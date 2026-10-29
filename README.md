@@ -27,7 +27,7 @@ To install it on an Android device:
 
 ### Build locally
 
-Install Android Studio, Android SDK 35, and Java 17, then run:
+Install Android Studio, Android SDK 35, and Java 21, then run:
 
 ```bash
 npm ci
