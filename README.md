@@ -15,6 +15,8 @@ Open `http://localhost:3000`.
 
 AURA includes a native Capacitor Android shell. The interface, fonts, and artwork are bundled into the APK, so the prototype works offline after installation.
 
+**Latest direct download:** [AURA 1.3 debug APK](public/downloads/AURA-debug.apk).
+
 ### Download from GitHub Actions
 
 Every push to `main` or an `arena/*` branch runs **Build Android APK**. Open the completed workflow run and download the **AURA-Android-APK** artifact. The APK is debug-signed for direct installation and testing; it is not a Play Store release build.
