@@ -11,6 +11,33 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Android APK
+
+AURA includes a native Capacitor Android shell. The interface, fonts, and artwork are bundled into the APK, so the prototype works offline after installation.
+
+### Download from GitHub Actions
+
+Every push to `main` or an `arena/*` branch runs **Build Android APK**. Open the completed workflow run and download the **AURA-Android-APK** artifact. The APK is debug-signed for direct installation and testing; it is not a Play Store release build.
+
+To install it on an Android device:
+
+1. Download `AURA-debug.apk` to the device.
+2. Allow your browser or file manager to install unknown apps when Android prompts you.
+3. Open the APK and tap **Install**.
+
+### Build locally
+
+Install Android Studio, Android SDK 35, and Java 17, then run:
+
+```bash
+npm ci
+npm run build:apk
+```
+
+The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+For native development, use `npm run cap:sync` after changing the web interface, then open the `android` directory in Android Studio.
+
 ## Included in this prototype
 
 - Interactive daily quests with category filters, rewards, countdowns, and empty states
@@ -26,9 +53,12 @@ Open `http://localhost:3000`.
 ## Commands
 
 ```bash
-npm run build   # Production build
-npm run lint    # ESLint
-npm run start   # Serve the production build
+npm run build         # Production web build
+npm run build:mobile  # Native web bundle
+npm run cap:sync      # Build and copy the bundle into Android
+npm run build:apk     # Build an installable debug APK (requires Android SDK)
+npm run lint          # ESLint
+npm run start         # Serve the production web build
 ```
 
 ## Architecture note
