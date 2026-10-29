@@ -67,6 +67,7 @@ const firstQuestByClass = {
     'Shadow Ranger': { title: 'Complete a 20-minute focus session', category: 'Mental', duration: 20, xp: 100, gold: 60 },
     'Iron Vanguard': { title: 'Complete a 15-minute bodyweight workout', category: 'Physical', duration: 15, xp: 100, gold: 60 },
     'Dawn Keeper': { title: 'Take 10 minutes for prayer or reflection', category: 'Spiritual', duration: 10, xp: 100, gold: 60 },
+    'Arcane Weaver': { title: 'Read or study without distraction for 20 minutes', category: 'Mental', duration: 20, xp: 100, gold: 60 },
 };
 
 const rotatingQuests = [

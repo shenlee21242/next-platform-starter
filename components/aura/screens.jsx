@@ -50,6 +50,7 @@ import {
 import { friends, skills, storeItems, XP_TO_LEVEL, getRank } from './data';
 import { characters, getCharacter } from './characters';
 import CharacterLoreModal from './character-lore';
+import CharacterRoster from './character-roster';
 import {
     Avatar,
     CategoryIcon,
@@ -196,28 +197,9 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                 </section>
             </div>
             <section className="panel skins-panel">
-                <PanelTitle title="Hero collection" meta="6 heroes · 3 classes" eyebrow="CHOOSE YOUR CHARACTER" />
+                <PanelTitle title="Hero collection" meta={`${characters.length} heroes · 4 classes`} eyebrow="CHOOSE YOUR CHARACTER" />
                 <p className="hero-gallery-note">Tap any portrait to discover the person behind the armor.</p>
-                <div className="skins-grid">
-                    {characters.map((character) => {
-                        const active = activeCharacter.id === character.id;
-                        return (
-                            <article key={character.id} className={`skin-card ${active ? 'is-active' : ''}`}>
-                                <button type="button" className="skin-art" onClick={() => setStoryCharacter(character)} aria-label={`Read ${character.name}'s backstory`}>
-                                    <Image src={character.image} alt={`${character.name}, ${character.title}`} fill sizes="(max-width: 560px) 45vw, 260px" />
-                                    {active && <span className="skin-equipped"><Check size={12} /> EQUIPPED</span>}
-                                    <span className="skin-story-hint"><BookOpen size={13} /> Read story</span>
-                                </button>
-                                <div className="skin-copy">
-                                    <span>{character.heroClass}</span>
-                                    <strong>{character.name}</strong>
-                                    <small>{character.title}</small>
-                                    <button type="button" className="hero-equip-button" onClick={() => onSkinChange(character.id)} disabled={active}>{active ? 'Current hero' : 'Choose hero'}</button>
-                                </div>
-                            </article>
-                        );
-                    })}
-                </div>
+                <CharacterRoster selectedId={activeCharacter.id} onSelect={onSkinChange} onReadStory={setStoryCharacter} />
             </section>
             {storyCharacter && <CharacterLoreModal character={storyCharacter} selected={storyCharacter.id === activeCharacter.id} onClose={() => setStoryCharacter(null)} onSelect={(character) => onSkinChange(character.id)} />}
         </div>
@@ -509,7 +491,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.4</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.5</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
             </div>
         </div>

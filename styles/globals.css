@@ -428,6 +428,41 @@ a { color: inherit; }
 .hero-story-link:hover { color: var(--gold-light); }
 .onboarding-experience .character-lore-modal { text-align: left; }
 
+/* Expandable character roster */
+.sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
+.roster-controls { margin-top: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: rgba(8,10,14,.35); }
+.roster-search { position: relative; display: flex; align-items: center; height: 38px; padding: 0 11px; border: 1px solid var(--line); border-radius: 6px; background: rgba(5,7,10,.42); color: var(--muted); }
+.roster-search:focus-within { border-color: rgba(255,193,116,.4); box-shadow: 0 0 0 3px rgba(255,193,116,.04); }
+.roster-search > svg { flex: 0 0 auto; }
+.roster-search input { min-width: 0; flex: 1; height: 100%; padding: 0 9px; border: 0; outline: 0; background: transparent; color: var(--text-soft); font-size: 10px; }
+.roster-search input::placeholder { color: #606673; }
+.roster-search button { display: grid; border: 0; place-items: center; width: 24px; height: 24px; padding: 0; background: transparent; color: var(--muted); }
+.roster-filter-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.roster-gender-filter { display: flex; align-items: center; gap: 4px; }
+.roster-gender-filter button { min-height: 30px; padding: 0 11px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--muted); font-size: 8px; transition: color .2s,background .2s,border-color .2s; }
+.roster-gender-filter button:hover { color: var(--text-soft); background: rgba(255,255,255,.03); }
+.roster-gender-filter button.active { border-color: rgba(255,193,116,.23); background: rgba(255,193,116,.08); color: var(--gold); }
+.roster-class-filter select { min-width: 135px; height: 31px; padding: 0 28px 0 10px; border: 1px solid var(--line); border-radius: 5px; outline: 0; background: #15181f; color: var(--text-soft); font-size: 8px; cursor: pointer; }
+.roster-class-filter select:focus { border-color: rgba(255,193,116,.4); }
+.roster-result-count { display: flex; align-items: center; justify-content: space-between; min-height: 15px; margin-top: 8px; color: #676e7a; font-size: 7px; letter-spacing: .04em; }
+.roster-result-count button { padding: 0; border: 0; background: transparent; color: var(--gold-dark); font-size: 7px; }
+.roster-onboarding .roster-controls { margin-top: 19px; }
+.roster-onboarding .hero-select-grid { margin-top: 13px; }
+.roster-gallery .skins-grid { margin-top: 13px; }
+.roster-empty { display: flex; flex-direction: column; align-items: center; padding: 50px 20px 42px; color: var(--muted); text-align: center; }
+.roster-empty > svg { margin-bottom: 13px; color: var(--gold-dark); }
+.roster-empty strong { color: var(--text-soft); font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+.roster-empty p { max-width: 320px; margin: 8px 0 18px; font-size: 10px; line-height: 1.7; }
+.roster-empty .button { width: auto; }
+.hero-select-story { position: absolute; z-index: 2; right: 11px; bottom: 9px; display: flex; align-items: center; gap: 4px; color: #d9cdbc; font-size: 7px; }
+.hero-select-class { max-width: 62%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-story-link:disabled { color: var(--muted); cursor: default; }
+.hero-3d-card { --hero-rotate-x: 0deg; --hero-rotate-y: 0deg; transform: perspective(950px) rotateX(var(--hero-rotate-x)) rotateY(var(--hero-rotate-y)) translateY(0); transform-style: preserve-3d; backface-visibility: hidden; transition: border-color .2s,background .2s,transform .16s ease-out; will-change: transform; }
+.skin-card.hero-3d-card:hover,.hero-select-card.hero-3d-card:hover { transform: perspective(950px) rotateX(var(--hero-rotate-x)) rotateY(var(--hero-rotate-y)) translateY(-3px); }
+.hero-3d-card .skin-art img,.hero-3d-card .hero-select-portrait > img { backface-visibility: hidden; }
+.hero-3d-card:hover .skin-art img,.hero-3d-card:hover .hero-select-portrait > img { transform: scale(1.04) translateZ(8px); }
+.reduce-motion .hero-3d-card,.reduce-motion .hero-3d-card:hover { transform: none; }
+
 /* Imperial Vault */
 .store-balances { display: flex; align-items: center; gap: 18px; padding: 10px 13px; border: 1px solid var(--border); background: rgba(255,255,255,.02); border-radius: 7px; }
 .store-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
@@ -626,7 +661,7 @@ a { color: inherit; }
 .system-info p { color: #626a68; font-size: 8px; line-height: 1.6; margin-top: 4px; }
 
 /* Modals and forms */
-.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 22px; background: rgba(4,5,8,.78); backdrop-filter: blur(10px); animation: backdrop-in .2s ease; overflow-y: auto; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 22px; background: rgba(4,5,8,.78); backdrop-filter: blur(10px); animation: backdrop-in .2s ease; overflow-y: auto; }
 @keyframes backdrop-in { from { opacity: 0; } }
 .modal-card { width: min(100%, 480px); max-height: calc(100vh - 44px); overflow-y: auto; position: relative; padding: 28px; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: linear-gradient(145deg, #1a1d25, #12151b); box-shadow: 0 35px 100px rgba(0,0,0,.55), 0 0 50px rgba(255,193,116,.025); animation: modal-in .25s cubic-bezier(.2,.8,.2,1); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
@@ -1122,4 +1157,24 @@ a { color: inherit; }
 @media (max-width: 370px) {
     .hero-select-portrait { height: 155px; }
     .hero-select-copy span { max-width: 115px; }
+}
+
+@media (max-width: 560px) {
+    .roster-controls { padding: 10px; }
+    .roster-filter-row { align-items: stretch; flex-direction: column; gap: 8px; }
+    .roster-gender-filter { display: grid; grid-template-columns: repeat(3,1fr); }
+    .roster-gender-filter button { padding: 0 7px; }
+    .roster-class-filter select { width: 100%; }
+    .hero-select-story { font-size: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-3d-card,.hero-3d-card:hover { transform: none; }
+}
+
+/* Keep expanded character creation scrollable at every viewport height. */
+.onboarding-content { height: 100vh; min-height: 0; align-items: flex-start; }
+.onboarding-form-wrap { margin-top: auto; margin-bottom: auto; }
+@media (max-width: 760px) {
+    .onboarding-content { height: auto; min-height: 0; }
+    .onboarding-form-wrap { margin-top: 0; margin-bottom: 0; }
 }

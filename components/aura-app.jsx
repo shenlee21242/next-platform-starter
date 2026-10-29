@@ -32,6 +32,7 @@ import {
 import Dashboard from './aura/dashboard';
 import AuthScreen from './aura/auth-screen';
 import CharacterLoreModal from './aura/character-lore';
+import CharacterRoster from './aura/character-roster';
 import { characters, getCharacter } from './aura/characters';
 import {
     CharacterScreen,
@@ -262,25 +263,8 @@ function OnboardingExperience({ player, onClose, onSave }) {
                         <>
                             <div className="eyebrow">CHOOSE YOUR STARTING HERO</div>
                             <h2>Who will walk beside you, {form.name.trim()}?</h2>
-                            <p className="onboarding-step-description">Six heroes, three paths. Choose the character who reflects your journey and read the story behind them.</p>
-                            <div className="hero-select-grid">
-                                {characters.map((character) => {
-                                    const selected = form.characterId === character.id;
-                                    return (
-                                        <article key={character.id} className={`hero-select-card ${selected ? 'active' : ''}`}>
-                                            <button type="button" className="hero-select-portrait" onClick={() => chooseCharacter(character)} aria-label={`Select ${character.name}`} aria-pressed={selected}>
-                                                <Image src={character.image} alt={`${character.name}, ${character.title}`} fill sizes="(max-width: 560px) 42vw, 210px" />
-                                                <span className="hero-select-class">{character.heroClass}</span>
-                                                {selected && <span className="hero-selected-mark"><Check size={14} /></span>}
-                                            </button>
-                                            <div className="hero-select-copy">
-                                                <div><strong>{character.name}</strong><span>{character.title}</span></div>
-                                                <button type="button" className="hero-story-link" onClick={() => setStoryCharacter(character)}>Read story</button>
-                                            </div>
-                                        </article>
-                                    );
-                                })}
-                            </div>
+                            <p className="onboarding-step-description">{characters.length} heroes across four paths. Tap a portrait to read their story, then choose who reflects your journey.</p>
+                            <CharacterRoster variant="onboarding" selectedId={form.characterId} onSelect={chooseCharacter} onReadStory={setStoryCharacter} />
                             <button className="button button-primary button-full" onClick={finish}>Begin as {selectedCharacter.name} <ArrowRight size={16} /></button>
                             <button className="text-button onboarding-back" onClick={() => setStep(1)}>Back to player details</button>
                         </>
