@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -16,6 +16,7 @@ function nativePublicAssets() {
             for (const file of ['aura-hero.png', 'void-colossus.png']) {
                 copyFileSync(`${publicDir}/images/${file}`, `${outDir}/images/${file}`);
             }
+            cpSync(`${publicDir}/images/heroes`, `${outDir}/images/heroes`, { recursive: true });
             copyFileSync(`${publicDir}/favicon.svg`, `${outDir}/favicon.svg`);
         },
     };
