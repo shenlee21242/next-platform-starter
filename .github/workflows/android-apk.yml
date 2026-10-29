@@ -44,9 +44,24 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
+        shell: bash
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          set +e
+          ./gradlew assembleDebug --no-daemon --console=plain > ../gradle-build.log 2>&1
+          status=$?
+          set -e
+          tail -n 100 ../gradle-build.log
+          if [ "$status" -ne 0 ]; then
+            python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import quote
+          lines = Path('../gradle-build.log').read_text(errors='replace').splitlines()
+          summary = '\n'.join(lines[-70:])
+          print(f'::error title=Gradle compilation failed::{quote(summary, safe="")}')
+          PY
+            exit "$status"
+          fi
 
       - name: Prepare downloadable APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk AURA-debug.apk
