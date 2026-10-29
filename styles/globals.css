@@ -883,3 +883,96 @@ a { color: inherit; }
 .aura-native .sidebar { padding-top: calc(26px + env(safe-area-inset-top, 0px)); }
 .aura-native .main-content { padding-bottom: calc(35px + env(safe-area-inset-bottom, 0px)); }
 .aura-native .toast { bottom: calc(15px + env(safe-area-inset-bottom, 0px)); }
+
+/* Home floating action */
+.quest-fab { position: fixed; right: 28px; bottom: 26px; z-index: 45; height: 49px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 19px; border: 1px solid #ffd294; border-radius: 28px; background: linear-gradient(135deg, #ffd08c, #e7aa60); color: #281c0e; box-shadow: 0 10px 35px rgba(0,0,0,.35), 0 0 24px rgba(255,193,116,.14); font-size: 10px; font-weight: 700; transition: transform .2s, box-shadow .2s; }
+.quest-fab:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(0,0,0,.42), 0 0 30px rgba(255,193,116,.22); }
+.quest-fab:active { transform: scale(.95); }
+
+/* First-launch onboarding */
+.onboarding-active > .sidebar, .onboarding-active > .app-shell { visibility: hidden; }
+.aura-boot { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: radial-gradient(circle at 50% 35%, rgba(255,193,116,.07), transparent 32%), var(--bg); color: var(--gold); }
+.aura-boot strong { font-family: var(--font-display); font-size: 24px; font-weight: 500; letter-spacing: .24em; margin-left: .24em; }
+.aura-boot span { color: var(--muted); font-size: 7px; letter-spacing: .18em; }
+.aura-boot i { width: 90px; height: 1px; margin-top: 9px; overflow: hidden; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: boot-pulse 1.2s ease-in-out infinite; }
+@keyframes boot-pulse { 50% { opacity: .25; transform: scaleX(.65); } }
+.onboarding-experience { position: fixed; inset: 0; z-index: 110; display: grid; grid-template-columns: minmax(340px, .85fr) minmax(500px, 1.15fr); overflow: hidden; background: var(--bg); }
+.onboarding-visual { min-height: 100vh; position: relative; overflow: hidden; }
+.onboarding-visual > img { object-fit: cover; object-position: center 10%; filter: saturate(.8) contrast(1.04); }
+.onboarding-visual-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(8,10,14,.15), rgba(8,10,14,.35)), linear-gradient(0deg, rgba(8,10,14,.98), transparent 62%, rgba(8,10,14,.25)); }
+.onboarding-visual-brand { position: absolute; top: 32px; left: 36px; display: flex; align-items: center; gap: 11px; color: var(--gold); }
+.onboarding-visual-brand span { font-family: var(--font-display); color: #f4e7d2; font-size: 20px; letter-spacing: .23em; }
+.onboarding-visual-copy { position: absolute; left: clamp(28px, 5vw, 68px); right: clamp(28px, 5vw, 68px); bottom: 52px; }
+.onboarding-visual-copy h1 { max-width: 490px; margin-top: 12px; font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 48px); line-height: 1.25; font-weight: 500; color: #f0ebe2; }
+.onboarding-visual-copy > p { max-width: 450px; margin-top: 17px; color: #96958f; font-size: 11px; line-height: 1.85; }
+.onboarding-visual-rule { display: flex; align-items: center; gap: 12px; margin-top: 30px; color: var(--gold-dark); font-size: 7px; letter-spacing: .16em; }
+.onboarding-visual-rule i { width: 35px; height: 1px; background: var(--gold-dark); opacity: .5; }
+.onboarding-content { min-height: 100vh; position: relative; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 48px clamp(30px, 6vw, 90px); background: radial-gradient(circle at 100% 0, rgba(76,215,246,.025), transparent 38%), #0e1015; }
+.onboarding-content::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .15; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 55px 55px; mask-image: linear-gradient(to bottom, black, transparent 75%); }
+.onboarding-close { position: absolute; top: 22px; right: 22px; z-index: 2; }
+.onboarding-form-wrap { width: 100%; max-width: 530px; position: relative; z-index: 1; }
+.onboarding-progress { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 15px; margin-bottom: 40px; }
+.onboarding-progress > span { color: #6c7078; font-size: 7px; letter-spacing: .15em; }
+.onboarding-progress > div { display: flex; gap: 5px; }
+.onboarding-progress i { width: 30px; height: 2px; background: #32363e; }
+.onboarding-progress i.active { background: var(--gold); }
+.onboarding-progress strong { color: #8a8172; font-family: var(--font-display); font-size: 10px; font-weight: 500; }
+.onboarding-content h2 { margin-top: 9px; font-family: var(--font-display); font-size: clamp(25px, 2.5vw, 34px); line-height: 1.3; font-weight: 500; }
+.onboarding-step-description { margin-top: 12px; color: var(--muted); font-size: 10px; line-height: 1.8; }
+.onboarding-native-form { margin-top: 30px; gap: 21px; }
+.onboarding-native-form input { height: 45px; font-size: 11px; }
+.onboarding-privacy { display: flex; align-items: flex-start; gap: 8px; color: #646b72; font-size: 8px; line-height: 1.65; }
+.onboarding-privacy svg { flex-shrink: 0; color: #668475; margin-top: 1px; }
+.onboarding-class-options { margin: 27px 0 22px; gap: 10px; }
+.onboarding-class-options button { grid-template-columns: 39px 1fr 20px; grid-template-rows: auto auto auto; padding: 15px; }
+.onboarding-class-options button > svg:first-child { grid-row: 1/4; }
+.onboarding-class-options button strong, .onboarding-class-options button span, .onboarding-class-options button small { grid-column: 2; }
+.onboarding-class-options button small { color: #626973; font-size: 7px; margin-top: 4px; }
+.onboarding-class-options button > svg:last-child { grid-row: 1/4; }
+.onboarding-class-options button.active small { color: #8b806f; }
+
+/* PvP attack spells */
+.duel-spell-panel { width: min(100%, 570px); display: flex; align-items: center; gap: 12px; margin: 0 auto 23px; padding: 12px 14px; text-align: left; border: 1px solid rgba(182,154,245,.15); border-radius: 8px; background: linear-gradient(100deg, rgba(182,154,245,.06), rgba(255,255,255,.012)); }
+.duel-spell-icon { width: 38px; height: 38px; display: grid; place-items: center; flex-shrink: 0; color: var(--violet); border: 1px solid rgba(182,154,245,.17); border-radius: 7px; background: rgba(182,154,245,.06); }
+.duel-spell-panel > div { flex: 1; min-width: 0; }
+.duel-spell-panel strong { color: #d4c9df; font-size: 10px; font-weight: 500; }
+.duel-spell-panel p { margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.duel-spell-panel.is-cast { border-color: rgba(239,68,68,.15); background: rgba(239,68,68,.035); }
+.duel-spell-panel.is-cast .duel-spell-icon { color: #df7279; border-color: rgba(239,68,68,.15); background: rgba(239,68,68,.05); }
+.spell-cast-label { display: flex; align-items: center; gap: 4px; color: #d47b81; font-size: 7px; letter-spacing: .1em; white-space: nowrap; }
+.duel-player > span.duel-debuff { display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; padding: 4px 6px; color: #dd7c83; border: 1px solid rgba(239,68,68,.15); border-radius: 4px; background: rgba(239,68,68,.05); font-size: 7px; letter-spacing: .02em; }
+
+@media (max-width: 900px) {
+    .onboarding-experience { grid-template-columns: minmax(280px, .7fr) minmax(430px, 1.3fr); }
+    .onboarding-content { padding: 40px 30px; }
+    .onboarding-visual-copy { left: 30px; right: 30px; }
+}
+
+@media (max-width: 760px) {
+    .onboarding-experience { display: block; overflow-y: auto; }
+    .onboarding-visual { min-height: 205px; height: 205px; }
+    .onboarding-visual > img { object-position: center 12%; }
+    .onboarding-visual-brand { top: 20px; left: 22px; }
+    .onboarding-visual-brand svg { width: 29px; height: 29px; }
+    .onboarding-visual-brand span { font-size: 15px; }
+    .onboarding-visual-copy { left: 22px; right: 22px; bottom: 20px; }
+    .onboarding-visual-copy .eyebrow, .onboarding-visual-copy > p, .onboarding-visual-rule { display: none; }
+    .onboarding-visual-copy h1 { max-width: 360px; margin: 0; font-size: 22px; }
+    .onboarding-content { min-height: auto; overflow: visible; padding: 29px 20px calc(35px + env(safe-area-inset-bottom, 0px)); }
+    .onboarding-progress { margin-bottom: 27px; }
+    .onboarding-content h2 { font-size: 25px; }
+    .onboarding-close { top: 14px; right: 14px; }
+}
+
+@media (max-width: 560px) {
+    .quest-fab { width: 52px; height: 52px; right: 18px; bottom: calc(19px + env(safe-area-inset-bottom, 0px)); padding: 0; }
+    .quest-fab > span { display: none; }
+    .onboarding-native-form { margin-top: 24px; }
+    .onboarding-native-form .form-row.three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .onboarding-native-form .form-row.three input { padding: 0 8px; }
+    .onboarding-class-options button { padding: 13px 11px; }
+    .duel-spell-panel { flex-wrap: wrap; }
+    .duel-spell-panel > div { min-width: 170px; }
+    .duel-spell-panel > .button { margin-left: 50px; }
+    .spell-cast-label { margin-left: auto; }
+}

@@ -45,6 +45,7 @@ export default function Dashboard({
     focusRunning,
     onFocusToggle,
     activeSkin,
+    player,
 }) {
     const [filter, setFilter] = useState('All');
     const completed = quests.filter((quest) => quest.done).length;
@@ -182,17 +183,17 @@ export default function Dashboard({
                 <aside className="dashboard-side-column">
                     <section className={`character-card skin-${activeSkin}`}>
                         <div className="character-art">
-                            <Image src="/images/aura-hero.png" alt="Arin, Shadow Ranger" fill priority sizes="(max-width: 900px) 100vw, 30vw" />
+                            <Image src="/images/aura-hero.png" alt={`${player.name}, ${player.heroClass}`} fill priority sizes="(max-width: 900px) 100vw, 30vw" />
                             <div className="character-art-overlay" />
                             <div className="character-card-top">
                                 <span className="level-chip">LEVEL {level}</span>
-                                <span className="class-chip">SHADOW RANGER</span>
+                                <span className="class-chip">{player.heroClass.toUpperCase()}</span>
                             </div>
                         </div>
                         <div className="character-card-body">
                             <div className="character-name-row">
                                 <div>
-                                    <h2>Arin</h2>
+                                    <h2>{player.name}</h2>
                                     <span>Gold III <i /> 12 day streak</span>
                                 </div>
                                 <button className="icon-button" onClick={() => onNavigate('character')} aria-label="Open character profile"><ArrowRight size={18} /></button>
@@ -233,6 +234,10 @@ export default function Dashboard({
                     </button>
                 </aside>
             </div>
+            <button className="quest-fab" onClick={onAddQuest} aria-label="Add a new daily quest">
+                <Plus size={21} strokeWidth={1.8} />
+                <span>New quest</span>
+            </button>
         </div>
     );
 }

@@ -47,7 +47,7 @@ For native development, use `npm run cap:sync` after changing the web interface,
 - Imperial Vault with cosmetics, consumables, and tarot cards
 - Mystery tarot draws with rank-based pricing and real quest rewards
 - Focus Sanctuary timer, energy, and session rewards
-- Friends, gifting, friends-only leaderboards, and stake-based PvP duels
+- Friends, gifting, friends-only leaderboards, stake-based PvP duels, and consumable attack spells
 - Notifications, settings, onboarding, responsive drawer navigation, and reduced-motion support
 
 ## Commands

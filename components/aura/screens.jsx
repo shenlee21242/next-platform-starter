@@ -151,7 +151,7 @@ const skinOptions = [
     { id: 'golden', name: 'Golden Age Knight', style: 'Historical', rarity: 'Legendary' },
 ];
 
-export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal }) {
+export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player }) {
     return (
         <div className="screen">
             <ScreenHeader eyebrow="THE PERSON BEHIND THE PROGRESS" title="Character profile" description="Your real life, reflected in your legend.">
@@ -159,12 +159,12 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
             </ScreenHeader>
             <div className="profile-layout">
                 <section className={`profile-hero panel skin-${activeSkin}`}>
-                    <Image src="/images/aura-hero.png" alt="Arin character portrait" fill sizes="(max-width: 800px) 100vw, 40vw" />
+                    <Image src="/images/aura-hero.png" alt={`${player.name} character portrait`} fill sizes="(max-width: 800px) 100vw, 40vw" />
                     <div className="profile-hero-gradient" />
                     <div className="profile-level"><span>LEVEL</span><strong>{level}</strong></div>
                     <div className="profile-hero-copy">
-                        <span>SHADOW RANGER</span>
-                        <h2>Arin</h2>
+                        <span>{player.heroClass.toUpperCase()}</span>
+                        <h2>{player.name}</h2>
                         <p>“Discipline is my sharpest blade.”</p>
                     </div>
                 </section>
@@ -187,9 +187,9 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                     </div>
                     <div className="panel physical-stats-card">
                         <PanelTitle title="Physical record" />
-                        <div><span>Age</span><strong>24 years</strong></div>
-                        <div><span>Height</span><strong>178 cm</strong></div>
-                        <div><span>Weight</span><strong>74 kg</strong></div>
+                        <div><span>Age</span><strong>{player.age} years</strong></div>
+                        <div><span>Height</span><strong>{player.height} cm</strong></div>
+                        <div><span>Weight</span><strong>{player.weight} kg</strong></div>
                         <div><span>Status</span><strong className="status-ready"><i /> Ready for battle</strong></div>
                     </div>
                 </section>
@@ -315,15 +315,15 @@ export function SocialScreen({ onGift, onChallenge, onSecretCode, devMode }) {
     );
 }
 
-export function LeaderboardScreen({ xp, level }) {
+export function LeaderboardScreen({ xp, level, playerName }) {
     const [period, setPeriod] = useState('Weekly');
     const players = useMemo(() => {
         const multiplier = period === 'Weekly' ? 1 : period === 'Monthly' ? 3.7 : 14.2;
         return [
             ...friends.filter((friend) => friend.id !== 3).map((friend) => ({ ...friend, score: Math.round(friend.xp * multiplier) })),
-            { id: 'you', name: 'Arin', handle: '@arin', level, xp, score: Math.round(xp * multiplier), initials: 'AR', color: '#66543b', online: true },
+            { id: 'you', name: playerName, handle: '@arin', level, xp, score: Math.round(xp * multiplier), initials: playerName.slice(0, 2).toUpperCase(), color: '#66543b', online: true },
         ].sort((a, b) => b.score - a.score);
-    }, [period, xp, level]);
+    }, [period, xp, level, playerName]);
     const podium = [players[1], players[0], players[2]];
     return (
         <div className="screen">
@@ -402,7 +402,7 @@ export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggl
     );
 }
 
-export function PvpScreen({ duel, completedQuests, onNavigate, onClaim }) {
+export function PvpScreen({ duel, completedQuests, onNavigate, onClaim, player, level, hasAttackSpell, onCastSpell }) {
     if (!duel) return (
         <div className="screen"><ScreenHeader eyebrow="DIRECT CHALLENGE" title="PvP Duel Arena" description="Honor, discipline, and a little friendly rivalry." /><section className="panel"><EmptyState icon={<Swords size={28} />} title="No active duel" description="Challenge a friend from the Social Hub. First to complete 3 daily quests takes the pot." action="Find a challenger" onAction={() => onNavigate('social')} /></section></div>
     );
@@ -413,9 +413,29 @@ export function PvpScreen({ duel, completedQuests, onNavigate, onClaim }) {
             <section className="panel duel-arena">
                 <div className="duel-stake"><Trophy size={16} /><span>VICTOR’S POT</span><strong>{formatNumber(duel.stake * 2)} GOLD</strong></div>
                 <div className="duel-versus">
-                    <div className="duel-player"><Avatar name="Arin" size="duel" image /><span>LEVEL 12</span><h2>Arin</h2><strong>{playerScore}<small>/3</small></strong><ProgressBar value={playerScore} max={3} /><p>{3 - playerScore || 'No'} quests to victory</p></div>
+                    <div className="duel-player"><Avatar name={player.name} size="duel" image /><span>LEVEL {level}</span><h2>{player.name}</h2><strong>{playerScore}<small>/3</small></strong><ProgressBar value={playerScore} max={3} /><p>{3 - playerScore || 'No'} quests to victory</p></div>
                     <div className="versus-mark"><span>VS</span><i /></div>
-                    <div className="duel-player"><Avatar {...duel} size="duel" online={duel.online} /><span>LEVEL {duel.level}</span><h2>{duel.name}</h2><strong>1<small>/3</small></strong><ProgressBar value={1} max={3} tone="cyan" /><p>2 quests to victory</p></div>
+                    <div className="duel-player">
+                        <Avatar {...duel} size="duel" online={duel.online} />
+                        <span>LEVEL {duel.level}</span>
+                        <h2>{duel.name}</h2>
+                        {duel.debuff && <span className="duel-debuff"><WandSparkles size={11} /> {duel.debuff}</span>}
+                        <strong>1<small>/3</small></strong><ProgressBar value={1} max={3} tone="cyan" /><p>2 quests to victory</p>
+                    </div>
+                </div>
+                <div className={`duel-spell-panel ${duel.debuff ? 'is-cast' : ''}`}>
+                    <span className="duel-spell-icon"><WandSparkles size={21} strokeWidth={1.5} /></span>
+                    <div>
+                        <strong>{duel.debuff ? 'Exhaustion is active' : 'Exhaustion Spell'}</strong>
+                        <p>{duel.debuff ? `${duel.name} earns −10% XP for the next hour.` : 'Weaken your opponent with −10% XP for their next hour.'}</p>
+                    </div>
+                    {duel.debuff ? (
+                        <span className="spell-cast-label"><Check size={13} /> CAST</span>
+                    ) : (
+                        <button className="button button-secondary button-small" onClick={hasAttackSpell ? onCastSpell : () => onNavigate('store')}>
+                            {hasAttackSpell ? <><WandSparkles size={14} /> Cast spell</> : 'Get from Vault'}
+                        </button>
+                    )}
                 </div>
                 <button className="button button-primary" onClick={playerScore >= 3 ? onClaim : () => onNavigate('quests')}>{playerScore >= 3 ? <><Trophy size={16} /> Claim {formatNumber(duel.stake * 2)} Gold pot</> : <>Complete your daily quests <ArrowRight size={16} /></>}</button>
             </section>
@@ -448,7 +468,7 @@ function SettingToggle({ settings, onSettingChange, setting, title, description 
     );
 }
 
-export function SettingsScreen({ settings, onSettingChange, onOpenModal }) {
+export function SettingsScreen({ settings, onSettingChange, onOpenModal, player }) {
     return (
         <div className="screen settings-screen">
             <ScreenHeader eyebrow="MAKE AURA YOURS" title="Settings" description="Tune the system. Keep the discipline." />
@@ -470,11 +490,11 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal }) {
                 <aside>
                     <section className="panel settings-section account-card">
                         <PanelTitle title="Account" eyebrow="PLAYER RECORD" />
-                        <div className="account-profile"><Avatar name="Arin" image size="large" /><div><strong>Arin</strong><span>arin@aura.app</span></div></div>
+                        <div className="account-profile"><Avatar name={player.name} image size="large" /><div><strong>{player.name}</strong><span>arin@aura.app</span></div></div>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><Settings2 size={15} /> Edit player details</button>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.0</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.2</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
             </div>
         </div>
