@@ -6,6 +6,7 @@ export const defaultPlayer = {
     age: 24,
     height: 178,
     weight: 74,
+    characterId: 'kael',
     heroClass: 'Shadow Ranger',
 };
 
@@ -50,7 +51,7 @@ export function createNewGame(auth = {}) {
         skillPoints: 0,
         unlockedSkills: ['discipline'],
         inventory: [],
-        activeSkin: 'realistic',
+        activeSkin: 'kael',
         duel: null,
         streak: 0,
         lastCompletionDate: null,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import {
     ArrowRight,
@@ -74,10 +75,11 @@ export function ScreenHeader({ eyebrow, title, description, children }) {
 }
 
 export function Avatar({ name, initials, color, size = 'medium', image = false, online = false }) {
+    const imageSource = typeof image === 'string' ? image : '/images/heroes/kael.webp';
     return (
         <span className={`avatar avatar-${size}`} style={{ '--avatar-color': color || '#534a3d' }}>
             {image ? (
-                <Image src="/images/aura-hero.png" alt={`${name}'s avatar`} fill sizes="80px" />
+                <Image src={imageSource} alt={`${name}'s avatar`} fill sizes="80px" />
             ) : (
                 <span>{initials || name?.slice(0, 2).toUpperCase()}</span>
             )}
@@ -117,7 +119,7 @@ export function Modal({ children, onClose, className = '', label = 'Dialog' }) {
         };
     }, [onClose]);
 
-    return (
+    return createPortal(
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => {
             if (event.target === event.currentTarget) onClose();
         }}>
@@ -125,7 +127,8 @@ export function Modal({ children, onClose, className = '', label = 'Dialog' }) {
                 <button className="modal-close icon-button" onClick={onClose} aria-label="Close dialog"><X size={19} /></button>
                 {children}
             </section>
-        </div>
+        </div>,
+        document.body,
     );
 }
 

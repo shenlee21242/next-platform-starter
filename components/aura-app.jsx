@@ -11,7 +11,6 @@ import {
     Clock3,
     Coins,
     Diamond,
-    Dumbbell,
     Flame,
     Focus,
     Gem,
@@ -32,6 +31,8 @@ import {
 } from 'lucide-react';
 import Dashboard from './aura/dashboard';
 import AuthScreen from './aura/auth-screen';
+import CharacterLoreModal from './aura/character-lore';
+import { characters, getCharacter } from './aura/characters';
 import {
     CharacterScreen,
     FocusScreen,
@@ -186,7 +187,7 @@ function DuelModal({ friend, gold, onClose, onStart, player }) {
     return (
         <Modal onClose={onClose} label="Create a duel" className="duel-modal">
             <div className="eyebrow">A FRIENDLY TRIAL</div><h2>Challenge {friend.name}</h2><p>First to complete 3 daily quests wins the pot.</p>
-            <div className="duel-modal-versus"><Avatar name={player.name} image size="large" /><span>VS</span><Avatar {...friend} size="large" /></div>
+            <div className="duel-modal-versus"><Avatar name={player.name} image={getCharacter(player.characterId).image} size="large" /><span>VS</span><Avatar {...friend} size="large" /></div>
             <label className="stake-label">Choose your Gold stake</label><div className="stake-options">{[100, 250, 500].map((amount) => <button key={amount} className={stake === amount ? 'active' : ''} onClick={() => setStake(amount)}><Coins size={15} />{amount}</button>)}</div>
             <div className="duel-pot-preview"><span>Winner takes</span><strong>{formatNumber(stake * 2)} Gold</strong></div>
             <button className="button button-primary button-full" onClick={() => onStart(friend, stake)} disabled={gold < stake}><Swords size={16} /> {gold < stake ? 'Not enough Gold' : 'Begin duel'}</button>
@@ -196,8 +197,11 @@ function DuelModal({ friend, gold, onClose, onStart, player }) {
 
 function OnboardingExperience({ player, onClose, onSave }) {
     const [step, setStep] = useState(1);
-    const [form, setForm] = useState({ ...player });
+    const [form, setForm] = useState({ ...player, characterId: player.characterId || 'kael' });
+    const [storyCharacter, setStoryCharacter] = useState(null);
+    const selectedCharacter = getCharacter(form.characterId);
     const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+    const chooseCharacter = (character) => setForm((current) => ({ ...current, characterId: character.id, heroClass: character.heroClass }));
     const detailsValid = form.name.trim() && Number(form.age) >= 13 && Number(form.height) > 50 && Number(form.weight) > 20;
 
     useEffect(() => {
@@ -224,7 +228,7 @@ function OnboardingExperience({ player, onClose, onSave }) {
     return (
         <div className="onboarding-experience" role="dialog" aria-modal="true" aria-label="Create your AURA character">
             <div className="onboarding-visual">
-                <Image src="/images/aura-hero.png" alt="A shadow ranger entering a new realm" fill priority sizes="(max-width: 760px) 100vw, 45vw" />
+                <Image key={selectedCharacter.id} src={selectedCharacter.image} alt={`${selectedCharacter.name}, ${selectedCharacter.title}`} fill priority sizes="(max-width: 760px) 100vw, 45vw" />
                 <div className="onboarding-visual-shade" />
                 <div className="onboarding-visual-brand"><AuraMark size={38} /><span>AURA</span></div>
                 <div className="onboarding-visual-copy">
@@ -236,7 +240,7 @@ function OnboardingExperience({ player, onClose, onSave }) {
             </div>
             <section className="onboarding-content">
                 {onClose && <button className="onboarding-close icon-button" onClick={onClose} aria-label="Close onboarding"><X size={19} /></button>}
-                <div className="onboarding-form-wrap">
+                <div className={`onboarding-form-wrap ${step === 2 ? 'hero-choice-wrap' : ''}`}>
                     <div className="onboarding-progress"><span>CHARACTER CREATION</span><div><i className="active" /><i className={step === 2 ? 'active' : ''} /></div><strong>0{step} / 02</strong></div>
                     {step === 1 ? (
                         <>
@@ -256,26 +260,34 @@ function OnboardingExperience({ player, onClose, onSave }) {
                         </>
                     ) : (
                         <>
-                            <div className="eyebrow">CHOOSE YOUR STARTING CLASS</div>
-                            <h2>How will you rise, {form.name.trim()}?</h2>
-                            <p className="onboarding-step-description">Pick the path that feels most like you. Every class can master every skill over time.</p>
-                            <div className="class-options onboarding-class-options">
-                                {[
-                                    ['Shadow Ranger', Focus, 'Mental mastery', 'Focus, intelligence, and quiet discipline.'],
-                                    ['Iron Vanguard', Dumbbell, 'Physical strength', 'Strength, stamina, and relentless action.'],
-                                    ['Dawn Keeper', Sparkles, 'Spiritual balance', 'Reflection, gratitude, and inner peace.'],
-                                ].map(([item, Icon, description, detail]) => (
-                                    <button type="button" key={item} className={form.heroClass === item ? 'active' : ''} onClick={() => update('heroClass', item)}>
-                                        <Icon size={25} /><strong>{item}</strong><span>{description}</span><small>{detail}</small>{form.heroClass === item && <Check size={15} />}
-                                    </button>
-                                ))}
+                            <div className="eyebrow">CHOOSE YOUR STARTING HERO</div>
+                            <h2>Who will walk beside you, {form.name.trim()}?</h2>
+                            <p className="onboarding-step-description">Six heroes, three paths. Choose the character who reflects your journey and read the story behind them.</p>
+                            <div className="hero-select-grid">
+                                {characters.map((character) => {
+                                    const selected = form.characterId === character.id;
+                                    return (
+                                        <article key={character.id} className={`hero-select-card ${selected ? 'active' : ''}`}>
+                                            <button type="button" className="hero-select-portrait" onClick={() => chooseCharacter(character)} aria-label={`Select ${character.name}`} aria-pressed={selected}>
+                                                <Image src={character.image} alt={`${character.name}, ${character.title}`} fill sizes="(max-width: 560px) 42vw, 210px" />
+                                                <span className="hero-select-class">{character.heroClass}</span>
+                                                {selected && <span className="hero-selected-mark"><Check size={14} /></span>}
+                                            </button>
+                                            <div className="hero-select-copy">
+                                                <div><strong>{character.name}</strong><span>{character.title}</span></div>
+                                                <button type="button" className="hero-story-link" onClick={() => setStoryCharacter(character)}>Read story</button>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
                             </div>
-                            <button className="button button-primary button-full" onClick={finish}>Begin your journey <ArrowRight size={16} /></button>
+                            <button className="button button-primary button-full" onClick={finish}>Begin as {selectedCharacter.name} <ArrowRight size={16} /></button>
                             <button className="text-button onboarding-back" onClick={() => setStep(1)}>Back to player details</button>
                         </>
                     )}
                 </div>
             </section>
+            {storyCharacter && <CharacterLoreModal character={storyCharacter} selected={storyCharacter.id === form.characterId} onClose={() => setStoryCharacter(null)} onSelect={chooseCharacter} />}
         </div>
     );
 }
@@ -312,7 +324,7 @@ export default function AuraApp() {
     const [skillPoints, setSkillPoints] = useState(0);
     const [unlockedSkills, setUnlockedSkills] = useState(['discipline']);
     const [inventory, setInventory] = useState([]);
-    const [activeSkin, setActiveSkin] = useState('realistic');
+    const [activeSkin, setActiveSkin] = useState('kael');
     const [duel, setDuel] = useState(null);
     const [streak, setStreak] = useState(0);
     const [lastCompletionDate, setLastCompletionDate] = useState(null);
@@ -349,7 +361,8 @@ export default function AuraApp() {
     }, [notify]);
 
     const restoreGame = useCallback((game) => {
-        setPlayer({ ...defaultPlayer, ...(game.player || {}) });
+        const restoredCharacter = getCharacter(game.player?.characterId || game.activeSkin);
+        setPlayer({ ...defaultPlayer, ...(game.player || {}), characterId: restoredCharacter.id, heroClass: game.player?.heroClass || restoredCharacter.heroClass });
         setQuests(Array.isArray(game.quests) ? game.quests : []);
         setLevel(game.level ?? 0);
         const savedXp = game.xp ?? 0;
@@ -362,7 +375,7 @@ export default function AuraApp() {
         setSkillPoints(game.skillPoints ?? 0);
         setUnlockedSkills(game.unlockedSkills || ['discipline']);
         setInventory(game.inventory || []);
-        setActiveSkin(game.activeSkin || 'realistic');
+        setActiveSkin(restoredCharacter.id);
         setDuel(game.duel || null);
         setStreak(game.streak ?? 0);
         setLastCompletionDate(game.lastCompletionDate || null);
@@ -473,9 +486,12 @@ export default function AuraApp() {
 
     const savePlayer = (profile) => {
         const isFirstLaunch = initialOnboarding;
-        setPlayer(profile);
+        const selectedCharacter = getCharacter(profile.characterId);
+        const nextProfile = { ...profile, characterId: selectedCharacter.id, heroClass: selectedCharacter.heroClass };
+        setPlayer(nextProfile);
+        setActiveSkin(selectedCharacter.id);
         if (isFirstLaunch) {
-            const dailyQuest = createDailyQuest(profile, lastQuestDate);
+            const dailyQuest = createDailyQuest(nextProfile, lastQuestDate);
             setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
             setLastQuestDate(localDayKey());
         }
@@ -595,6 +611,13 @@ export default function AuraApp() {
         return 'Developer Mode disabled.';
     };
 
+    const selectCharacter = (id) => {
+        const character = getCharacter(id);
+        setActiveSkin(character.id);
+        setPlayer((current) => ({ ...current, characterId: character.id, heroClass: character.heroClass }));
+        notify(`${character.name} is now your active hero.`);
+    };
+
     const resetFocus = () => { setFocusRunning(false); setFocusSeconds(focusDuration); };
     const changeFocusDuration = (seconds) => { setFocusDuration(seconds); setFocusSeconds(seconds); setFocusRunning(false); };
     const completedQuests = quests.filter((quest) => quest.done).length;
@@ -604,15 +627,16 @@ export default function AuraApp() {
         STA: 1 + level * 2,
         CHA: 1 + level,
     };
+    const activeCharacter = getCharacter(player.characterId || activeSkin);
     const unread = notifications.filter((notification) => !notification.read).length;
 
     let content;
     switch (screen) {
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} onUnlock={unlockSkill} />; break;
-        case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={(skin) => { setActiveSkin(skin); notify('Avatar equipped.'); }} onOpenModal={openModal} />; break;
+        case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
         case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onGift={(friend) => { setGold((current) => Math.max(0, current - 25)); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
-        case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} />; break;
+        case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} playerImage={activeCharacter.image} />; break;
         case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={streak} focusRunning={focusRunning} onToggle={() => setFocusRunning((current) => !current)} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} completedQuests={completedQuests} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
@@ -641,7 +665,7 @@ export default function AuraApp() {
                 <div className="sidebar-bottom">
                     <button className="sidebar-fate-card" onClick={() => openModal('tarot')}><span className="fate-icon"><Sparkles size={19} /></span><span><strong>Draw your fate</strong><small>Mystery quests await</small></span><ChevronRight size={15} /></button>
                     <button className={`nav-item ${screen === 'settings' ? 'active' : ''}`} onClick={() => navigate('settings')}><Settings size={18} strokeWidth={1.6} /><span>Settings</span></button>
-                    <div className="sidebar-profile"><Avatar name={player.name} image size="small" /><div><strong>{player.name}</strong><span>Level {level} · {getRank(level)}</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
+                    <div className="sidebar-profile"><Avatar name={player.name} image={activeCharacter.image} size="small" /><div><strong>{player.name}</strong><span>Level {level} · {getRank(level)}</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
                 </div>
             </aside>
 
@@ -653,7 +677,7 @@ export default function AuraApp() {
                         <div className="topbar-currencies"><Currency value={gold} />{devMode && <button className="convert-button" onClick={() => { if (gold >= 100) { setGold((current) => current - 100); setDiamonds((current) => current + 1); notify('Converted 100 Gold into 1 Diamond.'); } }}>Convert</button>}<Currency type="diamonds" value={diamonds} /></div>
                         <div className="topbar-divider" />
                         <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label={`${unread} unread notifications`}><Bell size={19} strokeWidth={1.6} />{unread > 0 && <span>{unread}</span>}</button>
-                        <button className="topbar-avatar" onClick={() => navigate('character')} aria-label="Open character profile"><Avatar name={player.name} image size="small" /></button>
+                        <button className="topbar-avatar" onClick={() => navigate('character')} aria-label="Open character profile"><Avatar name={player.name} image={activeCharacter.image} size="small" /></button>
                     </div>
                 </header>
                 <main className="main-content">{content}</main>

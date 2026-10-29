@@ -15,7 +15,7 @@ Open `http://localhost:3000`.
 
 AURA includes a native Capacitor Android shell. The interface, fonts, and artwork are bundled into the APK, so the prototype works offline after installation.
 
-**Latest direct download:** [AURA 1.3 debug APK](public/downloads/AURA-debug.apk).
+**Latest direct download:** [AURA 1.4 debug APK](public/downloads/AURA-debug.apk).
 
 ### Download from GitHub Actions
 
@@ -45,7 +45,8 @@ For native development, use `npm run cap:sync` after changing the web interface,
 - Device-local email, Google, and Facebook preview login with returning-account restoration
 - Level-zero character creation and class-based daily quests that rotate on later days
 - Interactive daily quests with category filters, rewards, countdowns, and empty states
-- Character progression, level-up celebrations, attributes, and avatar skins
+- Character progression, level-up celebrations, and attributes
+- Six original male and female heroes across three classes, with selectable portraits and readable backstories
 - Radial skill constellation with unlockable permanent and active skills
 - Weekly Void Colossus boss encounter with trial progress
 - Imperial Vault with cosmetics, consumables, and tarot cards

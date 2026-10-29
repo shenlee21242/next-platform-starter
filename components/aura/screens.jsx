@@ -7,6 +7,7 @@ import {
     ArrowRight,
     Award,
     Bell,
+    BookOpen,
     Brain,
     Check,
     ChevronRight,
@@ -47,6 +48,8 @@ import {
     Zap,
 } from 'lucide-react';
 import { friends, skills, storeItems, XP_TO_LEVEL, getRank } from './data';
+import { characters, getCharacter } from './characters';
+import CharacterLoreModal from './character-lore';
 import {
     Avatar,
     CategoryIcon,
@@ -144,30 +147,28 @@ export function SkillTreeScreen({ unlockedSkills, skillPoints, onUnlock }) {
     );
 }
 
-const skinOptions = [
-    { id: 'realistic', name: 'Shadow Ranger', style: 'Realistic', rarity: 'Equipped' },
-    { id: 'cyberpunk', name: 'Neon Ronin', style: 'Cyberpunk', rarity: 'Owned' },
-    { id: 'comic', name: 'Night Sentinel', style: 'Comic', rarity: 'Owned' },
-    { id: 'golden', name: 'Golden Age Knight', style: 'Historical', rarity: 'Legendary' },
-];
-
 export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, attributes }) {
+    const [storyCharacter, setStoryCharacter] = useState(null);
+    const activeCharacter = getCharacter(player.characterId || activeSkin);
+
     return (
         <div className="screen">
             <ScreenHeader eyebrow="THE PERSON BEHIND THE PROGRESS" title="Character profile" description="Your real life, reflected in your legend.">
                 <button className="button button-secondary" onClick={() => onOpenModal('onboarding')}><Settings2 size={16} /> Edit character</button>
             </ScreenHeader>
             <div className="profile-layout">
-                <section className={`profile-hero panel skin-${activeSkin}`}>
-                    <Image src="/images/aura-hero.png" alt={`${player.name} character portrait`} fill sizes="(max-width: 800px) 100vw, 40vw" />
+                <button type="button" className={`profile-hero panel skin-${activeCharacter.id}`} onClick={() => setStoryCharacter(activeCharacter)} aria-label={`Read ${activeCharacter.name}'s backstory`}>
+                    <Image src={activeCharacter.image} alt={`${activeCharacter.name}, ${activeCharacter.title}`} fill sizes="(max-width: 800px) 100vw, 40vw" />
                     <div className="profile-hero-gradient" />
                     <div className="profile-level"><span>LEVEL</span><strong>{level}</strong></div>
+                    <span className="profile-lore-hint"><BookOpen size={14} /> Read backstory</span>
                     <div className="profile-hero-copy">
-                        <span>{player.heroClass.toUpperCase()}</span>
+                        <span>{activeCharacter.heroClass.toUpperCase()}</span>
                         <h2>{player.name}</h2>
-                        <p>“Discipline is my sharpest blade.”</p>
+                        <small>{activeCharacter.name} · {activeCharacter.title}</small>
+                        <p>“{activeCharacter.quote}”</p>
                     </div>
-                </section>
+                </button>
                 <section className="profile-stats-column">
                     <div className="panel profile-progress-card">
                         <PanelTitle title="Level progression" meta={`Rank · ${getRank(level)}`} />
@@ -195,17 +196,30 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                 </section>
             </div>
             <section className="panel skins-panel">
-                <PanelTitle title="Skins gallery" meta="4 avatars" eyebrow="YOUR COLLECTION" />
+                <PanelTitle title="Hero collection" meta="6 heroes · 3 classes" eyebrow="CHOOSE YOUR CHARACTER" />
+                <p className="hero-gallery-note">Tap any portrait to discover the person behind the armor.</p>
                 <div className="skins-grid">
-                    {skinOptions.map((skin, index) => (
-                        <button key={skin.id} className={`skin-card skin-${skin.id} ${activeSkin === skin.id ? 'is-active' : ''}`} onClick={() => onSkinChange(skin.id)}>
-                            <div className="skin-art"><Image src="/images/aura-hero.png" alt="" fill sizes="220px" /></div>
-                            {activeSkin === skin.id && <span className="skin-equipped"><Check size={12} /> EQUIPPED</span>}
-                            <div className="skin-copy"><span>{skin.style}</span><strong>{skin.name}</strong><small>{skin.rarity}</small></div>
-                        </button>
-                    ))}
+                    {characters.map((character) => {
+                        const active = activeCharacter.id === character.id;
+                        return (
+                            <article key={character.id} className={`skin-card ${active ? 'is-active' : ''}`}>
+                                <button type="button" className="skin-art" onClick={() => setStoryCharacter(character)} aria-label={`Read ${character.name}'s backstory`}>
+                                    <Image src={character.image} alt={`${character.name}, ${character.title}`} fill sizes="(max-width: 560px) 45vw, 260px" />
+                                    {active && <span className="skin-equipped"><Check size={12} /> EQUIPPED</span>}
+                                    <span className="skin-story-hint"><BookOpen size={13} /> Read story</span>
+                                </button>
+                                <div className="skin-copy">
+                                    <span>{character.heroClass}</span>
+                                    <strong>{character.name}</strong>
+                                    <small>{character.title}</small>
+                                    <button type="button" className="hero-equip-button" onClick={() => onSkinChange(character.id)} disabled={active}>{active ? 'Current hero' : 'Choose hero'}</button>
+                                </div>
+                            </article>
+                        );
+                    })}
                 </div>
             </section>
+            {storyCharacter && <CharacterLoreModal character={storyCharacter} selected={storyCharacter.id === activeCharacter.id} onClose={() => setStoryCharacter(null)} onSelect={(character) => onSkinChange(character.id)} />}
         </div>
     );
 }
@@ -315,7 +329,7 @@ export function SocialScreen({ onGift, onChallenge, onSecretCode, devMode }) {
     );
 }
 
-export function LeaderboardScreen({ xp, level, playerName }) {
+export function LeaderboardScreen({ xp, level, playerName, playerImage }) {
     const [period, setPeriod] = useState('Weekly');
     const players = useMemo(() => {
         const multiplier = period === 'Weekly' ? 1 : period === 'Monthly' ? 3.7 : 14.2;
@@ -338,7 +352,7 @@ export function LeaderboardScreen({ xp, level, playerName }) {
                         return (
                             <div className={`podium-player podium-rank-${rank}`} key={player.id}>
                                 {rank === 1 && <Crown className="podium-crown" size={26} strokeWidth={1.3} />}
-                                <Avatar {...player} size={rank === 1 ? 'large' : 'medium'} image={player.id === 'you'} />
+                                <Avatar {...player} size={rank === 1 ? 'large' : 'medium'} image={player.id === 'you' ? playerImage : false} />
                                 <h3>{player.name}</h3><span>Level {player.level}</span><strong>{formatNumber(player.score)} <small>XP</small></strong>
                                 <div className="podium-base"><i>{rank}</i></div>
                             </div>
@@ -351,7 +365,7 @@ export function LeaderboardScreen({ xp, level, playerName }) {
                 {players.map((player, index) => (
                     <div className={`ranking-row ${player.id === 'you' ? 'is-you' : ''}`} key={player.id}>
                         <span className="ranking-number">{index + 1 <= 3 ? <Medal size={19} /> : index + 1}</span>
-                        <div className="ranking-person"><Avatar {...player} size="small" image={player.id === 'you'} /><strong>{player.name}{player.id === 'you' && <small>YOU</small>}</strong></div>
+                        <div className="ranking-person"><Avatar {...player} size="small" image={player.id === 'you' ? playerImage : false} /><strong>{player.name}{player.id === 'you' && <small>YOU</small>}</strong></div>
                         <span>{player.level}</span><strong>{formatNumber(player.score)} XP</strong>
                     </div>
                 ))}
@@ -413,7 +427,7 @@ export function PvpScreen({ duel, completedQuests, onNavigate, onClaim, player, 
             <section className="panel duel-arena">
                 <div className="duel-stake"><Trophy size={16} /><span>VICTOR’S POT</span><strong>{formatNumber(duel.stake * 2)} GOLD</strong></div>
                 <div className="duel-versus">
-                    <div className="duel-player"><Avatar name={player.name} size="duel" image /><span>LEVEL {level}</span><h2>{player.name}</h2><strong>{playerScore}<small>/3</small></strong><ProgressBar value={playerScore} max={3} /><p>{3 - playerScore || 'No'} quests to victory</p></div>
+                    <div className="duel-player"><Avatar name={player.name} size="duel" image={getCharacter(player.characterId).image} /><span>LEVEL {level}</span><h2>{player.name}</h2><strong>{playerScore}<small>/3</small></strong><ProgressBar value={playerScore} max={3} /><p>{3 - playerScore || 'No'} quests to victory</p></div>
                     <div className="versus-mark"><span>VS</span><i /></div>
                     <div className="duel-player">
                         <Avatar {...duel} size="duel" online={duel.online} />
@@ -490,12 +504,12 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                 <aside>
                     <section className="panel settings-section account-card">
                         <PanelTitle title="Account" eyebrow="PLAYER RECORD" />
-                        <div className="account-profile"><Avatar name={player.name} image size="large" /><div><strong>{player.name}</strong><span>{session?.email}</span><small>Signed in with {session?.provider}</small></div></div>
+                        <div className="account-profile"><Avatar name={player.name} image={getCharacter(player.characterId).image} size="large" /><div><strong>{player.name}</strong><span>{session?.email}</span><small>Signed in with {session?.provider}</small></div></div>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><Settings2 size={15} /> Edit player details</button>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.3</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.4</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
             </div>
         </div>

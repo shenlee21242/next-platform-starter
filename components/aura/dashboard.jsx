@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import {
     ArrowRight,
+    BookOpen,
     CalendarDays,
     ChevronRight,
     CircleAlert,
@@ -18,6 +19,8 @@ import {
     Zap,
 } from 'lucide-react';
 import { XP_TO_LEVEL, getRank } from './data';
+import { getCharacter } from './characters';
+import CharacterLoreModal from './character-lore';
 import {
     CategoryIcon,
     CheckButton,
@@ -50,6 +53,8 @@ export default function Dashboard({
     streak,
 }) {
     const [filter, setFilter] = useState('All');
+    const [storyOpen, setStoryOpen] = useState(false);
+    const character = getCharacter(player.characterId || activeSkin);
     const completed = quests.filter((quest) => quest.done).length;
     const remaining = quests.length - completed;
     const filteredQuests = filter === 'All' ? quests : quests.filter((quest) => quest.category === filter);
@@ -184,19 +189,20 @@ export default function Dashboard({
 
                 <aside className="dashboard-side-column">
                     <section className={`character-card skin-${activeSkin}`}>
-                        <div className="character-art">
-                            <Image src="/images/aura-hero.png" alt={`${player.name}, ${player.heroClass}`} fill priority sizes="(max-width: 900px) 100vw, 30vw" />
+                        <button type="button" className="character-art" onClick={() => setStoryOpen(true)} aria-label={`Read ${character.name}'s backstory`}>
+                            <Image src={character.image} alt={`${player.name} as ${character.name}, ${character.title}`} fill priority sizes="(max-width: 900px) 100vw, 30vw" />
                             <div className="character-art-overlay" />
                             <div className="character-card-top">
                                 <span className="level-chip">LEVEL {level}</span>
-                                <span className="class-chip">{player.heroClass.toUpperCase()}</span>
+                                <span className="class-chip">{character.heroClass.toUpperCase()}</span>
                             </div>
-                        </div>
+                            <span className="dashboard-lore-hint"><BookOpen size={13} /> Story</span>
+                        </button>
                         <div className="character-card-body">
                             <div className="character-name-row">
                                 <div>
                                     <h2>{player.name}</h2>
-                                    <span>{getRank(level)} <i /> {streak} day streak</span>
+                                    <span>{character.name} · {getRank(level)} <i /> {streak} day streak</span>
                                 </div>
                                 <button className="icon-button" onClick={() => onNavigate('character')} aria-label="Open character profile"><ArrowRight size={18} /></button>
                             </div>
@@ -235,6 +241,7 @@ export default function Dashboard({
                     </button>
                 </aside>
             </div>
+            {storyOpen && <CharacterLoreModal character={character} onClose={() => setStoryOpen(false)} />}
             <button className="quest-fab" onClick={onAddQuest} aria-label="Add a new daily quest">
                 <Plus size={21} strokeWidth={1.8} />
                 <span>New quest</span>
