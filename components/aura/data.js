@@ -1,52 +1,8 @@
 export const XP_TO_LEVEL = 3200;
 
-export const initialQuests = [
-    {
-        id: 1,
-        title: 'Fajr prayer',
-        category: 'Spiritual',
-        duration: 10,
-        xp: 100,
-        gold: 60,
-        done: true,
-    },
-    {
-        id: 2,
-        title: 'Morning workout',
-        category: 'Physical',
-        duration: 30,
-        xp: 120,
-        gold: 80,
-        done: false,
-    },
-    {
-        id: 3,
-        title: 'Read 20 pages',
-        category: 'Mental',
-        duration: 25,
-        xp: 90,
-        gold: 50,
-        done: true,
-    },
-    {
-        id: 4,
-        title: 'Deep work session',
-        category: 'Mental',
-        duration: 45,
-        xp: 180,
-        gold: 120,
-        done: false,
-    },
-    {
-        id: 5,
-        title: 'Evening reflection',
-        category: 'Spiritual',
-        duration: 10,
-        xp: 80,
-        gold: 50,
-        done: false,
-    },
-];
+// Daily quests are intentionally player-created. New players start with a
+// clean path and are prompted to add their first quest from the dashboard.
+export const initialQuests = [];
 
 export const friends = [
     { id: 1, name: 'Omar Khaled', handle: '@omar', level: 15, xp: 4280, online: true, color: '#6d5b45', initials: 'OK', status: 'On a 21 day streak' },

@@ -87,12 +87,14 @@ export default function Dashboard({
                         <div className="quests-panel-heading">
                             <PanelTitle
                                 title="Daily quests"
-                                meta={`${completed}/${quests.length} completed`}
+                                meta={quests.length ? `${completed}/${quests.length} completed` : 'No quests yet'}
                             />
-                            <div className="quest-progress-summary">
-                                <ProgressBar value={completed} max={quests.length || 1} />
-                                <span>{quests.length ? Math.round((completed / quests.length) * 100) : 0}%</span>
-                            </div>
+                            {quests.length > 0 && (
+                                <div className="quest-progress-summary">
+                                    <ProgressBar value={completed} max={quests.length} />
+                                    <span>{Math.round((completed / quests.length) * 100)}%</span>
+                                </div>
+                            )}
                         </div>
                         <div className="quest-filter" role="tablist" aria-label="Filter quests">
                             {['All', 'Physical', 'Mental', 'Spiritual'].map((item) => (
@@ -147,7 +149,7 @@ export default function Dashboard({
                             )}
                         </div>
                         <button className="add-quest-row" onClick={onAddQuest}>
-                            <Plus size={16} /> Add another quest
+                            <Plus size={16} /> {quests.length ? 'Add another quest' : 'Add your first quest'}
                         </button>
                     </section>
 
