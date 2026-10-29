@@ -1,7 +1,16 @@
-export const XP_TO_LEVEL = 3200;
+export const XP_TO_LEVEL = 300;
 
-// Daily quests are intentionally player-created. New players start with a
-// clean path and are prompted to add their first quest from the dashboard.
+export function getRank(level) {
+    if (level <= 0) return 'Unranked';
+    if (level < 5) return 'Bronze I';
+    if (level < 10) return 'Silver I';
+    if (level < 15) return 'Gold III';
+    if (level < 20) return 'Platinum I';
+    return 'Diamond I';
+}
+
+// The account flow adds a class-based quest after onboarding and rotates
+// subsequent daily quests. Players can also create their own quests.
 export const initialQuests = [];
 
 export const friends = [

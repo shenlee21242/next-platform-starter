@@ -40,6 +40,8 @@ For native development, use `npm run cap:sync` after changing the web interface,
 
 ## Included in this prototype
 
+- Device-local email, Google, and Facebook preview login with returning-account restoration
+- Level-zero character creation and class-based daily quests that rotate on later days
 - Interactive daily quests with category filters, rewards, countdowns, and empty states
 - Character progression, level-up celebrations, attributes, and avatar skins
 - Radial skill constellation with unlockable permanent and active skills
@@ -63,4 +65,4 @@ npm run start         # Serve the production web build
 
 ## Architecture note
 
-This repository currently implements the front-end experience with in-memory demo state. Firebase Authentication, Firestore persistence, server-time anti-cheat, native notifications, and production-ready admin authorization require a separately configured backend and are not represented as active integrations in this prototype.
+This repository currently implements the front-end experience with device-local sessions and per-account browser storage. The email, Google, and Facebook controls are preview authentication flows; they are not production OAuth or secure remote identity verification. Progress is restored only on the same browser/device. Firebase Authentication, Firestore persistence, server-time anti-cheat, native notifications, and production-ready admin authorization require a separately configured backend and are not represented as active integrations in this prototype.

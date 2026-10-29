@@ -31,6 +31,7 @@ import {
     Zap,
 } from 'lucide-react';
 import Dashboard from './aura/dashboard';
+import AuthScreen from './aura/auth-screen';
 import {
     CharacterScreen,
     FocusScreen,
@@ -42,8 +43,21 @@ import {
     SocialScreen,
     StoreScreen,
 } from './aura/screens';
-import { friends, initialQuests, randomQuests, tarotRanks, XP_TO_LEVEL } from './aura/data';
+import { initialQuests, randomQuests, tarotRanks, XP_TO_LEVEL, getRank } from './aura/data';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
+import {
+    createDailyQuest,
+    createNewGame,
+    defaultPlayer,
+    defaultSettings,
+    localDayKey,
+    readSession,
+    readStoredGame,
+    secondsUntilMidnight,
+    withDailyQuest,
+    writeSession,
+    writeStoredGame,
+} from './aura/game';
 
 const navigation = [
     {
@@ -70,15 +84,6 @@ const screenLabels = Object.fromEntries(navigation.flatMap((group) => group.item
 screenLabels.notifications = 'Notifications';
 screenLabels.settings = 'Settings';
 
-const initialNotifications = [
-    { id: 1, type: 'gift', title: 'A gift from Layla', description: 'Layla sent you an Energy Potion. Your circle has your back.', time: '12 minutes ago', read: false },
-    { id: 2, type: 'duel', title: 'Omar is ready to duel', description: 'Omar accepted your friendly challenge. First to 3 quests wins.', time: '1 hour ago', read: false },
-    { id: 3, type: 'quest', title: 'The Colossus grows weaker', description: 'Your weekly boss is at 68% integrity. Keep up the pressure.', time: '3 hours ago', read: false },
-    { id: 4, type: 'system', title: 'Gold III achieved', description: 'Your consistency has raised you to Gold III. The next rank awaits.', time: 'Yesterday', read: true },
-];
-
-const defaultPlayer = { name: 'Arin', age: 24, height: 178, weight: 74, heroClass: 'Shadow Ranger' };
-const PROFILE_STORAGE_KEY = 'aura_player_profile';
 
 function AuraMark({ size = 34 }) {
     return (
@@ -278,84 +283,170 @@ function OnboardingExperience({ player, onClose, onSave }) {
 function LevelUpModal({ level, onClose }) {
     return (
         <Modal onClose={onClose} label="Level up" className="level-up-modal">
-            <div className="level-up-rays" /><div className="level-up-emblem"><AuraMark size={62} /></div><div className="eyebrow">YOUR LEGEND GROWS</div><h2>Level {level}</h2><p>Discipline became progress. Progress became power.</p><div className="level-up-perks"><div><Sparkles size={18} /><span><strong>+1 Skill Point</strong><small>Shape your constellation</small></span></div><div><Zap size={18} /><span><strong>+20 Maximum Energy</strong><small>Your capacity has grown</small></span></div></div><button className="button button-primary button-full" onClick={onClose}>Continue the journey <ArrowRight size={16} /></button>
+            <div className="level-up-rays" /><div className="level-up-emblem"><AuraMark size={62} /></div><div className="eyebrow">YOUR LEGEND GROWS</div><h2>Level {level}</h2><p>Discipline became progress. Progress became power.</p><div className="level-up-perks"><div><Sparkles size={18} /><span><strong>+1 Skill Point</strong><small>Shape your constellation</small></span></div><div><Zap size={18} /><span><strong>+20 Energy</strong><small>Your capacity has grown</small></span></div></div><button className="button button-primary button-full" onClick={onClose}>Continue the journey <ArrowRight size={16} /></button>
         </Modal>
     );
 }
 
 export default function AuraApp() {
     const [screen, setScreen] = useState('quests');
+    const [session, setSession] = useState(null);
     const [player, setPlayer] = useState(defaultPlayer);
     const [profileReady, setProfileReady] = useState(false);
     const [initialOnboarding, setInitialOnboarding] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [quests, setQuests] = useState(initialQuests);
-    const [gold, setGold] = useState(2450);
-    const [diamonds, setDiamonds] = useState(18);
-    const [level, setLevel] = useState(12);
-    const [xp, setXp] = useState(2840);
-    const xpRef = useRef(2840);
-    const [energy, setEnergy] = useState(82);
-    const [bossProgress, setBossProgress] = useState(68);
-    const [deadline, setDeadline] = useState(6 * 3600 + 42 * 60 + 18);
+    const [gold, setGold] = useState(100);
+    const [diamonds, setDiamonds] = useState(0);
+    const [level, setLevel] = useState(0);
+    const [xp, setXp] = useState(0);
+    const xpRef = useRef(0);
+    const [energy, setEnergy] = useState(100);
+    const [bossProgress, setBossProgress] = useState(100);
+    const [deadline, setDeadline] = useState(0);
     const [focusDuration, setFocusDuration] = useState(25 * 60);
     const [focusSeconds, setFocusSeconds] = useState(25 * 60);
     const [focusRunning, setFocusRunning] = useState(false);
-    const [skillPoints, setSkillPoints] = useState(4);
-    const [unlockedSkills, setUnlockedSkills] = useState(['discipline', 'iron-body']);
+    const [focusSessions, setFocusSessions] = useState(0);
+    const [focusMinutes, setFocusMinutes] = useState(0);
+    const [skillPoints, setSkillPoints] = useState(0);
+    const [unlockedSkills, setUnlockedSkills] = useState(['discipline']);
     const [inventory, setInventory] = useState([]);
     const [activeSkin, setActiveSkin] = useState('realistic');
     const [duel, setDuel] = useState(null);
+    const [streak, setStreak] = useState(0);
+    const [lastCompletionDate, setLastCompletionDate] = useState(null);
+    const [lastQuestDate, setLastQuestDate] = useState(null);
     const [devMode, setDevMode] = useState(false);
-    const [notifications, setNotifications] = useState(initialNotifications);
+    const [notifications, setNotifications] = useState([]);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [modal, setModal] = useState(null);
     const [modalData, setModalData] = useState(null);
     const [toast, setToast] = useState(null);
-    const [settings, setSettings] = useState({ sound: true, particles: true, notifications: true, reducedMotion: false, penalty: 'Standard' });
+    const [settings, setSettings] = useState(defaultSettings);
 
     const notify = useCallback((message, type = 'success') => setToast({ message, type, id: Date.now() }), []);
     const closeModal = useCallback(() => { setModal(null); setModalData(null); }, []);
     const openModal = useCallback((type, data = null) => { setModal(type); setModalData(data); setNotificationsOpen(false); }, []);
 
     const awardRewards = useCallback((xpAmount, goldAmount, message) => {
-        const nextXp = xpRef.current + xpAmount;
-        if (nextXp >= XP_TO_LEVEL) {
-            const remainder = nextXp - XP_TO_LEVEL;
-            xpRef.current = remainder;
-            setXp(remainder);
-            setLevel((current) => current + 1);
-            setSkillPoints((current) => current + 1);
+        let nextXp = xpRef.current + xpAmount;
+        let levelsGained = 0;
+        while (nextXp >= XP_TO_LEVEL) {
+            nextXp -= XP_TO_LEVEL;
+            levelsGained += 1;
+        }
+        xpRef.current = nextXp;
+        setXp(nextXp);
+        if (levelsGained > 0) {
+            setLevel((current) => current + levelsGained);
+            setSkillPoints((current) => current + levelsGained);
+            setEnergy((current) => Math.min(100, current + 20 * levelsGained));
             setModal('level-up');
-        } else {
-            xpRef.current = nextXp;
-            setXp(nextXp);
         }
         setGold((current) => current + goldAmount);
         if (message) notify(message);
     }, [notify]);
 
+    const restoreGame = useCallback((game) => {
+        setPlayer({ ...defaultPlayer, ...(game.player || {}) });
+        setQuests(Array.isArray(game.quests) ? game.quests : []);
+        setLevel(game.level ?? 0);
+        const savedXp = game.xp ?? 0;
+        xpRef.current = savedXp;
+        setXp(savedXp);
+        setGold(game.gold ?? 100);
+        setDiamonds(game.diamonds ?? 0);
+        setEnergy(game.energy ?? 100);
+        setBossProgress(game.bossProgress ?? 100);
+        setSkillPoints(game.skillPoints ?? 0);
+        setUnlockedSkills(game.unlockedSkills || ['discipline']);
+        setInventory(game.inventory || []);
+        setActiveSkin(game.activeSkin || 'realistic');
+        setDuel(game.duel || null);
+        setStreak(game.streak ?? 0);
+        setLastCompletionDate(game.lastCompletionDate || null);
+        setLastQuestDate(game.lastQuestDate || null);
+        setNotifications(game.notifications || []);
+        setSettings({ ...defaultSettings, ...(game.settings || {}) });
+        setFocusRunning(false);
+        setFocusDuration(25 * 60);
+        setFocusSeconds(25 * 60);
+        setFocusSessions(game.focusSessions ?? 0);
+        setFocusMinutes(game.focusMinutes ?? 0);
+        setDeadline(secondsUntilMidnight());
+        setDevMode(false);
+        setScreen('quests');
+        setModal(null);
+        setModalData(null);
+    }, []);
+
+    const startSession = useCallback((auth) => {
+        const email = auth.email.trim().toLowerCase();
+        const stored = readStoredGame(email);
+        const returningPlayer = Boolean(stored?.profileComplete);
+        const game = returningPlayer ? withDailyQuest(stored) : createNewGame(auth);
+        restoreGame(game);
+        const nextSession = { email, provider: auth.provider };
+        setSession(nextSession);
+        writeSession(nextSession);
+        setInitialOnboarding(!returningPlayer);
+        setProfileReady(true);
+        setToast(null);
+    }, [restoreGame]);
+
     useEffect(() => {
         const timer = window.setTimeout(() => {
-            try {
-                const saved = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-                if (saved) {
-                    setPlayer({ ...defaultPlayer, ...JSON.parse(saved) });
-                } else {
-                    setInitialOnboarding(true);
-                }
-            } catch {
-                setInitialOnboarding(true);
-            }
-            setProfileReady(true);
+            const savedSession = readSession();
+            if (savedSession?.email) startSession(savedSession);
+            else setProfileReady(true);
         }, 0);
         return () => window.clearTimeout(timer);
-    }, []);
+    }, [startSession]);
+
+    useEffect(() => {
+        if (!session || !profileReady || initialOnboarding) return;
+        writeStoredGame(session.email, {
+            profileComplete: true,
+            player,
+            quests,
+            level,
+            xp,
+            gold,
+            diamonds,
+            energy,
+            bossProgress,
+            skillPoints,
+            unlockedSkills,
+            inventory,
+            activeSkin,
+            duel,
+            streak,
+            lastCompletionDate,
+            lastQuestDate,
+            focusSessions,
+            focusMinutes,
+            notifications,
+            settings,
+        });
+    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, inventory, activeSkin, duel, streak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
 
     useEffect(() => {
         const timer = setInterval(() => setDeadline((current) => Math.max(0, current - 1)), 1000);
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        if (deadline !== 0 || !session || initialOnboarding) return undefined;
+        const timer = window.setTimeout(() => {
+            const dailyQuest = createDailyQuest(player, lastQuestDate);
+            setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
+            setLastQuestDate(localDayKey());
+            setDeadline(secondsUntilMidnight());
+            notify(`A new day begins. ${dailyQuest.title} is your new daily quest.`);
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [deadline, session, initialOnboarding, player, lastQuestDate, notify]);
 
     useEffect(() => {
         if (!focusRunning) return undefined;
@@ -364,13 +455,15 @@ export default function AuraApp() {
                 setFocusSeconds(0);
                 setFocusRunning(false);
                 setEnergy((current) => Math.max(0, current - 10));
+                setFocusSessions((current) => current + 1);
+                setFocusMinutes((current) => current + Math.round(focusDuration / 60));
                 awardRewards(150, 75, 'Sanctuary complete · +150 XP and +75 Gold');
             } else {
                 setFocusSeconds(focusSeconds - 1);
             }
         }, 1000);
         return () => clearTimeout(timer);
-    }, [focusSeconds, focusRunning, awardRewards]);
+    }, [focusSeconds, focusRunning, focusDuration, awardRewards]);
 
     useEffect(() => {
         if (!toast) return undefined;
@@ -381,14 +474,23 @@ export default function AuraApp() {
     const savePlayer = (profile) => {
         const isFirstLaunch = initialOnboarding;
         setPlayer(profile);
-        try {
-            window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-        } catch {
-            // The profile still works for this session when storage is unavailable.
+        if (isFirstLaunch) {
+            const dailyQuest = createDailyQuest(profile, lastQuestDate);
+            setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
+            setLastQuestDate(localDayKey());
         }
         setInitialOnboarding(false);
         closeModal();
-        notify(isFirstLaunch ? `Welcome to AURA, ${profile.name}. Your journey begins now.` : 'Your character record has been updated.');
+        notify(isFirstLaunch ? `Welcome to AURA, ${profile.name}. Your first daily quest is ready.` : 'Your character record has been updated.');
+    };
+
+    const logout = () => {
+        writeSession(null);
+        setSession(null);
+        setInitialOnboarding(false);
+        setNotificationsOpen(false);
+        setModal(null);
+        setToast(null);
     };
 
     const navigate = (id) => {
@@ -409,6 +511,12 @@ export default function AuraApp() {
             setGold((current) => Math.max(0, current - quest.gold));
             notify('Quest marked incomplete. Rewards returned.', 'neutral');
         } else {
+            const today = localDayKey();
+            if (lastCompletionDate !== today) {
+                const yesterday = localDayKey(new Date(Date.now() - 86400000));
+                setStreak((current) => lastCompletionDate === yesterday ? current + 1 : 1);
+                setLastCompletionDate(today);
+            }
             awardRewards(quest.xp, quest.gold, `Quest complete · +${quest.xp} XP · +${quest.gold} Gold`);
         }
     };
@@ -479,6 +587,7 @@ export default function AuraApp() {
 
     const secretCode = (code) => {
         if (code === 'JAS777') {
+            if (session?.email !== 'arin@aura.app') return 'Invalid code';
             setDevMode(true);
             return 'Developer Mode enabled. Gold conversion is now available.';
         }
@@ -489,24 +598,34 @@ export default function AuraApp() {
     const resetFocus = () => { setFocusRunning(false); setFocusSeconds(focusDuration); };
     const changeFocusDuration = (seconds) => { setFocusDuration(seconds); setFocusSeconds(seconds); setFocusRunning(false); };
     const completedQuests = quests.filter((quest) => quest.done).length;
+    const attributes = {
+        STR: 1 + level * 2,
+        INT: 1 + level * 2,
+        STA: 1 + level * 2,
+        CHA: 1 + level,
+    };
     const unread = notifications.filter((notification) => !notification.read).length;
 
     let content;
     switch (screen) {
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} onUnlock={unlockSkill} />; break;
-        case 'character': content = <CharacterScreen player={player} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={(skin) => { setActiveSkin(skin); notify('Avatar equipped.'); }} onOpenModal={openModal} />; break;
+        case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={(skin) => { setActiveSkin(skin); notify('Avatar equipped.'); }} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
         case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onGift={(friend) => { setGold((current) => Math.max(0, current - 25)); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
         case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} />; break;
-        case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusRunning={focusRunning} onToggle={() => setFocusRunning((current) => !current)} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
+        case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={streak} focusRunning={focusRunning} onToggle={() => setFocusRunning((current) => !current)} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} completedQuests={completedQuests} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
-        case 'settings': content = <SettingsScreen player={player} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard player={player} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} level={level} xp={xp} bossProgress={bossProgress} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={() => setFocusRunning((current) => !current)} activeSkin={activeSkin} />;
+        case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
+        default: content = <Dashboard player={player} attributes={attributes} streak={streak} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} level={level} xp={xp} bossProgress={bossProgress} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={() => setFocusRunning((current) => !current)} activeSkin={activeSkin} />;
     }
 
     if (!profileReady) {
         return <div className="aura-boot"><AuraMark size={48} /><strong>AURA</strong><span>PREPARING YOUR JOURNEY</span><i /></div>;
+    }
+
+    if (!session) {
+        return <AuthScreen onAuthenticate={startSession} />;
     }
 
     return (
@@ -522,7 +641,7 @@ export default function AuraApp() {
                 <div className="sidebar-bottom">
                     <button className="sidebar-fate-card" onClick={() => openModal('tarot')}><span className="fate-icon"><Sparkles size={19} /></span><span><strong>Draw your fate</strong><small>Mystery quests await</small></span><ChevronRight size={15} /></button>
                     <button className={`nav-item ${screen === 'settings' ? 'active' : ''}`} onClick={() => navigate('settings')}><Settings size={18} strokeWidth={1.6} /><span>Settings</span></button>
-                    <div className="sidebar-profile"><Avatar name={player.name} image size="small" /><div><strong>{player.name}</strong><span>Level {level} · Gold III</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
+                    <div className="sidebar-profile"><Avatar name={player.name} image size="small" /><div><strong>{player.name}</strong><span>Level {level} · {getRank(level)}</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
                 </div>
             </aside>
 
@@ -530,7 +649,7 @@ export default function AuraApp() {
                 <header className="topbar">
                     <div className="topbar-left"><button className="mobile-menu icon-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={21} /></button><div className="topbar-breadcrumb"><span>AURA</span><ChevronRight size={12} /><strong>{screenLabels[screen]}</strong></div></div>
                     <div className="topbar-right">
-                        <div className="streak-chip" title="12 day streak"><Flame size={16} fill="currentColor" /><strong>12</strong><span>day streak</span></div>
+                        <div className="streak-chip" title={`${streak} day streak`}><Flame size={16} fill="currentColor" /><strong>{streak}</strong><span>day streak</span></div>
                         <div className="topbar-currencies"><Currency value={gold} />{devMode && <button className="convert-button" onClick={() => { if (gold >= 100) { setGold((current) => current - 100); setDiamonds((current) => current + 1); notify('Converted 100 Gold into 1 Diamond.'); } }}>Convert</button>}<Currency type="diamonds" value={diamonds} /></div>
                         <div className="topbar-divider" />
                         <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label={`${unread} unread notifications`}><Bell size={19} strokeWidth={1.6} />{unread > 0 && <span>{unread}</span>}</button>

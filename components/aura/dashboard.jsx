@@ -17,7 +17,7 @@ import {
     Swords,
     Zap,
 } from 'lucide-react';
-import { XP_TO_LEVEL } from './data';
+import { XP_TO_LEVEL, getRank } from './data';
 import {
     CategoryIcon,
     CheckButton,
@@ -46,6 +46,8 @@ export default function Dashboard({
     onFocusToggle,
     activeSkin,
     player,
+    attributes,
+    streak,
 }) {
     const [filter, setFilter] = useState('All');
     const completed = quests.filter((quest) => quest.done).length;
@@ -194,7 +196,7 @@ export default function Dashboard({
                             <div className="character-name-row">
                                 <div>
                                     <h2>{player.name}</h2>
-                                    <span>Gold III <i /> 12 day streak</span>
+                                    <span>{getRank(level)} <i /> {streak} day streak</span>
                                 </div>
                                 <button className="icon-button" onClick={() => onNavigate('character')} aria-label="Open character profile"><ArrowRight size={18} /></button>
                             </div>
@@ -203,10 +205,9 @@ export default function Dashboard({
                                 <ProgressBar value={xp} max={XP_TO_LEVEL} />
                             </div>
                             <div className="attribute-grid">
-                                <div><span>STR</span><strong>24</strong><i className="attribute-up">+2</i></div>
-                                <div><span>INT</span><strong>31</strong><i className="attribute-up">+4</i></div>
-                                <div><span>STA</span><strong>28</strong><i className="attribute-up">+3</i></div>
-                                <div><span>CHA</span><strong>19</strong><i>—</i></div>
+                                {Object.entries(attributes).map(([name, value]) => (
+                                    <div key={name}><span>{name}</span><strong>{value}</strong><i>{level > 0 ? `+${level}` : '—'}</i></div>
+                                ))}
                             </div>
                         </div>
                     </section>

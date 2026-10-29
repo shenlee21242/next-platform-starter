@@ -46,7 +46,7 @@ import {
     WandSparkles,
     Zap,
 } from 'lucide-react';
-import { friends, skills, storeItems, XP_TO_LEVEL } from './data';
+import { friends, skills, storeItems, XP_TO_LEVEL, getRank } from './data';
 import {
     Avatar,
     CategoryIcon,
@@ -151,7 +151,7 @@ const skinOptions = [
     { id: 'golden', name: 'Golden Age Knight', style: 'Historical', rarity: 'Legendary' },
 ];
 
-export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player }) {
+export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, attributes }) {
     return (
         <div className="screen">
             <ScreenHeader eyebrow="THE PERSON BEHIND THE PROGRESS" title="Character profile" description="Your real life, reflected in your legend.">
@@ -170,13 +170,13 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                 </section>
                 <section className="profile-stats-column">
                     <div className="panel profile-progress-card">
-                        <PanelTitle title="Level progression" meta={`Rank · Gold III`} />
+                        <PanelTitle title="Level progression" meta={`Rank · ${getRank(level)}`} />
                         <div className="profile-xp-number"><strong>{formatNumber(xp)}</strong><span>/ {formatNumber(XP_TO_LEVEL)} XP</span></div>
                         <ProgressBar value={xp} max={XP_TO_LEVEL} />
                         <p><Sparkles size={14} /> {formatNumber(Math.max(0, XP_TO_LEVEL - xp))} XP until your next level</p>
                     </div>
                     <div className="attribute-cards">
-                        {[['STR', 'Strength', 24, Dumbbell, '+2 this month'], ['INT', 'Intelligence', 31, Brain, '+4 this month'], ['STA', 'Stamina', 28, Heart, '+3 this month'], ['CHA', 'Charisma', 19, Users, 'No change']].map(([abbr, name, value, Icon, change]) => (
+                        {[['STR', 'Strength', attributes.STR, Dumbbell, 'Grows with your level'], ['INT', 'Intelligence', attributes.INT, Brain, 'Grows with your level'], ['STA', 'Stamina', attributes.STA, Heart, 'Grows with your level'], ['CHA', 'Charisma', attributes.CHA, Users, 'Grows with your level']].map(([abbr, name, value, Icon, change]) => (
                             <div className="panel attribute-card" key={abbr}>
                                 <div><Icon size={19} strokeWidth={1.5} /><span>{abbr}</span></div>
                                 <strong>{value}</strong>
@@ -360,7 +360,7 @@ export function LeaderboardScreen({ xp, level, playerName }) {
     );
 }
 
-export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggle, onReset, onDuration, energy }) {
+export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggle, onReset, onDuration, energy, focusSessions, focusMinutes, streak }) {
     const progress = 1 - focusSeconds / focusDuration;
     return (
         <div className="screen focus-screen">
@@ -391,9 +391,9 @@ export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggl
                     </section>
                     <section className="panel focus-stats-card">
                         <PanelTitle title="This week" />
-                        <div><span><Focus size={16} /> Focus time</span><strong>6h 45m</strong></div>
-                        <div><span><Check size={16} /> Sessions</span><strong>18</strong></div>
-                        <div><span><Flame size={16} /> Best streak</span><strong>5 days</strong></div>
+                        <div><span><Focus size={16} /> Focus time</span><strong>{Math.floor(focusMinutes / 60)}h {focusMinutes % 60}m</strong></div>
+                        <div><span><Check size={16} /> Sessions</span><strong>{focusSessions}</strong></div>
+                        <div><span><Flame size={16} /> Best streak</span><strong>{streak} days</strong></div>
                     </section>
                     <blockquote className="focus-quote">“You do not rise to the level of your goals. You fall to the level of your systems.”<span>— JAMES CLEAR</span></blockquote>
                 </aside>
@@ -468,7 +468,7 @@ function SettingToggle({ settings, onSettingChange, setting, title, description 
     );
 }
 
-export function SettingsScreen({ settings, onSettingChange, onOpenModal, player }) {
+export function SettingsScreen({ settings, onSettingChange, onOpenModal, player, session, onLogout }) {
     return (
         <div className="screen settings-screen">
             <ScreenHeader eyebrow="MAKE AURA YOURS" title="Settings" description="Tune the system. Keep the discipline." />
@@ -490,9 +490,10 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player 
                 <aside>
                     <section className="panel settings-section account-card">
                         <PanelTitle title="Account" eyebrow="PLAYER RECORD" />
-                        <div className="account-profile"><Avatar name={player.name} image size="large" /><div><strong>{player.name}</strong><span>arin@aura.app</span></div></div>
+                        <div className="account-profile"><Avatar name={player.name} image size="large" /><div><strong>{player.name}</strong><span>{session?.email}</span><small>Signed in with {session?.provider}</small></div></div>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><Settings2 size={15} /> Edit player details</button>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
+                        <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
                     </section>
                     <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.2</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
