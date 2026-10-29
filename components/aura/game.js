@@ -18,6 +18,20 @@ export const defaultSettings = {
     penalty: 'Standard',
 };
 
+export const DAILY_PENALTY_GOLD = {
+    Forgiving: 50,
+    Standard: 100,
+    Relentless: 200,
+};
+
+export function getMissedQuestPenalty(quests = [], severity = 'Standard') {
+    const incomplete = quests.filter((quest) => !quest.done).length;
+    return {
+        incomplete,
+        gold: incomplete ? DAILY_PENALTY_GOLD[severity] || DAILY_PENALTY_GOLD.Standard : 0,
+    };
+}
+
 export function accountStorageKey(email) {
     return `${ACCOUNT_STORAGE_PREFIX}${email.trim().toLowerCase()}`;
 }
@@ -27,6 +41,13 @@ export function localDayKey(date = new Date()) {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+}
+
+export function localWeekKey(date = new Date()) {
+    const monday = new Date(date);
+    monday.setHours(12, 0, 0, 0);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    return localDayKey(monday);
 }
 
 export function secondsUntilMidnight() {
@@ -54,10 +75,12 @@ export function createNewGame(auth = {}) {
         activeSkin: 'kael',
         duel: null,
         streak: 0,
+        bestStreak: 0,
         lastCompletionDate: null,
         lastQuestDate: null,
         focusSessions: 0,
         focusMinutes: 0,
+        focusWeek: localWeekKey(),
         notifications: [],
         settings: { ...defaultSettings },
     };
@@ -97,11 +120,32 @@ export function withDailyQuest(game) {
     if (!game.profileComplete) return game;
     const today = localDayKey();
     if (game.lastQuestDate === today && game.quests?.some((quest) => quest.generatedFor === today)) return game;
+
+    const isNewDay = game.lastQuestDate !== today;
     const dailyQuest = createDailyQuest(game.player, game.lastQuestDate);
+    const penalty = game.lastQuestDate && isNewDay ? getMissedQuestPenalty(game.quests, game.settings?.penalty) : { incomplete: 0, gold: 0 };
+    const previousWeek = game.lastQuestDate ? localWeekKey(new Date(`${game.lastQuestDate}T12:00:00`)) : null;
+    const isNewWeek = previousWeek && previousWeek !== localWeekKey();
+    const penaltyNotification = penalty.incomplete ? {
+        id: `penalty-${today}`,
+        type: 'quest',
+        title: 'Daily quest penalty',
+        description: `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
+        time: 'Daily reset',
+        read: false,
+    } : null;
+
     return {
         ...game,
         quests: [...(game.quests || []).filter((quest) => !quest.generated), dailyQuest],
         lastQuestDate: today,
+        gold: Math.max(0, (game.gold ?? 100) - penalty.gold),
+        streak: penalty.incomplete ? 0 : game.streak ?? 0,
+        bestStreak: Math.max(game.bestStreak ?? 0, game.streak ?? 0),
+        focusSessions: isNewWeek ? 0 : game.focusSessions ?? 0,
+        focusMinutes: isNewWeek ? 0 : game.focusMinutes ?? 0,
+        focusWeek: localWeekKey(),
+        notifications: penaltyNotification ? [penaltyNotification, ...(game.notifications || [])] : game.notifications || [],
     };
 }
 

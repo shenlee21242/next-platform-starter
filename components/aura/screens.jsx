@@ -255,7 +255,7 @@ export function StoreScreen({ gold, diamonds, inventory, onBuy, onOpenModal }) {
     );
 }
 
-export function SocialScreen({ onGift, onChallenge, onSecretCode, devMode }) {
+export function SocialScreen({ onGift, onChallenge, onSecretCode, onAdminAction, devMode }) {
     const [query, setQuery] = useState('');
     const [searchMessage, setSearchMessage] = useState('');
     const filtered = friends.filter((friend) => `${friend.name} ${friend.handle}`.toLowerCase().includes(query.toLowerCase()));
@@ -278,6 +278,16 @@ export function SocialScreen({ onGift, onChallenge, onSecretCode, devMode }) {
                 {query && <button type="submit" className="button button-secondary button-small">Search</button>}
             </form>
             {searchMessage && <div className={`inline-message ${devMode ? 'success' : ''}`}><Sparkles size={15} />{searchMessage}</div>}
+            {devMode && (
+                <section className="panel developer-tools" aria-label="Developer systems">
+                    <div><span>REGISTERED ADMIN</span><strong>Developer systems</strong><p>Discreet tools for testing this device-local preview.</p></div>
+                    <div className="developer-actions">
+                        <button className="button button-secondary button-small" onClick={() => onAdminAction('convert')}><Coins size={14} /> 100 Gold → 1 Diamond</button>
+                        <button className="button button-secondary button-small" onClick={() => onAdminAction('xp')}><Sparkles size={14} /> Inject 300 XP</button>
+                        <button className="button button-secondary button-small" onClick={() => onAdminAction('energy')}><Zap size={14} /> Refill Energy</button>
+                    </div>
+                </section>
+            )}
             <div className="social-layout">
                 <section className="panel friends-panel">
                     <PanelTitle title="Your companions" meta={`${friends.length} friends`} />
@@ -313,13 +323,14 @@ export function SocialScreen({ onGift, onChallenge, onSecretCode, devMode }) {
 
 export function LeaderboardScreen({ xp, level, playerName, playerImage }) {
     const [period, setPeriod] = useState('Weekly');
+    const totalXp = level * XP_TO_LEVEL + xp;
     const players = useMemo(() => {
         const multiplier = period === 'Weekly' ? 1 : period === 'Monthly' ? 3.7 : 14.2;
         return [
             ...friends.filter((friend) => friend.id !== 3).map((friend) => ({ ...friend, score: Math.round(friend.xp * multiplier) })),
-            { id: 'you', name: playerName, handle: '@arin', level, xp, score: Math.round(xp * multiplier), initials: playerName.slice(0, 2).toUpperCase(), color: '#66543b', online: true },
+            { id: 'you', name: playerName, handle: '@arin', level, xp: totalXp, score: Math.round(totalXp * multiplier), initials: playerName.slice(0, 2).toUpperCase(), color: '#66543b', online: true },
         ].sort((a, b) => b.score - a.score);
-    }, [period, xp, level, playerName]);
+    }, [period, totalXp, level, playerName]);
     const podium = [players[1], players[0], players[2]];
     return (
         <div className="screen">
@@ -358,6 +369,7 @@ export function LeaderboardScreen({ xp, level, playerName, playerImage }) {
 
 export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggle, onReset, onDuration, energy, focusSessions, focusMinutes, streak }) {
     const progress = 1 - focusSeconds / focusDuration;
+    const needsEnergy = !focusRunning && energy < 10;
     return (
         <div className="screen focus-screen">
             <ScreenHeader eyebrow="A QUIET PLACE IN A LOUD WORLD" title="Focus Sanctuary" description="One session. One intention. Nothing else." />
@@ -373,7 +385,7 @@ export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggl
                     </div>
                     <div className="focus-controls">
                         <button className="icon-button focus-reset" onClick={onReset} aria-label="Reset timer"><RotateCcw size={19} /></button>
-                        <button className="focus-main-button" onClick={onToggle}>{focusRunning ? <Pause size={21} fill="currentColor" /> : <Play size={21} fill="currentColor" />}{focusRunning ? 'Pause session' : 'Begin focus'}</button>
+                        <button className="focus-main-button" onClick={onToggle} disabled={needsEnergy}>{focusRunning ? <Pause size={21} fill="currentColor" /> : needsEnergy ? <Zap size={21} /> : <Play size={21} fill="currentColor" />}{focusRunning ? 'Pause session' : needsEnergy ? 'Need 10 Energy' : 'Begin focus'}</button>
                         <span className="focus-control-spacer" />
                     </div>
                     <p className="focus-energy-cost"><Zap size={14} /> A completed session uses 10 Energy and earns 150 XP.</p>
@@ -383,7 +395,7 @@ export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggl
                         <PanelTitle title="Your energy" meta={`${energy}/100`} />
                         <div className="energy-visual"><Zap size={28} fill="currentColor" /><strong>{energy}<small>%</small></strong></div>
                         <ProgressBar value={energy} tone="cyan" />
-                        <p>{energy > 20 ? 'You’re ready for a deep work session.' : 'Rest or use an Energy Potion to recover.'}</p>
+                        <p>{energy >= 10 ? 'You’re ready for a deep work session.' : 'You need 10 Energy. Rest or use an Energy Potion to recover.'}</p>
                     </section>
                     <section className="panel focus-stats-card">
                         <PanelTitle title="This week" />
@@ -398,11 +410,11 @@ export function FocusScreen({ focusSeconds, focusDuration, focusRunning, onToggl
     );
 }
 
-export function PvpScreen({ duel, completedQuests, onNavigate, onClaim, player, level, hasAttackSpell, onCastSpell }) {
+export function PvpScreen({ duel, onNavigate, onClaim, player, level, hasAttackSpell, onCastSpell }) {
     if (!duel) return (
         <div className="screen"><ScreenHeader eyebrow="DIRECT CHALLENGE" title="PvP Duel Arena" description="Honor, discipline, and a little friendly rivalry." /><section className="panel"><EmptyState icon={<Swords size={28} />} title="No active duel" description="Challenge a friend from the Social Hub. First to complete 3 daily quests takes the pot." action="Find a challenger" onAction={() => onNavigate('social')} /></section></div>
     );
-    const playerScore = Math.min(3, completedQuests);
+    const playerScore = Math.min(3, duel.playerProgress || 0);
     return (
         <div className="screen">
             <ScreenHeader eyebrow="LIVE DUEL · FIRST TO 3 QUESTS" title="Duel Arena" description={`A friendly trial against ${duel.name}.`} />
@@ -491,7 +503,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.6</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.7</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
             </div>
         </div>

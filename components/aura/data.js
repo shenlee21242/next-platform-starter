@@ -55,6 +55,6 @@ export const tarotRanks = [
 export const randomQuests = {
     F: { title: 'The First Step', description: 'Take a focused 15-minute walk without your phone.', xp: 100, gold: 80, category: 'Physical', duration: 15 },
     B: { title: 'The Unbroken Hour', description: 'Complete one hour of distraction-free deep work.', xp: 350, gold: 250, category: 'Mental', duration: 60 },
-    S: { title: 'Trial of the Dawn', description: 'Complete a workout and reflection before 8 AM.', xp: 1100, gold: 800, category: 'Physical', duration: 60 },
-    SSS: { title: 'The Legend’s Path', description: 'Finish every daily quest for seven consecutive days.', xp: 5000, gold: 4000, category: 'Mental', duration: 30 },
+    S: { title: 'Trial of the Dawn', description: 'Complete a workout and reflection before 8 AM.', xp: 1100, gold: 800, diamonds: 1, category: 'Physical', duration: 60 },
+    SSS: { title: 'The Legend’s Path', description: 'Finish every daily quest for seven consecutive days.', xp: 5000, gold: 4000, diamonds: 3, category: 'Mental', duration: 30 },
 };

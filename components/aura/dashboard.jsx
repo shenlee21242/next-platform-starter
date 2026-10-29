@@ -10,6 +10,7 @@ import {
     CircleAlert,
     Clock3,
     Coins,
+    Diamond,
     Flame,
     Focus,
     Plus,
@@ -51,6 +52,7 @@ export default function Dashboard({
     player,
     attributes,
     streak,
+    penaltyGold,
 }) {
     const [filter, setFilter] = useState('All');
     const [storyOpen, setStoryOpen] = useState(false);
@@ -84,7 +86,7 @@ export default function Dashboard({
                     </div>
                     <div className="penalty-cost">
                         <span>MISSED PENALTY</span>
-                        <strong>−100 <Coins size={13} /></strong>
+                        <strong>−{penaltyGold} <Coins size={13} /></strong>
                     </div>
                 </section>
             )}
@@ -141,6 +143,7 @@ export default function Dashboard({
                                     <div className="quest-rewards">
                                         <span className="xp-reward">+{quest.xp} <small>XP</small></span>
                                         <span className="gold-reward"><Coins size={13} /> +{quest.gold}</span>
+                                        {quest.diamonds > 0 && <span className="diamond-reward"><Diamond size={13} /> +{quest.diamonds}</span>}
                                     </div>
                                     <button className="quest-more" aria-label={`View ${quest.title}`} onClick={() => onOpenModal('quest-detail', quest)}>
                                         <ChevronRight size={17} />

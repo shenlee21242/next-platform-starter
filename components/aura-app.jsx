@@ -50,9 +50,12 @@ import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, Progr
 import {
     createDailyQuest,
     createNewGame,
+    DAILY_PENALTY_GOLD,
     defaultPlayer,
     defaultSettings,
+    getMissedQuestPenalty,
     localDayKey,
+    localWeekKey,
     readSession,
     readStoredGame,
     secondsUntilMidnight,
@@ -135,7 +138,7 @@ function QuestDetailModal({ quest, onClose, onToggle }) {
             <div className="eyebrow">{quest.category} PATH · DAILY QUEST</div>
             <h2>{quest.title}</h2>
             <p>Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.</p>
-            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>Estimated time</span><strong>{quest.duration} minutes</strong></div><div><Sparkles size={17} /><span>Experience</span><strong>+{quest.xp} XP</strong></div><div><Coins size={17} /><span>Gold reward</span><strong>+{quest.gold} Gold</strong></div></div>
+            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>Estimated time</span><strong>{quest.duration} minutes</strong></div><div><Sparkles size={17} /><span>Experience</span><strong>+{quest.xp} XP</strong></div><div><Coins size={17} /><span>Gold reward</span><strong>+{quest.gold} Gold</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond reward</span><strong>+{quest.diamonds}</strong></div>}</div>
             <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); onClose(); }}>{quest.done ? <><X size={16} /> Mark as incomplete</> : <><Check size={16} /> Mark quest complete</>}</button>
         </Modal>
     );
@@ -177,7 +180,7 @@ function TarotModal({ gold, onClose, onSpend, onAccept }) {
                 <p className="tarot-odds">Every card contains a real-world quest. Choose your commitment wisely.</p>
             </>}
             {stage === 'drawing' && <div className="tarot-drawing"><div className="tarot-card-back"><AuraMark size={52} /><span>AURA</span><i /></div><h2>The deck is listening…</h2><p>Your next trial is revealing itself.</p></div>}
-            {stage === 'revealed' && <div className="tarot-revealed"><div className="revealed-card" style={{ '--rank-color': selected.color }}><span className="revealed-rank">{rank}</span><AuraMark size={44} /><span>THE DECK OF FATE</span><i /></div><div className="eyebrow">YOUR {rank}-RANK QUEST</div><h2>{quest.title}</h2><p>{quest.description}</p><div className="revealed-rewards"><strong>+{formatNumber(quest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(quest.gold)}</strong>{(rank === 'S' || rank === 'SSS') && <strong><Diamond size={14} /> +1</strong>}</div><button className="button button-primary button-full" onClick={() => onAccept({ ...quest, rank })}><Check size={16} /> Accept this quest</button></div>}
+            {stage === 'revealed' && <div className="tarot-revealed"><div className="revealed-card" style={{ '--rank-color': selected.color }}><span className="revealed-rank">{rank}</span><AuraMark size={44} /><span>THE DECK OF FATE</span><i /></div><div className="eyebrow">YOUR {rank}-RANK QUEST</div><h2>{quest.title}</h2><p>{quest.description}</p><div className="revealed-rewards"><strong>+{formatNumber(quest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(quest.gold)}</strong>{quest.diamonds > 0 && <strong><Diamond size={14} /> +{quest.diamonds}</strong>}</div><button className="button button-primary button-full" onClick={() => onAccept({ ...quest, rank })}><Check size={16} /> Accept this quest</button></div>}
         </Modal>
     );
 }
@@ -311,6 +314,7 @@ export default function AuraApp() {
     const [activeSkin, setActiveSkin] = useState('kael');
     const [duel, setDuel] = useState(null);
     const [streak, setStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
     const [lastCompletionDate, setLastCompletionDate] = useState(null);
     const [lastQuestDate, setLastQuestDate] = useState(null);
     const [devMode, setDevMode] = useState(false);
@@ -346,6 +350,7 @@ export default function AuraApp() {
 
     const restoreGame = useCallback((game) => {
         const restoredCharacter = getCharacter(game.player?.characterId || game.activeSkin);
+        const sameFocusWeek = game.focusWeek === localWeekKey();
         setPlayer({ ...defaultPlayer, ...(game.player || {}), characterId: restoredCharacter.id, heroClass: game.player?.heroClass || restoredCharacter.heroClass });
         setQuests(Array.isArray(game.quests) ? game.quests : []);
         setLevel(game.level ?? 0);
@@ -362,6 +367,7 @@ export default function AuraApp() {
         setActiveSkin(restoredCharacter.id);
         setDuel(game.duel || null);
         setStreak(game.streak ?? 0);
+        setBestStreak(Math.max(game.bestStreak ?? 0, game.streak ?? 0));
         setLastCompletionDate(game.lastCompletionDate || null);
         setLastQuestDate(game.lastQuestDate || null);
         setNotifications(game.notifications || []);
@@ -369,8 +375,8 @@ export default function AuraApp() {
         setFocusRunning(false);
         setFocusDuration(25 * 60);
         setFocusSeconds(25 * 60);
-        setFocusSessions(game.focusSessions ?? 0);
-        setFocusMinutes(game.focusMinutes ?? 0);
+        setFocusSessions(sameFocusWeek ? game.focusSessions ?? 0 : 0);
+        setFocusMinutes(sameFocusWeek ? game.focusMinutes ?? 0 : 0);
         setDeadline(secondsUntilMidnight());
         setDevMode(false);
         setScreen('quests');
@@ -419,14 +425,16 @@ export default function AuraApp() {
             activeSkin,
             duel,
             streak,
+            bestStreak,
             lastCompletionDate,
             lastQuestDate,
             focusSessions,
             focusMinutes,
+            focusWeek: localWeekKey(),
             notifications,
             settings,
         });
-    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, inventory, activeSkin, duel, streak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
+    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, inventory, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
 
     useEffect(() => {
         const timer = setInterval(() => setDeadline((current) => Math.max(0, current - 1)), 1000);
@@ -436,14 +444,39 @@ export default function AuraApp() {
     useEffect(() => {
         if (deadline !== 0 || !session || initialOnboarding) return undefined;
         const timer = window.setTimeout(() => {
+            const today = localDayKey();
+            if (lastQuestDate === today) {
+                setDeadline(secondsUntilMidnight());
+                return;
+            }
+            const penalty = getMissedQuestPenalty(quests, settings.penalty);
             const dailyQuest = createDailyQuest(player, lastQuestDate);
+            const isNewWeek = lastQuestDate && localWeekKey(new Date(`${lastQuestDate}T12:00:00`)) !== localWeekKey();
+            if (penalty.incomplete) {
+                setGold((current) => Math.max(0, current - penalty.gold));
+                setStreak(0);
+                setNotifications((current) => [{
+                    id: `penalty-${today}`,
+                    type: 'quest',
+                    title: 'Daily quest penalty',
+                    description: `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
+                    time: 'Daily reset',
+                    read: false,
+                }, ...current]);
+            }
+            if (isNewWeek) {
+                setFocusSessions(0);
+                setFocusMinutes(0);
+            }
             setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
-            setLastQuestDate(localDayKey());
+            setLastQuestDate(today);
             setDeadline(secondsUntilMidnight());
-            notify(`A new day begins. ${dailyQuest.title} is your new daily quest.`);
+            notify(penalty.incomplete
+                ? `Daily reset · −${penalty.gold} Gold and your streak was reset.`
+                : `A new day begins. ${dailyQuest.title} is your new daily quest.`, penalty.incomplete ? 'error' : 'success');
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [deadline, session, initialOnboarding, player, lastQuestDate, notify]);
+    }, [deadline, session, initialOnboarding, player, lastQuestDate, quests, settings.penalty, notify]);
 
     useEffect(() => {
         if (!focusRunning) return undefined;
@@ -509,15 +542,37 @@ export default function AuraApp() {
             xpRef.current = next;
             setXp(next);
             setGold((current) => Math.max(0, current - quest.gold));
+            if (quest.diamonds) setDiamonds((current) => Math.max(0, current - quest.diamonds));
+            if (duel?.completedQuestIds?.includes(id)) {
+                setDuel((current) => ({
+                    ...current,
+                    playerProgress: Math.max(0, (current.playerProgress || 0) - 1),
+                    completedQuestIds: (current.completedQuestIds || []).filter((questId) => questId !== id),
+                }));
+            }
             notify('Quest marked incomplete. Rewards returned.', 'neutral');
         } else {
             const today = localDayKey();
             if (lastCompletionDate !== today) {
                 const yesterday = localDayKey(new Date(Date.now() - 86400000));
-                setStreak((current) => lastCompletionDate === yesterday ? current + 1 : 1);
+                const nextStreak = lastCompletionDate === yesterday ? streak + 1 : 1;
+                setStreak(nextStreak);
+                setBestStreak((current) => Math.max(current, nextStreak));
                 setLastCompletionDate(today);
             }
-            awardRewards(quest.xp, quest.gold, `Quest complete · +${quest.xp} XP · +${quest.gold} Gold`);
+            if (quest.diamonds) setDiamonds((current) => current + quest.diamonds);
+            if (duel) {
+                setDuel((current) => {
+                    if ((current.completedQuestIds || []).includes(id)) return current;
+                    return {
+                        ...current,
+                        playerProgress: Math.min(3, (current.playerProgress || 0) + 1),
+                        completedQuestIds: [...(current.completedQuestIds || []), id],
+                    };
+                });
+            }
+            const diamondReward = quest.diamonds ? ` · +${quest.diamonds} ${quest.diamonds === 1 ? 'Diamond' : 'Diamonds'}` : '';
+            awardRewards(quest.xp, quest.gold, `Quest complete · +${quest.xp} XP · +${quest.gold} Gold${diamondReward}`);
         }
     };
 
@@ -566,7 +621,7 @@ export default function AuraApp() {
     const startDuel = (friend, stake) => {
         if (gold < stake) return;
         setGold((current) => current - stake);
-        setDuel({ ...friend, stake });
+        setDuel({ ...friend, stake, playerProgress: 0, completedQuestIds: [], startedAt: Date.now() });
         closeModal();
         navigate('duel');
         notify(`${friend.name} has been challenged. First to 3 quests wins.`);
@@ -581,18 +636,46 @@ export default function AuraApp() {
     };
 
     const bossTrial = () => {
-        setBossProgress((current) => Math.max(0, current - 8));
-        awardRewards(150, 75, 'Boss trial logged · The Colossus weakens.');
+        if (bossProgress <= 0) return;
+        const nextProgress = Math.max(0, bossProgress - 8);
+        setBossProgress(nextProgress);
+        if (nextProgress === 0) {
+            setDiamonds((current) => current + 1);
+            awardRewards(1200, 800, 'Colossus defeated · +1,200 XP · +800 Gold · +1 Diamond');
+        } else {
+            awardRewards(150, 75, 'Boss trial logged · The Colossus weakens.');
+        }
     };
 
     const secretCode = (code) => {
+        if (session?.email !== 'arin@aura.app') return 'Invalid code';
         if (code === 'JAS777') {
-            if (session?.email !== 'arin@aura.app') return 'Invalid code';
             setDevMode(true);
-            return 'Developer Mode enabled. Gold conversion is now available.';
+            return 'Developer Mode enabled. Admin systems are now available.';
         }
-        setDevMode(false);
-        return 'Developer Mode disabled.';
+        if (code === 'JAS666') {
+            setDevMode(false);
+            return 'Developer Mode disabled.';
+        }
+        return 'Invalid code';
+    };
+
+    const runAdminAction = (action) => {
+        if (!devMode || session?.email !== 'arin@aura.app') return;
+        if (action === 'convert') {
+            if (gold < 100) {
+                notify('You need at least 100 Gold to test conversion.', 'error');
+                return;
+            }
+            setGold((current) => current - 100);
+            setDiamonds((current) => current + 1);
+            notify('Admin test · Converted 100 Gold into 1 Diamond.');
+        } else if (action === 'xp') {
+            awardRewards(XP_TO_LEVEL, 0, 'Admin test · 300 XP injected.');
+        } else if (action === 'energy') {
+            setEnergy(100);
+            notify('Admin test · Sanctuary Energy refilled.');
+        }
     };
 
     const selectCharacter = (id) => {
@@ -602,9 +685,19 @@ export default function AuraApp() {
         notify(`${character.name} is now your active hero.`);
     };
 
+    const toggleFocus = () => {
+        if (focusRunning) {
+            setFocusRunning(false);
+            return;
+        }
+        if (energy < 10) {
+            notify('You need at least 10 Energy to begin a Focus session.', 'error');
+            return;
+        }
+        setFocusRunning(true);
+    };
     const resetFocus = () => { setFocusRunning(false); setFocusSeconds(focusDuration); };
     const changeFocusDuration = (seconds) => { setFocusDuration(seconds); setFocusSeconds(seconds); setFocusRunning(false); };
-    const completedQuests = quests.filter((quest) => quest.done).length;
     const attributes = {
         STR: 1 + level * 2,
         INT: 1 + level * 2,
@@ -619,13 +712,13 @@ export default function AuraApp() {
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} onUnlock={unlockSkill} />; break;
         case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
-        case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onGift={(friend) => { setGold((current) => Math.max(0, current - 25)); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
+        case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onAdminAction={runAdminAction} onGift={(friend) => { if (gold < 25) { notify('You need 25 Gold to send a gift.', 'error'); return; } setGold((current) => current - 25); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
         case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} playerImage={activeCharacter.image} />; break;
-        case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={streak} focusRunning={focusRunning} onToggle={() => setFocusRunning((current) => !current)} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
-        case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} completedQuests={completedQuests} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
+        case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={bestStreak} focusRunning={focusRunning} onToggle={toggleFocus} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
+        case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
         case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard player={player} attributes={attributes} streak={streak} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} level={level} xp={xp} bossProgress={bossProgress} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={() => setFocusRunning((current) => !current)} activeSkin={activeSkin} />;
+        default: content = <Dashboard player={player} attributes={attributes} streak={streak} penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} level={level} xp={xp} bossProgress={bossProgress} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} activeSkin={activeSkin} />;
     }
 
     if (!profileReady) {
@@ -658,7 +751,7 @@ export default function AuraApp() {
                     <div className="topbar-left"><button className="mobile-menu icon-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={21} /></button><div className="topbar-breadcrumb"><span>AURA</span><ChevronRight size={12} /><strong>{screenLabels[screen]}</strong></div></div>
                     <div className="topbar-right">
                         <div className="streak-chip" title={`${streak} day streak`}><Flame size={16} fill="currentColor" /><strong>{streak}</strong><span>day streak</span></div>
-                        <div className="topbar-currencies"><Currency value={gold} />{devMode && <button className="convert-button" onClick={() => { if (gold >= 100) { setGold((current) => current - 100); setDiamonds((current) => current + 1); notify('Converted 100 Gold into 1 Diamond.'); } }}>Convert</button>}<Currency type="diamonds" value={diamonds} /></div>
+                        <div className="topbar-currencies"><Currency value={gold} />{devMode && <button className="convert-button" onClick={() => runAdminAction('convert')}>Convert</button>}<Currency type="diamonds" value={diamonds} /></div>
                         <div className="topbar-divider" />
                         <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label={`${unread} unread notifications`}><Bell size={19} strokeWidth={1.6} />{unread > 0 && <span>{unread}</span>}</button>
                         <button className="topbar-avatar" onClick={() => navigate('character')} aria-label="Open character profile"><Avatar name={player.name} image={activeCharacter.image} size="small" /></button>

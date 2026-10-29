@@ -205,6 +205,7 @@ a { color: inherit; }
 .xp-reward small { font-size: 7px; color: #776c5b; }
 .gold-reward { display: inline-flex; align-items: center; gap: 4px; color: #a68b65; font-size: 8px; }
 .gold-reward svg { color: var(--gold-dark); }
+.diamond-reward { display: inline-flex; align-items: center; gap: 4px; color: var(--cyan); font-size: 8px; }
 .quest-more { display: grid; place-items: center; border: 0; background: none; color: #4e535c; padding: 0; }
 .quest-more:hover { color: var(--gold); }
 .add-quest-row { width: 100%; height: 37px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: rgba(255,255,255,.008); color: #6f747e; font-size: 9px; transition: color .2s, background .2s; }
@@ -498,6 +499,12 @@ a { color: inherit; }
 .friend-search input::placeholder { color: #5c626c; }
 .inline-message { display: flex; align-items: center; gap: 7px; color: #c28888; background: rgba(239,68,68,.04); border: 1px solid rgba(239,68,68,.1); border-radius: 6px; padding: 10px 12px; margin: -7px 0 16px; font-size: 9px; }
 .inline-message.success { color: var(--cyan); border-color: rgba(76,215,246,.15); background: rgba(76,215,246,.04); }
+.developer-tools { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 17px; margin: -7px 0 16px; border-color: rgba(76,215,246,.14); background: linear-gradient(120deg, rgba(76,215,246,.045), rgba(17,20,27,.9)); }
+.developer-tools > div:first-child { display: flex; flex-direction: column; gap: 4px; }
+.developer-tools > div:first-child > span { color: var(--cyan); font-size: 7px; letter-spacing: .16em; }
+.developer-tools > div:first-child > strong { font-family: var(--font-display); font-size: 13px; font-weight: 500; }
+.developer-tools p { color: var(--muted); font-size: 8px; }
+.developer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
 .social-layout { display: grid; grid-template-columns: minmax(0,1fr) 255px; gap: 20px; }
 .friends-panel { padding: 19px; }
 .friends-list { margin-top: 12px; }
@@ -574,6 +581,7 @@ a { color: inherit; }
 .focus-controls { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: 290px; position: relative; z-index: 2; margin-top: 37px; }
 .focus-main-button { height: 44px; flex: 1; display: flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid rgba(76,215,246,.35); border-radius: 6px; background: rgba(76,215,246,.1); color: var(--cyan); font-size: 10px; font-weight: 600; transition: all .2s; }
 .focus-main-button:hover { background: rgba(76,215,246,.17); box-shadow: 0 0 25px rgba(76,215,246,.08); }
+.focus-main-button:disabled { opacity: .45; box-shadow: none; background: rgba(76,215,246,.04); }
 .focus-reset { border-radius: 50%; }
 .focus-control-spacer { width: 34px; }
 .focus-energy-cost { position: relative; z-index: 2; display: flex; align-items: center; gap: 5px; color: #5e6871; font-size: 8px; margin-top: 21px; }
@@ -694,7 +702,7 @@ a { color: inherit; }
 .quest-detail-modal { text-align: center; }
 .quest-detail-symbol { width: 64px; height: 64px; display: grid; place-items: center; margin: 5px auto 20px; border-radius: 13px; }
 .quest-detail-modal h2 { margin-top: 7px; }
-.quest-detail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin: 23px 0; }
+.quest-detail-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(85px,1fr)); gap: 8px; margin: 23px 0; }
 .quest-detail-grid > div { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 13px 5px; border: 1px solid var(--border); border-radius: 6px; color: var(--gold-dark); }
 .quest-detail-grid span { color: var(--muted); font-size: 7px; }
 .quest-detail-grid strong { color: #c8c7c2; font-size: 9px; font-weight: 500; }
@@ -871,6 +879,8 @@ a { color: inherit; }
     .focus-quote { grid-column: 1/-1; }
     .settings-layout { grid-template-columns: 1fr; }
     .settings-layout > aside { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+    .developer-tools { align-items: flex-start; flex-direction: column; }
+    .developer-actions { justify-content: flex-start; }
     .notification-popover { right: 15px; top: 55px; }
 }
 
