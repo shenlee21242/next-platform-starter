@@ -5,6 +5,7 @@ import Image from 'next/image';
 import {
     ArrowRight,
     Bell,
+    BookOpen,
     Check,
     ChevronRight,
     CircleAlert,
@@ -30,6 +31,7 @@ import {
     Zap,
 } from 'lucide-react';
 import Dashboard from './aura/dashboard';
+import QuestCodex from './aura/quest-codex';
 import AuthScreen from './aura/auth-screen';
 import CharacterLoreModal from './aura/character-lore';
 import CharacterRoster from './aura/character-roster';
@@ -70,6 +72,7 @@ const navigation = [
         label: 'YOUR JOURNEY',
         items: [
             { id: 'quests', label: 'Quest dashboard', icon: LayoutDashboard },
+            { id: 'codex', label: 'Quest Codex', icon: BookOpen },
             { id: 'skills', label: 'Skill tree', icon: Network },
             { id: 'character', label: 'Character', icon: UserRound },
             { id: 'store', label: 'Imperial Vault', icon: Gem },
@@ -778,6 +781,7 @@ export default function AuraApp() {
 
     let content;
     switch (screen) {
+        case 'codex': content = <QuestCodex onOpenModal={openModal} />; break;
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} skillQuestProgress={skillQuestProgress} onUnlock={unlockSkill} />; break;
         case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;

@@ -15,7 +15,7 @@ Open `http://localhost:3000`.
 
 AURA includes a native Capacitor Android shell. The interface, fonts, and artwork are bundled into the APK, so the prototype works offline after installation.
 
-**Latest direct download:** [AURA 1.9 debug APK](public/downloads/AURA-debug.apk).
+**Latest direct download:** [AURA 1.10 debug APK](public/downloads/AURA-debug.apk).
 
 ### Download from GitHub Actions
 
@@ -51,6 +51,7 @@ For native development, use `npm run cap:sync` after changing the web interface,
 - Weekly Void Colossus boss encounter with trial progress
 - Imperial Vault with cosmetics, consumables, and tarot cards
 - Level-weighted Deck of Fate with 2,700 real-world quests across nine ranks (F–SSS), unique illustrations/descriptions, balanced categories, and real XP, Gold, and Diamond quest rewards
+- Searchable Quest Codex with path/rank/skill filters, responsive pagination, detailed entry views, and a direct path back to the Deck
 - Energy-gated Focus Sanctuary timer, weekly statistics, session rewards, and persistent best streak
 - Friends, gifting, cumulative-XP leaderboards, duel-specific PvP progress, stake pots, and consumable attack spells
 - Notifications, settings, onboarding, responsive drawer navigation, and reduced-motion support
