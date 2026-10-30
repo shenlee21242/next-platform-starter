@@ -45,7 +45,7 @@ import {
     SocialScreen,
     StoreScreen,
 } from './aura/screens';
-import { initialQuests, XP_TO_LEVEL, getRank } from './aura/data';
+import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from './aura/data';
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
 import {
@@ -135,11 +135,12 @@ function QuestDetailModal({ quest, onClose, onToggle }) {
     if (!quest) return null;
     return (
         <Modal onClose={onClose} label={quest.title} className="quest-detail-modal">
-            <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>
-            <div className="eyebrow">{quest.category} PATH · DAILY QUEST</div>
+            {quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
+            <div className="eyebrow">{quest.category} PATH · {quest.rank ? `${quest.rank}-RANK FATE QUEST` : 'DAILY QUEST'}</div>
             <h2>{quest.title}</h2>
-            <p>Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.</p>
-            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>Estimated time</span><strong>{quest.duration} minutes</strong></div><div><Sparkles size={17} /><span>Experience</span><strong>+{quest.xp} XP</strong></div><div><Coins size={17} /><span>Gold reward</span><strong>+{quest.gold} Gold</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond reward</span><strong>+{quest.diamonds}</strong></div>}</div>
+            <p>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
+            {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label="Skills advanced by this quest"><span>ADVANCES</span><div>{quest.skillIds.map((id) => <strong key={id}>{skillDefinitions.find((skill) => skill.id === id)?.name || id}</strong>)}</div></div>}
+            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>Estimated time</span><strong>{quest.duration} minutes</strong></div><div><Sparkles size={17} /><span>Experience</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>Gold reward</span><strong>+{formatNumber(quest.gold)} Gold</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond reward</span><strong>+{quest.diamonds}</strong></div>}</div>
             <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); onClose(); }}>{quest.done ? <><X size={16} /> Mark as incomplete</> : <><Check size={16} /> Mark quest complete</>}</button>
         </Modal>
     );
@@ -181,11 +182,15 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
     };
 
     const accept = () => onAccept({
+        sourceId: drawnQuest.id,
         title: drawnQuest.text,
-        category: drawnQuest.cat,
+        category: drawnQuest.category,
         rank: drawnQuest.rank,
-        xp: revealedRank.xp,
-        gold: revealedRank.gold,
+        description: drawnQuest.description,
+        image: drawnQuest.image,
+        skillIds: drawnQuest.skillIds,
+        xp: drawnQuest.xp,
+        gold: drawnQuest.gold,
         diamonds: revealedRank.diamonds,
         duration: revealedRank.duration,
     });
@@ -216,17 +221,19 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
             {stage === 'drawing' && <div className="tarot-drawing">
                 <div className="fate-flip-scene"><div className="fate-flip-card">
                     <div className={`fate-flip-face fate-flip-back fate-shape-${drawnQuest.rank.toLowerCase()}`}><AuraMark size={48} /><span>AURA</span><i /></div>
-                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{drawnQuest.cat}</strong></div>
+                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{drawnQuest.category}</strong></div>
                 </div></div>
                 <h2>The deck is turning…</h2><p>Your level has chosen a rank. Fate is choosing a path.</p>
             </div>}
             {stage === 'revealed' && <div className="tarot-revealed fate-quest-revealed">
-                <div className="revealed-card" style={{ '--rank-color': revealedRank.color }}><span className="revealed-rank">{drawnQuest.rank}</span><AuraMark size={44} /><span>THE DECK OF FATE</span><i /></div>
-                <div className="eyebrow">YOUR {drawnQuest.rank}-RANK · {drawnQuest.cat.toUpperCase()} QUEST</div>
-                <div className="fate-quest-category"><CategoryIcon category={drawnQuest.cat} size={20} /><span>{drawnQuest.cat}</span></div>
+                <div className="fate-quest-art" style={{ '--rank-color': revealedRank.color }}><Image src={drawnQuest.image} alt={`${drawnQuest.category} ${drawnQuest.rank}-rank quest illustration`} width={640} height={400} unoptimized /></div>
+                <div className="eyebrow">YOUR {drawnQuest.rank}-RANK · {drawnQuest.category.toUpperCase()} QUEST</div>
+                <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{drawnQuest.category}</span></div>
                 <h2>{drawnQuest.text}</h2>
-                <p>Drawn from your Level {level} deck for {formatNumber(revealedRank.price)} Gold.</p>
-                <div className="revealed-rewards"><strong>+{formatNumber(revealedRank.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(revealedRank.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
+                <p className="fate-quest-description">{drawnQuest.description}</p>
+                <div className="quest-skill-links" aria-label="Skills advanced by this quest"><span>ADVANCES</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{skillDefinitions.find((skill) => skill.id === id)?.name || id}</strong>)}</div></div>
+                <p className="fate-draw-note">Drawn from your Level {level} deck for {formatNumber(revealedRank.price)} Gold.</p>
+                <div className="revealed-rewards"><strong>+{formatNumber(drawnQuest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(drawnQuest.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
                 <button className="button button-primary button-full" onClick={accept}><Check size={16} /> Accept this quest</button>
             </div>}
         </Modal>
@@ -358,6 +365,7 @@ export default function AuraApp() {
     const [focusMinutes, setFocusMinutes] = useState(0);
     const [skillPoints, setSkillPoints] = useState(0);
     const [unlockedSkills, setUnlockedSkills] = useState(['discipline']);
+    const [skillQuestProgress, setSkillQuestProgress] = useState({});
     const [inventory, setInventory] = useState([]);
     const [activeSkin, setActiveSkin] = useState('kael');
     const [duel, setDuel] = useState(null);
@@ -411,6 +419,7 @@ export default function AuraApp() {
         setBossProgress(game.bossProgress ?? 100);
         setSkillPoints(game.skillPoints ?? 0);
         setUnlockedSkills(game.unlockedSkills || ['discipline']);
+        setSkillQuestProgress(game.skillQuestProgress || {});
         setInventory(game.inventory || []);
         setActiveSkin(restoredCharacter.id);
         setDuel(game.duel || null);
@@ -469,6 +478,7 @@ export default function AuraApp() {
             bossProgress,
             skillPoints,
             unlockedSkills,
+            skillQuestProgress,
             inventory,
             activeSkin,
             duel,
@@ -482,7 +492,7 @@ export default function AuraApp() {
             notifications,
             settings,
         });
-    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, inventory, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
+    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, skillQuestProgress, inventory, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
 
     useEffect(() => {
         const timer = setInterval(() => setDeadline((current) => Math.max(0, current - 1)), 1000);
@@ -584,8 +594,17 @@ export default function AuraApp() {
     const toggleQuest = (id) => {
         const quest = quests.find((item) => item.id === id);
         if (!quest) return;
+        const changeSkillProgress = (direction) => {
+            if (!quest.skillIds?.length) return;
+            setSkillQuestProgress((current) => {
+                const next = { ...current };
+                for (const skillId of quest.skillIds) next[skillId] = Math.max(0, (next[skillId] || 0) + direction);
+                return next;
+            });
+        };
         setQuests((current) => current.map((item) => item.id === id ? { ...item, done: !item.done } : item));
         if (quest.done) {
+            changeSkillProgress(-1);
             const next = Math.max(0, xpRef.current - quest.xp);
             xpRef.current = next;
             setXp(next);
@@ -598,8 +617,9 @@ export default function AuraApp() {
                     completedQuestIds: (current.completedQuestIds || []).filter((questId) => questId !== id),
                 }));
             }
-            notify('Quest marked incomplete. Rewards returned.', 'neutral');
+            notify('Quest marked incomplete. Rewards and linked skill progress returned.', 'neutral');
         } else {
+            changeSkillProgress(1);
             const today = localDayKey();
             if (lastCompletionDate !== today) {
                 const yesterday = localDayKey(new Date(Date.now() - 86400000));
@@ -644,7 +664,8 @@ export default function AuraApp() {
     };
 
     const unlockSkill = (skill) => {
-        if (unlockedSkills.includes(skill.id) || skillPoints < skill.cost) return;
+        const linkedProgress = skillQuestProgress[skill.id] || 0;
+        if (unlockedSkills.includes(skill.id) || skillPoints < skill.cost || linkedProgress < skill.questRequirement) return;
         setSkillPoints((current) => current - skill.cost);
         setUnlockedSkills((current) => [...current, skill.id]);
         notify(`${skill.name} unlocked in your constellation.`);
@@ -660,7 +681,7 @@ export default function AuraApp() {
     };
 
     const acceptTarot = (quest) => {
-        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, title: `${quest.rank} · ${quest.title}` }]);
+        setQuests((current) => [...current, { ...quest, id: `fate-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.title}` }]);
         closeModal();
         navigate('quests');
         notify('Fate accepted. The quest is now on your daily path.');
@@ -757,7 +778,7 @@ export default function AuraApp() {
 
     let content;
     switch (screen) {
-        case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} onUnlock={unlockSkill} />; break;
+        case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} skillQuestProgress={skillQuestProgress} onUnlock={unlockSkill} />; break;
         case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
         case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onAdminAction={runAdminAction} onGift={(friend) => { if (gold < 25) { notify('You need 25 Gold to send a gift.', 'error'); return; } setGold((current) => current - 25); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;

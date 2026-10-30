@@ -45,12 +45,12 @@ export const storeItems = [
 ];
 
 export const skills = [
-    { id: 'discipline', name: 'Discipline', type: 'Permanent', description: 'The center of your constellation. All growth begins here.', cost: 0, x: 50, y: 50, icon: 'center' },
-    { id: 'iron-body', name: 'Iron Body', type: 'Permanent', description: '+5% XP from every Physical quest.', cost: 2, x: 50, y: 15, icon: 'physical' },
-    { id: 'deep-work', name: 'Deep Work', type: 'Permanent', description: '+10% XP from Focus Sanctuary sessions.', cost: 2, x: 79, y: 28, icon: 'mental' },
-    { id: 'golden-touch', name: 'Golden Touch', type: 'Active', description: 'Earn +15% Gold for the next 24 hours.', cost: 3, x: 85, y: 61, icon: 'gold' },
-    { id: 'second-wind', name: 'Second Wind', type: 'Active', description: 'Restore 25 Energy without a potion.', cost: 3, x: 65, y: 85, icon: 'energy' },
-    { id: 'inner-peace', name: 'Inner Peace', type: 'Permanent', description: '+5% XP from every Spiritual quest.', cost: 2, x: 35, y: 85, icon: 'spiritual' },
-    { id: 'swift-strike', name: 'Swift Strike', type: 'Active', description: 'Your first quest each day earns double Gold.', cost: 4, x: 15, y: 61, icon: 'swift' },
-    { id: 'mind-palace', name: 'Mind Palace', type: 'Permanent', description: '+5% XP from every Mental quest.', cost: 2, x: 21, y: 28, icon: 'mind' },
+    { id: 'discipline', name: 'Discipline', type: 'Permanent', description: 'The center of your constellation. All growth begins here.', cost: 0, questRequirement: 0, x: 50, y: 50, icon: 'center' },
+    { id: 'iron-body', name: 'Iron Body', type: 'Permanent', description: '+5% XP from every Physical quest.', cost: 2, questRequirement: 3, x: 50, y: 15, icon: 'physical' },
+    { id: 'deep-work', name: 'Deep Work', type: 'Permanent', description: '+10% XP from Focus Sanctuary sessions.', cost: 2, questRequirement: 3, x: 79, y: 28, icon: 'mental' },
+    { id: 'golden-touch', name: 'Golden Touch', type: 'Active', description: 'Earn +15% Gold for the next 24 hours.', cost: 3, questRequirement: 4, x: 85, y: 61, icon: 'gold' },
+    { id: 'second-wind', name: 'Second Wind', type: 'Active', description: 'Restore 25 Energy without a potion.', cost: 3, questRequirement: 4, x: 65, y: 85, icon: 'energy' },
+    { id: 'inner-peace', name: 'Inner Peace', type: 'Permanent', description: '+5% XP from every Spiritual quest.', cost: 2, questRequirement: 3, x: 35, y: 85, icon: 'spiritual' },
+    { id: 'swift-strike', name: 'Swift Strike', type: 'Active', description: 'Your first quest each day earns double Gold.', cost: 4, questRequirement: 5, x: 15, y: 61, icon: 'swift' },
+    { id: 'mind-palace', name: 'Mind Palace', type: 'Permanent', description: '+5% XP from every Mental quest.', cost: 2, questRequirement: 3, x: 21, y: 28, icon: 'mind' },
 ];

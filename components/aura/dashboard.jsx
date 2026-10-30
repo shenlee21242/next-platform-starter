@@ -123,17 +123,18 @@ export default function Dashboard({
 
                         <div className="quest-list">
                             {filteredQuests.length ? filteredQuests.map((quest) => (
-                                <article className={`quest-row ${quest.done ? 'is-complete' : ''}`} key={quest.id}>
+                                <article className={`quest-row ${quest.image ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''}`} key={quest.id}>
                                     <CheckButton
                                         checked={quest.done}
                                         onClick={() => onToggleQuest(quest.id)}
                                         label={`${quest.done ? 'Mark incomplete' : 'Complete'} ${quest.title}`}
                                     />
-                                    <div className={`quest-category-icon category-${quest.category.toLowerCase()}`}>
+                                    {quest.image ? <div className="quest-thumbnail"><Image src={quest.image} alt="" width={640} height={400} unoptimized /></div> : <div className={`quest-category-icon category-${quest.category.toLowerCase()}`}>
                                         <CategoryIcon category={quest.category} size={19} />
-                                    </div>
+                                    </div>}
                                     <div className="quest-info">
                                         <h3>{quest.title}</h3>
+                                        {quest.description && <p className="quest-row-description">{quest.description.split(' Objective:')[0]}</p>}
                                         <div className="quest-meta">
                                             <span>{quest.category}</span>
                                             <i />

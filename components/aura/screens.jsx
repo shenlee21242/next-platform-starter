@@ -74,11 +74,15 @@ const skillIcons = {
     mind: Brain,
 };
 
-export function SkillTreeScreen({ unlockedSkills, skillPoints, onUnlock }) {
+export function SkillTreeScreen({ unlockedSkills, skillPoints, skillQuestProgress = {}, onUnlock }) {
     const [selectedId, setSelectedId] = useState('iron-body');
     const selected = skills.find((skill) => skill.id === selectedId);
     const SelectedIcon = skillIcons[selected.icon];
     const isUnlocked = unlockedSkills.includes(selected.id);
+    const linkedProgress = skillQuestProgress[selected.id] || 0;
+    const questRequirement = selected.questRequirement || 0;
+    const hasQuestRequirement = linkedProgress >= questRequirement;
+    const canUnlock = !isUnlocked && skillPoints >= selected.cost && hasQuestRequirement;
 
     return (
         <div className="screen">
@@ -130,18 +134,23 @@ export function SkillTreeScreen({ unlockedSkills, skillPoints, onUnlock }) {
                         <div><span>Current tier</span><strong>{isUnlocked ? 'I' : '—'}</strong></div>
                         <div><span>Next tier</span><strong>{isUnlocked ? 'II' : 'I'}</strong></div>
                     </div>
+                    {questRequirement > 0 && <div className="skill-quest-requirement">
+                        <div><span>Linked Fate quests</span><strong>{Math.min(linkedProgress, questRequirement)} / {questRequirement}</strong></div>
+                        <ProgressBar value={Math.min(linkedProgress, questRequirement)} max={questRequirement} />
+                        <small>{hasQuestRequirement ? 'Quest milestone complete' : `${questRequirement - linkedProgress} more linked ${questRequirement - linkedProgress === 1 ? 'quest' : 'quests'} required`}</small>
+                    </div>}
                     <div className="skill-requirement">
                         <span>Upgrade cost</span>
-                        <strong><Sparkles size={15} /> {selected.cost || 1} SP</strong>
+                        <strong><Sparkles size={15} /> {selected.cost} SP</strong>
                     </div>
                     <button
                         className={`button ${isUnlocked ? 'button-secondary' : 'button-primary'} button-full`}
-                        disabled={isUnlocked || skillPoints < selected.cost}
+                        disabled={!canUnlock}
                         onClick={() => onUnlock(selected)}
                     >
-                        {isUnlocked ? <><Check size={16} /> Skill unlocked</> : skillPoints < selected.cost ? 'Not enough skill points' : <><LockKeyhole size={16} /> Unlock skill</>}
+                        {isUnlocked ? <><Check size={16} /> Skill unlocked</> : !hasQuestRequirement ? `Complete ${questRequirement - linkedProgress} more linked ${questRequirement - linkedProgress === 1 ? 'quest' : 'quests'}` : skillPoints < selected.cost ? `Need ${selected.cost} skill points` : <><LockKeyhole size={16} /> Unlock skill</>}
                     </button>
-                    <small className="skill-detail-note"><CircleHelp size={13} /> Complete quests to earn more skill points.</small>
+                    <small className="skill-detail-note"><CircleHelp size={13} /> Generated quests show their linked skills. Complete them to unlock this milestone; SP is earned through levels.</small>
                 </aside>
             </div>
         </div>
@@ -503,7 +512,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.8</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.9</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
                 </aside>
             </div>
         </div>

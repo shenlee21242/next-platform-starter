@@ -71,6 +71,7 @@ export function createNewGame(auth = {}) {
         bossProgress: 100,
         skillPoints: 0,
         unlockedSkills: ['discipline'],
+        skillQuestProgress: {},
         inventory: [],
         activeSkin: 'kael',
         duel: null,

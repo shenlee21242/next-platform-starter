@@ -185,6 +185,10 @@ a { color: inherit; }
 .quest-list { padding: 2px 0; }
 .quest-row { min-height: 63px; display: grid; grid-template-columns: 22px 36px minmax(0,1fr) auto 18px; align-items: center; gap: 11px; padding: 8px 15px 8px 18px; border-bottom: 1px solid rgba(255,255,255,.045); transition: background .2s, opacity .2s; }
 .quest-row:hover { background: rgba(255,255,255,.018); }
+.quest-row.has-image { grid-template-columns: 22px 64px minmax(0,1fr) auto 18px; min-height: 88px; }
+.quest-thumbnail { width: 64px; height: 48px; overflow: hidden; border: 1px solid rgba(255,193,116,.14); border-radius: 6px; background: #0a0b0e; }
+.quest-thumbnail img { width: 100%; height: 100%; object-fit: cover; }
+.quest-row-description { display: -webkit-box; margin-top: 4px; overflow: hidden; color: #777e88; font-size: 8px; line-height: 1.5; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .quest-row.is-complete { opacity: .51; }
 .quest-row.is-complete:hover { opacity: .7; }
 .quest-check { width: 19px; height: 19px; display: grid; place-items: center; padding: 0; border: 1px solid #454a54; border-radius: 50%; background: transparent; color: #1d160d; transition: all .2s; }
@@ -321,6 +325,11 @@ a { color: inherit; }
 .skill-detail-stats strong { font-family: var(--font-display); font-size: 17px; font-weight: 500; }
 .skill-requirement { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .skill-requirement strong { display: flex; align-items: center; gap: 4px; color: var(--gold); font-size: 10px; }
+.skill-quest-requirement { margin: 0 0 18px; padding: 13px; border: 1px solid rgba(76,215,246,.12); border-radius: 7px; background: rgba(76,215,246,.025); }
+.skill-quest-requirement > div { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
+.skill-quest-requirement span { color: #8f9da2; font-size: 8px; }
+.skill-quest-requirement strong { color: var(--cyan); font-family: var(--font-display); font-size: 13px; font-weight: 500; }
+.skill-quest-requirement small { display: block; margin-top: 8px; color: #68747b; font-size: 7px; line-height: 1.5; }
 .skill-detail-note { display: flex; gap: 5px; margin-top: 15px; color: #626873; font-size: 8px; line-height: 1.5; }
 
 /* Character */
@@ -700,6 +709,8 @@ a { color: inherit; }
 .quest-reward-preview > div { display: flex; gap: 12px; }
 .quest-reward-preview strong { display: flex; align-items: center; gap: 4px; color: #c8ab80; font-size: 9px; font-weight: 500; }
 .quest-detail-modal { text-align: center; }
+.quest-detail-art { width: 100%; margin: 0 auto 20px; overflow: hidden; border: 1px solid rgba(255,193,116,.15); border-radius: 10px; background: #0a0b0e; }
+.quest-detail-art img { display: block; width: 100%; height: auto; }
 .quest-detail-symbol { width: 64px; height: 64px; display: grid; place-items: center; margin: 5px auto 20px; border-radius: 13px; }
 .quest-detail-modal h2 { margin-top: 7px; }
 .quest-detail-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(85px,1fr)); gap: 8px; margin: 23px 0; }
@@ -761,6 +772,14 @@ a { color: inherit; }
 .fate-quest-revealed h2 { max-width: 480px; margin: 9px auto 0; font-size: 24px; }
 .fate-quest-category { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--cyan); }
 .fate-quest-category > span { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.fate-quest-art { width: min(100%, 520px); position: relative; aspect-ratio: 8 / 5; margin: 2px auto 21px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--rank-color) 45%, transparent); border-radius: 12px; background: #0a0b0e; box-shadow: 0 18px 50px color-mix(in srgb, var(--rank-color) 8%, transparent); animation: revealed-in .5s ease; }
+.fate-quest-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fate-quest-revealed > .fate-quest-description { max-width: 570px; margin: 12px auto 14px; color: #9298a0; font-size: 9px; line-height: 1.75; }
+.fate-quest-revealed > .fate-draw-note { margin: 12px auto 14px; color: #646b75; font-size: 8px; }
+.quest-skill-links { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 13px auto; }
+.quest-skill-links > span { color: #626b74; font-size: 7px; letter-spacing: .14em; }
+.quest-skill-links > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+.quest-skill-links strong { padding: 5px 8px; border: 1px solid rgba(76,215,246,.15); border-radius: 4px; background: rgba(76,215,246,.04); color: #83cbd9; font-size: 7px; font-weight: 500; }
 .tarot-odds { text-align: center; color: #5c626b !important; font-size: 7px !important; }
 .tarot-drawing { min-height: 410px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .tarot-card-back, .revealed-card { width: 145px; height: 225px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--gold); border: 1px solid rgba(255,193,116,.45); outline: 1px solid rgba(255,193,116,.12); outline-offset: -8px; border-radius: 8px; background: repeating-linear-gradient(45deg, rgba(255,193,116,.025), rgba(255,193,116,.025) 2px, transparent 2px, transparent 7px), #171a20; box-shadow: 0 0 45px rgba(255,193,116,.1); }
@@ -925,12 +944,14 @@ a { color: inherit; }
     .penalty-deadline > span { font-size: 6px; }
     .penalty-deadline strong { font-size: 12px; }
     .quest-row { grid-template-columns: 20px 32px minmax(0,1fr) 17px; gap: 9px; padding-left: 13px; padding-right: 11px; }
+    .quest-row.has-image { grid-template-columns: 20px 48px minmax(0,1fr) 17px; }
+    .quest-thumbnail { width: 48px; height: 42px; }
     .quest-category-icon { width: 31px; height: 31px; }
     .quest-rewards { grid-column: 3; flex-direction: row; align-items: center; justify-content: flex-start; margin-top: -6px; }
     .quest-info { align-self: end; }
     .quest-more { grid-column: 4; grid-row: 1/3; }
     .quest-check { align-self: center; grid-row: 1/3; }
-    .quest-category-icon { grid-row: 1/3; }
+    .quest-category-icon, .quest-thumbnail { grid-row: 1/3; }
     .quest-filter { overflow-x: auto; }
     .boss-card { height: 240px; }
     .boss-card-shade { background: linear-gradient(90deg, rgba(7,9,13,.92), rgba(7,9,13,.35)), linear-gradient(0deg, rgba(7,9,13,.9), transparent); }

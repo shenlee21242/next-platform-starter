@@ -17,6 +17,7 @@ function nativePublicAssets() {
                 copyFileSync(`${publicDir}/images/${file}`, `${outDir}/images/${file}`);
             }
             cpSync(`${publicDir}/images/heroes`, `${outDir}/images/heroes`, { recursive: true });
+            cpSync(`${publicDir}/images/quests`, `${outDir}/images/quests`, { recursive: true });
             copyFileSync(`${publicDir}/favicon.svg`, `${outDir}/favicon.svg`);
         },
     };

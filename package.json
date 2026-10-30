@@ -10,7 +10,9 @@
     "lint": "eslint .",
     "build:mobile": "vite build",
     "cap:sync": "npm run build:mobile && cap sync android",
-    "build:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug"
+    "build:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "generate:quests": "node scripts/generate-quests.mjs",
+    "validate:quests": "node scripts/validate-quests.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",

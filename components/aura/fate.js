@@ -1,60 +1,21 @@
-export const questBank = [
-    // RANK F (Easy)
-    { rank: 'F', cat: 'Physical', text: 'Do 10 Squats' },
-    { rank: 'F', cat: 'Mental', text: 'Read 3 pages' },
-    { rank: 'F', cat: 'Spiritual', text: "Say 'Astaghfirullah' 33 times" },
+import physicalQuests from './quests/physical.json' with { type: 'json' };
+import mentalQuests from './quests/mental.json' with { type: 'json' };
+import spiritualQuests from './quests/spiritual.json' with { type: 'json' };
 
-    // RANK E (Novice)
-    { rank: 'E', cat: 'Physical', text: 'Do 15 Squats' },
-    { rank: 'E', cat: 'Mental', text: 'Read 5 pages' },
-    { rank: 'E', cat: 'Spiritual', text: "Pray 2 Rak'ahs of Duha" },
-
-    // RANK D (Apprentice)
-    { rank: 'D', cat: 'Physical', text: 'Do 20 Push-ups' },
-    { rank: 'D', cat: 'Mental', text: 'Learn 5 new words' },
-    { rank: 'D', cat: 'Spiritual', text: 'Read 1 page of Quran' },
-
-    // RANK C (Adept)
-    { rank: 'C', cat: 'Physical', text: 'Do 40 Push-ups' },
-    { rank: 'C', cat: 'Mental', text: 'Read 20 pages' },
-    { rank: 'C', cat: 'Spiritual', text: 'Give Sadaqah' },
-
-    // RANK B (Expert)
-    { rank: 'B', cat: 'Physical', text: 'Run 2km' },
-    { rank: 'B', cat: 'Mental', text: 'Write a 300-word essay' },
-    { rank: 'B', cat: 'Spiritual', text: 'Fast a voluntary day' },
-
-    // RANK A (Master)
-    { rank: 'A', cat: 'Physical', text: 'Do 100 Push-ups' },
-    { rank: 'A', cat: 'Mental', text: 'Read 50 pages' },
-    { rank: 'A', cat: 'Spiritual', text: 'Pray Tahajjud' },
-
-    // RANK S (Grandmaster)
-    { rank: 'S', cat: 'Physical', text: 'Run 5km' },
-    { rank: 'S', cat: 'Mental', text: 'Learn a new skill for 3 hours' },
-    { rank: 'S', cat: 'Spiritual', text: 'Memorize 5 Ayahs' },
-
-    // RANK SS (Heroic)
-    { rank: 'SS', cat: 'Physical', text: 'Run 10km' },
-    { rank: 'SS', cat: 'Mental', text: 'Read a full book' },
-    { rank: 'SS', cat: 'Spiritual', text: 'Memorize 1 page of Quran' },
-
-    // RANK SSS (Legendary)
-    { rank: 'SSS', cat: 'Physical', text: 'Run a Half-Marathon' },
-    { rank: 'SSS', cat: 'Mental', text: 'Build a full software project' },
-    { rank: 'SSS', cat: 'Spiritual', text: 'Memorize 5 pages of Quran' },
-];
+// 100 base actions × nine ranks in each category. The generated source JSON
+// remains readable and can be independently validated or reused by clients.
+export const questBank = [...physicalQuests, ...mentalQuests, ...spiritualQuests];
 
 export const fateRanks = [
-    { rank: 'F', label: 'Initiate', price: 50, xp: 100, gold: 80, diamonds: 0, duration: 10, color: '#a9b0ba' },
-    { rank: 'E', label: 'Novice', price: 75, xp: 140, gold: 100, diamonds: 0, duration: 15, color: '#8fc6b4' },
-    { rank: 'D', label: 'Apprentice', price: 100, xp: 200, gold: 140, diamonds: 0, duration: 20, color: '#75b9d1' },
-    { rank: 'C', label: 'Adept', price: 150, xp: 300, gold: 200, diamonds: 0, duration: 25, color: '#4cd7f6' },
-    { rank: 'B', label: 'Expert', price: 250, xp: 350, gold: 250, diamonds: 0, duration: 45, color: '#7f9ee8' },
-    { rank: 'A', label: 'Master', price: 600, xp: 700, gold: 500, diamonds: 0, duration: 60, color: '#c4a5ff' },
-    { rank: 'S', label: 'Grandmaster', price: 1200, xp: 1100, gold: 800, diamonds: 1, duration: 90, color: '#ffc174' },
-    { rank: 'SS', label: 'Heroic', price: 5000, xp: 2200, gold: 1600, diamonds: 2, duration: 120, color: '#ef8d72' },
-    { rank: 'SSS', label: 'Legendary', price: 20000, xp: 5000, gold: 4000, diamonds: 3, duration: 180, color: '#f0d6ff' },
+    { rank: 'F', label: 'Initiate', price: 50, xp: 20, gold: 10, diamonds: 0, duration: 10, color: '#a9b0ba' },
+    { rank: 'E', label: 'Novice', price: 75, xp: 50, gold: 25, diamonds: 0, duration: 15, color: '#8fc6b4' },
+    { rank: 'D', label: 'Apprentice', price: 100, xp: 100, gold: 50, diamonds: 0, duration: 20, color: '#75b9d1' },
+    { rank: 'C', label: 'Adept', price: 150, xp: 250, gold: 100, diamonds: 0, duration: 25, color: '#4cd7f6' },
+    { rank: 'B', label: 'Expert', price: 250, xp: 500, gold: 250, diamonds: 0, duration: 45, color: '#7f9ee8' },
+    { rank: 'A', label: 'Master', price: 600, xp: 1000, gold: 500, diamonds: 0, duration: 60, color: '#c4a5ff' },
+    { rank: 'S', label: 'Grandmaster', price: 1200, xp: 2500, gold: 1000, diamonds: 1, duration: 90, color: '#ffc174' },
+    { rank: 'SS', label: 'Heroic', price: 5000, xp: 5000, gold: 2500, diamonds: 2, duration: 120, color: '#ef8d72' },
+    { rank: 'SSS', label: 'Legendary', price: 20000, xp: 10000, gold: 5000, diamonds: 3, duration: 180, color: '#f0d6ff' },
 ];
 
 const probabilityBands = [
@@ -69,7 +30,12 @@ const probabilityBands = [
     { maxLevel: Infinity, chances: { SS: 60, SSS: 40 } },
 ];
 
-const categories = ['Physical', 'Mental', 'Spiritual'];
+const questsByRankAndCategory = new Map();
+for (const quest of questBank) {
+    const key = `${quest.rank}:${quest.category}`;
+    if (!questsByRankAndCategory.has(key)) questsByRankAndCategory.set(key, []);
+    questsByRankAndCategory.get(key).push(quest);
+}
 
 export function getRankProbabilities(playerLevel) {
     const normalizedLevel = Math.max(1, Math.floor(Number(playerLevel) || 1));
@@ -81,9 +47,9 @@ export function getFateRank(rank) {
     return fateRanks.find((item) => item.rank === rank) || fateRanks[0];
 }
 
-export function generateQuest(playerLevel) {
+export function generateQuest(playerLevel, random = Math.random) {
     const probabilities = getRankProbabilities(playerLevel).filter((item) => item.chance > 0);
-    const rankRoll = Math.random() * 100;
+    const rankRoll = random() * 100;
     let cumulative = 0;
     let selectedRank = probabilities[probabilities.length - 1].rank;
     for (const item of probabilities) {
@@ -94,9 +60,7 @@ export function generateQuest(playerLevel) {
         }
     }
 
-    const rankQuests = questBank.filter((quest) => quest.rank === selectedRank);
-    const selectedCategory = categories[Math.floor(Math.random() * categories.length)];
-    const categoryQuests = rankQuests.filter((quest) => quest.cat === selectedCategory);
-    const availableQuests = categoryQuests.length ? categoryQuests : rankQuests;
-    return availableQuests[Math.floor(Math.random() * availableQuests.length)];
+    const selectedCategory = ['Physical', 'Mental', 'Spiritual'][Math.floor(random() * 3)];
+    const availableQuests = questsByRankAndCategory.get(`${selectedRank}:${selectedCategory}`);
+    return availableQuests[Math.floor(random() * availableQuests.length)];
 }
