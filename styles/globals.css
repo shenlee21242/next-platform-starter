@@ -724,16 +724,43 @@ a { color: inherit; }
 .boss-reward-line > span { flex: 1; color: var(--gold-dark); font-size: 7px; letter-spacing: .1em; }
 .boss-reward-line strong { display: flex; align-items: center; gap: 4px; color: var(--gold); font-size: 9px; }
 .tarot-modal { width: min(100%, 500px); }
-.tarot-rank-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 24px 0 18px; }
-.tarot-rank-grid button { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 4px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,.015); }
-.tarot-rank-grid button.active { border-color: var(--rank-color); background: color-mix(in srgb, var(--rank-color) 6%, transparent); box-shadow: inset 0 0 20px color-mix(in srgb, var(--rank-color) 3%, transparent); }
-.tarot-rank-grid button > span { font-family: var(--font-display); font-size: 20px; color: var(--rank-color); }
-.tarot-rank-grid button > strong { color: #a3a6a8; font-size: 7px; font-weight: 500; }
-.tarot-rank-grid button > small { display: flex; align-items: center; gap: 3px; color: #817664; font-size: 7px; }
-.tarot-reward-preview { min-height: 39px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 9px; margin-bottom: 17px; color: var(--muted); }
-.tarot-reward-preview > span { font-size: 6px; letter-spacing: .12em; }
-.tarot-reward-preview strong { display: flex; align-items: center; gap: 3px; color: #bca27d; font-size: 8px; font-weight: 500; }
-.tarot-reward-preview i { width: 2px; height: 2px; background: #555; border-radius: 50%; }
+.fate-generator-modal { width: min(100%, 760px); }
+.fate-level-status { display: flex; align-items: center; gap: 12px; margin: 19px 0 16px; padding: 10px 13px; border: 1px solid rgba(255,193,116,.12); border-radius: 6px; background: rgba(255,193,116,.025); }
+.fate-level-status > span { color: var(--gold); font-size: 7px; font-weight: 700; letter-spacing: .13em; }
+.fate-level-status > strong { flex: 1; color: #c9c4ba; font-family: var(--font-display); font-size: 10px; font-weight: 500; letter-spacing: .08em; }
+.fate-level-status > small { color: var(--muted); font-size: 8px; white-space: nowrap; }
+.fate-rank-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
+.fate-rank-card { min-width: 0; min-height: 122px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 17px 13px 14px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--rank-color) 25%, transparent); background: linear-gradient(145deg, color-mix(in srgb, var(--rank-color) 8%, #1a1d24), #12151b 75%); text-align: center; transition: opacity .2s, filter .2s, transform .2s, border-color .2s; }
+.fate-rank-card:not(:disabled):hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--rank-color) 48%, transparent); }
+.fate-rank-card::before { content: ''; position: absolute; width: 80px; height: 80px; top: -45px; right: -35px; border: 1px solid color-mix(in srgb, var(--rank-color) 14%, transparent); border-radius: 50%; box-shadow: 0 0 35px color-mix(in srgb, var(--rank-color) 6%, transparent); }
+.fate-rank-card.is-unavailable { opacity: .55; filter: saturate(.45); }
+.fate-rank-letter { position: relative; color: var(--rank-color); font-family: var(--font-display); font-size: 25px; line-height: 1; font-weight: 500; text-shadow: 0 0 20px color-mix(in srgb, var(--rank-color) 20%, transparent); }
+.fate-rank-card > strong { color: #d0cec8; font-size: 8px; font-weight: 600; }
+.fate-rank-card > small { display: inline-flex; align-items: center; gap: 4px; color: #ac9573; font-size: 8px; }
+.fate-rank-card > em { color: var(--muted); font-size: 7px; font-style: normal; }
+.fate-shape-f { border-radius: 6px; }
+.fate-shape-e { clip-path: polygon(0 0,88% 0,100% 13%,100% 100%,0 100%); border-radius: 4px; }
+.fate-shape-d { clip-path: polygon(8% 0,92% 0,100% 12%,100% 88%,92% 100%,8% 100%,0 88%,0 12%); }
+.fate-shape-c { border-radius: 48% 48% 7px 7px / 18% 18% 7px 7px; }
+.fate-shape-b { clip-path: polygon(0 0,100% 0,100% 70%,50% 100%,0 70%); }
+.fate-shape-a { clip-path: polygon(50% 0,100% 14%,100% 86%,50% 100%,0 86%,0 14%); }
+.fate-shape-s { clip-path: polygon(12% 0,100% 0,88% 100%,0 100%); }
+.fate-shape-ss { clip-path: polygon(0 0,100% 0,86% 50%,100% 100%,0 100%,14% 50%); }
+.fate-shape-sss { clip-path: polygon(50% 0,63% 10%,85% 5%,100% 25%,94% 100%,6% 100%,0 25%,15% 5%,37% 10%); }
+.fate-draw-action { margin-top: 3px; }
+.fate-flip-scene { width: 145px; height: 220px; perspective: 950px; }
+.fate-flip-card { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: fate-card-flip 1.2s cubic-bezier(.2,.72,.22,1) both; }
+.fate-flip-face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; overflow: hidden; border: 1px solid rgba(255,193,116,.4); background: repeating-linear-gradient(45deg,rgba(255,193,116,.025),rgba(255,193,116,.025) 2px,transparent 2px,transparent 7px),#171a20; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.fate-flip-back { color: var(--gold); }
+.fate-flip-back > span { font-family: var(--font-display); font-size: 10px; letter-spacing: .22em; }
+.fate-flip-back > i { width: 45px; height: 1px; background: currentColor; opacity: .4; }
+.fate-flip-front { transform: rotateY(180deg); color: var(--rank-color); border-color: var(--rank-color); background: radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--rank-color) 12%,transparent),transparent 60%),#15181f; }
+.fate-flip-front > span { font-family: var(--font-display); font-size: 43px; }
+.fate-flip-front > strong { color: #d4d1ca; font-size: 9px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
+@keyframes fate-card-flip { 0% { transform: rotateY(0) scale(.82); } 48% { transform: rotateY(180deg) scale(1.08); } 100% { transform: rotateY(360deg) scale(1); } }
+.fate-quest-revealed h2 { max-width: 480px; margin: 9px auto 0; font-size: 24px; }
+.fate-quest-category { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--cyan); }
+.fate-quest-category > span { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
 .tarot-odds { text-align: center; color: #5c626b !important; font-size: 7px !important; }
 .tarot-drawing { min-height: 410px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .tarot-card-back, .revealed-card { width: 145px; height: 225px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--gold); border: 1px solid rgba(255,193,116,.45); outline: 1px solid rgba(255,193,116,.12); outline-offset: -8px; border-radius: 8px; background: repeating-linear-gradient(45deg, rgba(255,193,116,.025), rgba(255,193,116,.025) 2px, transparent 2px, transparent 7px), #171a20; box-shadow: 0 0 45px rgba(255,193,116,.1); }
@@ -969,8 +996,14 @@ a { color: inherit; }
     .quest-reward-preview { align-items: flex-start; gap: 8px; }
     .quest-reward-preview > div { flex-direction: column; gap: 5px; }
     .level-up-perks { grid-template-columns: 1fr; }
-    .tarot-rank-grid { gap: 5px; }
-    .tarot-rank-grid button { padding: 10px 2px; }
+    .fate-level-status { flex-wrap: wrap; gap: 7px; }
+    .fate-level-status > strong { order: 3; flex-basis: 100%; }
+    .fate-rank-grid { gap: 6px; }
+    .fate-rank-card { min-height: 112px; padding: 15px 7px 12px; gap: 5px; }
+    .fate-rank-letter { font-size: 21px; }
+    .fate-rank-card > strong { font-size: 7px; }
+    .fate-rank-card > em { font-size: 6px; }
+    .fate-quest-revealed h2 { font-size: 20px; }
     .toast { bottom: 15px; }
 }
 

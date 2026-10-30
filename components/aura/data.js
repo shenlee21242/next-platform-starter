@@ -1,3 +1,5 @@
+import { fateRanks } from './fate';
+
 export const XP_TO_LEVEL = 300;
 
 export function getRank(level) {
@@ -29,9 +31,17 @@ export const storeItems = [
     { id: 'p2', category: 'Consumables', name: 'XP Elixir', description: 'Double XP for 24 hours', icon: 'elixir', price: 600, currency: 'gold', rarity: 'Rare', tone: 'violet' },
     { id: 'p3', category: 'Consumables', name: 'Streak Freeze', description: 'Protect your streak for one day', icon: 'freeze', price: 400, currency: 'gold', rarity: 'Rare', tone: 'cyan' },
     { id: 'p4', category: 'Consumables', name: 'Exhaustion Spell', description: 'Challenge a rival with −10% XP', icon: 'spell', price: 350, currency: 'gold', rarity: 'Rare', tone: 'crimson' },
-    { id: 't1', category: 'Cards', name: 'Fate Card · F', description: 'A small step toward greatness', icon: 'card', price: 50, currency: 'gold', rarity: 'F Rank', tone: 'gold' },
-    { id: 't2', category: 'Cards', name: 'Fate Card · A', description: 'A trial for the disciplined', icon: 'card', price: 650, currency: 'gold', rarity: 'A Rank', tone: 'cyan' },
-    { id: 't3', category: 'Cards', name: 'Fate Card · S', description: 'High risk. Legendary rewards.', icon: 'card', price: 1400, currency: 'gold', rarity: 'S Rank', tone: 'violet' },
+    ...fateRanks.map((item) => ({
+        id: `fate-${item.rank}`,
+        category: 'Cards',
+        name: `Fate Card · ${item.rank}`,
+        description: `${item.label} rank · your level determines the draw`,
+        icon: 'card',
+        price: item.price,
+        currency: 'gold',
+        rarity: `${item.rank} Rank`,
+        tone: ['A', 'SS', 'SSS'].includes(item.rank) ? 'violet' : ['C', 'B', 'E'].includes(item.rank) ? 'cyan' : 'gold',
+    })),
 ];
 
 export const skills = [
@@ -44,17 +54,3 @@ export const skills = [
     { id: 'swift-strike', name: 'Swift Strike', type: 'Active', description: 'Your first quest each day earns double Gold.', cost: 4, x: 15, y: 61, icon: 'swift' },
     { id: 'mind-palace', name: 'Mind Palace', type: 'Permanent', description: '+5% XP from every Mental quest.', cost: 2, x: 21, y: 28, icon: 'mind' },
 ];
-
-export const tarotRanks = [
-    { rank: 'F', label: 'Initiate', price: 50, xp: '80–120', color: '#a9b0ba' },
-    { rank: 'B', label: 'Adept', price: 250, xp: '250–400', color: '#4cd7f6' },
-    { rank: 'S', label: 'Master', price: 1200, xp: '900–1,200', color: '#ffc174' },
-    { rank: 'SSS', label: 'Legendary', price: 20000, xp: '5,000+', color: '#c4a5ff' },
-];
-
-export const randomQuests = {
-    F: { title: 'The First Step', description: 'Take a focused 15-minute walk without your phone.', xp: 100, gold: 80, category: 'Physical', duration: 15 },
-    B: { title: 'The Unbroken Hour', description: 'Complete one hour of distraction-free deep work.', xp: 350, gold: 250, category: 'Mental', duration: 60 },
-    S: { title: 'Trial of the Dawn', description: 'Complete a workout and reflection before 8 AM.', xp: 1100, gold: 800, diamonds: 1, category: 'Physical', duration: 60 },
-    SSS: { title: 'The Legend’s Path', description: 'Finish every daily quest for seven consecutive days.', xp: 5000, gold: 4000, diamonds: 3, category: 'Mental', duration: 30 },
-};

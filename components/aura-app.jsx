@@ -45,7 +45,8 @@ import {
     SocialScreen,
     StoreScreen,
 } from './aura/screens';
-import { initialQuests, randomQuests, tarotRanks, XP_TO_LEVEL, getRank } from './aura/data';
+import { initialQuests, XP_TO_LEVEL, getRank } from './aura/data';
+import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
 import {
     createDailyQuest,
@@ -158,29 +159,76 @@ function BossModal({ progress, onClose, onTrial }) {
     );
 }
 
-function TarotModal({ gold, onClose, onSpend, onAccept }) {
-    const [rank, setRank] = useState('F');
+function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
     const [stage, setStage] = useState('choose');
+    const [drawnQuest, setDrawnQuest] = useState(null);
     const timer = useRef(null);
-    const selected = tarotRanks.find((item) => item.rank === rank);
-    const quest = randomQuests[rank];
+    const probabilities = getRankProbabilities(level);
+    const availableRanks = probabilities.filter((item) => item.chance > 0).map((item) => getFateRank(item.rank));
+    const prices = availableRanks.map((item) => item.price);
+    const minimumPrice = Math.min(...prices);
+    const maximumPrice = Math.max(...prices);
+    const revealedRank = getFateRank(drawnQuest?.rank || 'F');
     useEffect(() => () => clearTimeout(timer.current), []);
+
     const draw = () => {
-        if (!onSpend(selected.price)) return;
+        const quest = generateQuest(level);
+        const rank = getFateRank(quest.rank);
+        if (!onSpend(rank.price)) return;
+        setDrawnQuest(quest);
         setStage('drawing');
-        timer.current = setTimeout(() => setStage('revealed'), 1100);
+        timer.current = setTimeout(() => setStage('revealed'), 1200);
     };
+
+    const accept = () => onAccept({
+        title: drawnQuest.text,
+        category: drawnQuest.cat,
+        rank: drawnQuest.rank,
+        xp: revealedRank.xp,
+        gold: revealedRank.gold,
+        diamonds: revealedRank.diamonds,
+        duration: revealedRank.duration,
+    });
+
     return (
-        <Modal onClose={onClose} label="Tarot mystery quest" className={`tarot-modal stage-${stage}`}>
+        <Modal onClose={onClose} label="Deck of Fate quest generator" className={`tarot-modal fate-generator-modal stage-${stage}`}>
             {stage === 'choose' && <>
-                <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">THE DECK OF FATE</div><h2>Choose your trial</h2><p>The quest remains a mystery until the card is revealed.</p></div>
-                <div className="tarot-rank-grid">{tarotRanks.map((item) => <button key={item.rank} className={rank === item.rank ? 'active' : ''} style={{ '--rank-color': item.color }} onClick={() => setRank(item.rank)}><span>{item.rank}</span><strong>{item.label}</strong><small><Coins size={12} /> {formatNumber(item.price)}</small></button>)}</div>
-                <div className="tarot-reward-preview"><span>POSSIBLE REWARDS</span><strong>{selected.xp} XP</strong><i />{(rank === 'S' || rank === 'SSS') && <strong><Diamond size={14} /> Rare Diamonds</strong>}<strong><Coins size={14} /> Bonus Gold</strong></div>
-                <button className="button button-primary button-full" onClick={draw} disabled={gold < selected.price}><Sparkles size={16} /> {gold < selected.price ? `You need ${formatNumber(selected.price - gold)} more Gold` : `Draw ${rank}-rank card · ${formatNumber(selected.price)} Gold`}</button>
-                <p className="tarot-odds">Every card contains a real-world quest. Choose your commitment wisely.</p>
+                <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">THE DECK OF FATE</div><h2>Your level shapes the unknown.</h2><p>Tap an active card to draw. Your level determines the possible ranks, then Physical, Mental, or Spiritual is rolled. You pay the revealed rank’s cost.</p></div>
+                <div className="fate-level-status"><span>LEVEL {level} DECK</span><strong>{availableRanks.map((item) => item.rank).join(' · ')}</strong><small>{minimumPrice === maximumPrice ? `${formatNumber(minimumPrice)} Gold per draw` : `${formatNumber(minimumPrice)}–${formatNumber(maximumPrice)} Gold per draw`}</small></div>
+                <div className="fate-rank-grid" role="group" aria-label={`Level ${level} rank probabilities`}>
+                    {fateRanks.map((item) => {
+                        const chance = probabilities.find((entry) => entry.rank === item.rank)?.chance || 0;
+                        return (
+                            <button type="button" key={item.rank} onClick={draw} disabled={!chance || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? '' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank} rank, ${chance}% chance, ${formatNumber(item.price)} Gold${chance ? '. Draw a level-weighted quest' : '. Outside current deck'}`}>
+                                <span className="fate-rank-letter">{item.rank}</span>
+                                <strong>{item.label}</strong>
+                                <small><Coins size={11} /> {formatNumber(item.price)}</small>
+                                <em>{chance ? `${chance}% chance` : 'Outside current deck'}</em>
+                            </button>
+                        );
+                    })}
+                </div>
+                <button className="button button-primary button-full fate-draw-action" onClick={draw} disabled={gold < minimumPrice}>
+                    <Sparkles size={16} /> {gold < minimumPrice ? `You need ${formatNumber(minimumPrice - gold)} more Gold` : `Draw a Fate card · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} Gold`}
+                </button>
+                <p className="tarot-odds">Every card contains a real-world quest. Higher levels unlock more demanding ranks.</p>
             </>}
-            {stage === 'drawing' && <div className="tarot-drawing"><div className="tarot-card-back"><AuraMark size={52} /><span>AURA</span><i /></div><h2>The deck is listening…</h2><p>Your next trial is revealing itself.</p></div>}
-            {stage === 'revealed' && <div className="tarot-revealed"><div className="revealed-card" style={{ '--rank-color': selected.color }}><span className="revealed-rank">{rank}</span><AuraMark size={44} /><span>THE DECK OF FATE</span><i /></div><div className="eyebrow">YOUR {rank}-RANK QUEST</div><h2>{quest.title}</h2><p>{quest.description}</p><div className="revealed-rewards"><strong>+{formatNumber(quest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(quest.gold)}</strong>{quest.diamonds > 0 && <strong><Diamond size={14} /> +{quest.diamonds}</strong>}</div><button className="button button-primary button-full" onClick={() => onAccept({ ...quest, rank })}><Check size={16} /> Accept this quest</button></div>}
+            {stage === 'drawing' && <div className="tarot-drawing">
+                <div className="fate-flip-scene"><div className="fate-flip-card">
+                    <div className={`fate-flip-face fate-flip-back fate-shape-${drawnQuest.rank.toLowerCase()}`}><AuraMark size={48} /><span>AURA</span><i /></div>
+                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{drawnQuest.cat}</strong></div>
+                </div></div>
+                <h2>The deck is turning…</h2><p>Your level has chosen a rank. Fate is choosing a path.</p>
+            </div>}
+            {stage === 'revealed' && <div className="tarot-revealed fate-quest-revealed">
+                <div className="revealed-card" style={{ '--rank-color': revealedRank.color }}><span className="revealed-rank">{drawnQuest.rank}</span><AuraMark size={44} /><span>THE DECK OF FATE</span><i /></div>
+                <div className="eyebrow">YOUR {drawnQuest.rank}-RANK · {drawnQuest.cat.toUpperCase()} QUEST</div>
+                <div className="fate-quest-category"><CategoryIcon category={drawnQuest.cat} size={20} /><span>{drawnQuest.cat}</span></div>
+                <h2>{drawnQuest.text}</h2>
+                <p>Drawn from your Level {level} deck for {formatNumber(revealedRank.price)} Gold.</p>
+                <div className="revealed-rewards"><strong>+{formatNumber(revealedRank.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(revealedRank.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
+                <button className="button button-primary button-full" onClick={accept}><Check size={16} /> Accept this quest</button>
+            </div>}
         </Modal>
     );
 }
@@ -766,7 +814,7 @@ export default function AuraApp() {
             {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
             {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} />}
             {modal === 'boss' && <BossModal progress={bossProgress} onClose={closeModal} onTrial={bossTrial} />}
-            {modal === 'tarot' && <TarotModal gold={gold} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} />}
+            {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}
             {modal === 'onboarding' && <OnboardingExperience player={player} onClose={closeModal} onSave={savePlayer} />}
             {modal === 'level-up' && <LevelUpModal level={level} onClose={closeModal} />}
