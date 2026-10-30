@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   apk:
@@ -65,6 +65,24 @@ jobs:
 
       - name: Prepare downloadable APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk AURA-debug.apk
+
+      - name: Create temporary APK transfer blob
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          from pathlib import Path
+          payload = {
+              'encoding': 'base64',
+              'content': base64.b64encode(Path('AURA-debug.apk').read_bytes()).decode('ascii'),
+          }
+          Path('apk-blob.json').write_text(json.dumps(payload))
+          PY
+          blob_sha=$(gh api --method POST "repos/${{ github.repository }}/git/blobs" --input apk-blob.json --jq '.sha')
+          rm apk-blob.json
+          echo "::notice title=AURA APK Git blob::${blob_sha}"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
