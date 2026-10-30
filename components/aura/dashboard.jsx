@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { XP_TO_LEVEL, getRank } from './data';
 import { getCharacter } from './characters';
+import { useI18n } from './i18n';
+import QuestArtwork from './quest-artwork';
 import CharacterLoreModal from './character-lore';
 import {
     CategoryIcon,
@@ -54,6 +56,7 @@ export default function Dashboard({
     streak,
     penaltyGold,
 }) {
+    const { t, language } = useI18n();
     const [filter, setFilter] = useState('All');
     const [storyOpen, setStoryOpen] = useState(false);
     const character = getCharacter(player.characterId || activeSkin);
@@ -64,12 +67,12 @@ export default function Dashboard({
     return (
         <div className="screen dashboard-screen">
             <ScreenHeader
-                eyebrow="YOUR DAILY ADVENTURE"
-                title="Ready for today’s quests?"
-                description="Small victories. Legendary outcomes."
+                eyebrow={t('dashboard.eyebrow')}
+                title={t('dashboard.title')}
+                description={t('dashboard.description')}
             >
                 <button className="button button-primary" onClick={onAddQuest}>
-                    <Plus size={17} /> New quest
+                    <Plus size={17} /> {t('common.newQuest')}
                 </button>
             </ScreenHeader>
 
@@ -96,8 +99,8 @@ export default function Dashboard({
                     <section className="panel quests-panel">
                         <div className="quests-panel-heading">
                             <PanelTitle
-                                title="Daily quests"
-                                meta={quests.length ? `${completed}/${quests.length} completed` : 'No quests yet'}
+                                title={t('dashboard.dailyQuests')}
+                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')}` : t('dashboard.noQuests')}
                             />
                             {quests.length > 0 && (
                                 <div className="quest-progress-summary">
@@ -107,7 +110,7 @@ export default function Dashboard({
                             )}
                         </div>
                         <div className="quest-filter" role="tablist" aria-label="Filter quests">
-                            {['All', 'Physical', 'Mental', 'Spiritual'].map((item) => (
+                            {['All', 'Religious', 'Psychological', 'Physical', 'Mental', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => (
                                 <button
                                     key={item}
                                     className={filter === item ? 'active' : ''}
@@ -115,7 +118,7 @@ export default function Dashboard({
                                     role="tab"
                                     aria-selected={filter === item}
                                 >
-                                    {item}
+                                    {item === 'All' ? t('common.all') : t(`category.${item}`)}
                                     {item === 'All' && <span>{quests.length}</span>}
                                 </button>
                             ))}
@@ -123,20 +126,20 @@ export default function Dashboard({
 
                         <div className="quest-list">
                             {filteredQuests.length ? filteredQuests.map((quest) => (
-                                <article className={`quest-row ${quest.image ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''}`} key={quest.id}>
+                                <article className={`quest-row ${quest.image || quest.generatedArt ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''}`} key={quest.id}>
                                     <CheckButton
                                         checked={quest.done}
                                         onClick={() => onToggleQuest(quest.id)}
                                         label={`${quest.done ? 'Mark incomplete' : 'Complete'} ${quest.title}`}
                                     />
-                                    {quest.image ? <div className="quest-thumbnail"><Image src={quest.image} alt="" width={640} height={400} unoptimized /></div> : <div className={`quest-category-icon category-${quest.category.toLowerCase()}`}>
+                                    {quest.generatedArt || quest.sourceId ? <div className="quest-thumbnail"><QuestArtwork quest={{ ...quest, text: quest.text || quest.title }} decorative /></div> : quest.image ? <div className="quest-thumbnail"><Image src={quest.image} alt="" width={640} height={400} unoptimized /></div> : <div className={`quest-category-icon category-${quest.category.toLowerCase()}`}>
                                         <CategoryIcon category={quest.category} size={19} />
                                     </div>}
                                     <div className="quest-info">
-                                        <h3>{quest.title}</h3>
-                                        {quest.description && <p className="quest-row-description">{quest.description.split(' Objective:')[0]}</p>}
+                                        <h3 dir="auto" lang={language}>{quest.title}</h3>
+                                        {quest.description && <p className="quest-row-description" dir="auto" lang={language}>{quest.description.split(' Objective:')[0]}</p>}
                                         <div className="quest-meta">
-                                            <span>{quest.category}</span>
+                                            <span>{t(`category.${quest.category}`)}</span>
                                             <i />
                                             <span><Clock3 size={12} /> {quest.duration} min</span>
                                         </div>
@@ -161,7 +164,7 @@ export default function Dashboard({
                             )}
                         </div>
                         <button className="add-quest-row" onClick={onAddQuest}>
-                            <Plus size={16} /> {quests.length ? 'Add another quest' : 'Add your first quest'}
+                            <Plus size={16} /> {quests.length ? t('dashboard.addAnother') : t('dashboard.addFirst')}
                         </button>
                     </section>
 
@@ -238,9 +241,9 @@ export default function Dashboard({
                     <button className="tarot-widget" onClick={() => onOpenModal('tarot')}>
                         <span className="tarot-mini-card"><Sparkles size={23} strokeWidth={1.2} /><i>FATE</i></span>
                         <span className="tarot-widget-copy">
-                            <small>THE UNKNOWN AWAITS</small>
-                            <strong>Draw a mystery quest</strong>
-                            <span>From 50 Gold <ArrowRight size={13} /></span>
+                            <small>{t('dashboard.unknown')}</small>
+                            <strong>{t('dashboard.drawMystery')}</strong>
+                            <span>{t('dashboard.fromGold')} <ArrowRight size={13} /></span>
                         </span>
                     </button>
                 </aside>
@@ -248,7 +251,7 @@ export default function Dashboard({
             {storyOpen && <CharacterLoreModal character={character} onClose={() => setStoryOpen(false)} />}
             <button className="quest-fab" onClick={onAddQuest} aria-label="Add a new daily quest">
                 <Plus size={21} strokeWidth={1.8} />
-                <span>New quest</span>
+                <span>{t('common.newQuest')}</span>
             </button>
         </div>
     );

@@ -49,6 +49,9 @@ import {
 } from './aura/screens';
 import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from './aura/data';
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
+import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
+import { localizeLifeQuest } from './aura/life-quests';
+import QuestArtwork from './aura/quest-artwork';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
 import {
     createDailyQuest,
@@ -69,6 +72,7 @@ import {
 
 const navigation = [
     {
+        id: 'journey',
         label: 'YOUR JOURNEY',
         items: [
             { id: 'quests', label: 'Quest dashboard', icon: LayoutDashboard },
@@ -80,6 +84,7 @@ const navigation = [
         ],
     },
     {
+        id: 'circle',
         label: 'YOUR CIRCLE',
         items: [
             { id: 'social', label: 'Social hub', icon: Users },
@@ -88,11 +93,6 @@ const navigation = [
         ],
     },
 ];
-
-const screenLabels = Object.fromEntries(navigation.flatMap((group) => group.items.map((item) => [item.id, item.label])));
-screenLabels.notifications = 'Notifications';
-screenLabels.settings = 'Settings';
-
 
 function AuraMark({ size = 34 }) {
     return (
@@ -106,6 +106,7 @@ function AuraMark({ size = 34 }) {
 }
 
 function AddQuestModal({ onClose, onSubmit }) {
+    const { t } = useI18n();
     const [title, setTitle] = useState('');
     const [category, setCategory] = useState('Physical');
     const [duration, setDuration] = useState(30);
@@ -122,7 +123,7 @@ function AddQuestModal({ onClose, onSubmit }) {
             <div className="modal-heading"><span className="modal-heading-icon"><Plus size={22} /></span><div className="eyebrow">A NEW STEP FORWARD</div><h2>Create a daily quest</h2><p>Make it clear, achievable, and worth showing up for.</p></div>
             <form onSubmit={submit} className="aura-form">
                 <label><span>Quest name</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Train for 30 minutes" required maxLength={60} /></label>
-                <fieldset><legend>Choose a path</legend><div className="category-picker">{['Physical', 'Mental', 'Spiritual'].map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}><CategoryIcon category={item} size={19} /><span>{item}</span></button>)}</div></fieldset>
+                <fieldset><legend>Choose a path</legend><div className="category-picker">{['Physical', 'Mental', 'Religious', 'Psychological', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}><CategoryIcon category={item} size={19} /><span>{t(`category.${item}`)}</span></button>)}</div></fieldset>
                 <div className="form-row">
                     <label><span>Duration</span><div className="input-with-suffix"><input type="number" min="5" max="240" step="5" value={duration} onChange={(event) => setDuration(event.target.value)} /><small>minutes</small></div></label>
                     <label><span>Difficulty</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Easy</option><option>Standard</option><option>Hard</option></select></label>
@@ -135,16 +136,18 @@ function AddQuestModal({ onClose, onSubmit }) {
 }
 
 function QuestDetailModal({ quest, onClose, onToggle }) {
+    const { t, language } = useI18n();
     if (!quest) return null;
+    const rank = getFateRank(quest.rank);
     return (
-        <Modal onClose={onClose} label={quest.title} className="quest-detail-modal">
-            {quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
-            <div className="eyebrow">{quest.category} PATH · {quest.rank ? `${quest.rank}-RANK FATE QUEST` : 'DAILY QUEST'}</div>
-            <h2>{quest.title}</h2>
-            <p>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
-            {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label="Skills advanced by this quest"><span>ADVANCES</span><div>{quest.skillIds.map((id) => <strong key={id}>{skillDefinitions.find((skill) => skill.id === id)?.name || id}</strong>)}</div></div>}
-            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>Estimated time</span><strong>{quest.duration} minutes</strong></div><div><Sparkles size={17} /><span>Experience</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>Gold reward</span><strong>+{formatNumber(quest.gold)} Gold</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond reward</span><strong>+{quest.diamonds}</strong></div>}</div>
-            <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); onClose(); }}>{quest.done ? <><X size={16} /> Mark as incomplete</> : <><Check size={16} /> Mark quest complete</>}</button>
+        <Modal onClose={onClose} label={quest.title} className={`quest-detail-modal ${quest.rank ? `rank-reveal-${quest.rank.toLowerCase()}` : ''}`}>
+            {quest.generatedArt || quest.sourceId ? <div className="quest-detail-art rank-aura" style={{ '--rank-color': rank.color }}><QuestArtwork quest={{ ...quest, text: quest.text || quest.title }} /></div> : quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
+            <div className="eyebrow">{t(`category.${quest.category}`)} · {quest.rank ? t('quest.fate', { rank: quest.rank }) : t('quest.daily')}</div>
+            <h2 dir="auto" lang={language}>{quest.title}</h2>
+            <p dir="auto" lang={language}>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
+            {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
+            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond</span><strong>+{quest.diamonds}</strong></div>}</div>
+            <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
         </Modal>
     );
 }
@@ -164,6 +167,7 @@ function BossModal({ progress, onClose, onTrial }) {
 }
 
 function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
+    const { t, language } = useI18n();
     const [stage, setStage] = useState('choose');
     const [drawnQuest, setDrawnQuest] = useState(null);
     const timer = useRef(null);
@@ -176,7 +180,7 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
     useEffect(() => () => clearTimeout(timer.current), []);
 
     const draw = () => {
-        const quest = generateQuest(level);
+        const quest = generateQuest(level, Math.random, language);
         const rank = getFateRank(quest.rank);
         if (!onSpend(rank.price)) return;
         setDrawnQuest(quest);
@@ -185,59 +189,52 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
     };
 
     const accept = () => onAccept({
+        ...drawnQuest,
         sourceId: drawnQuest.id,
         title: drawnQuest.text,
-        category: drawnQuest.category,
-        rank: drawnQuest.rank,
-        description: drawnQuest.description,
-        image: drawnQuest.image,
-        skillIds: drawnQuest.skillIds,
-        xp: drawnQuest.xp,
-        gold: drawnQuest.gold,
-        diamonds: revealedRank.diamonds,
-        duration: revealedRank.duration,
     });
 
     return (
-        <Modal onClose={onClose} label="Deck of Fate quest generator" className={`tarot-modal fate-generator-modal stage-${stage}`}>
+        <Modal onClose={onClose} label={t('fate.eyebrow')} className={`tarot-modal fate-generator-modal stage-${stage}`}>
             {stage === 'choose' && <>
-                <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">THE DECK OF FATE</div><h2>Your level shapes the unknown.</h2><p>Tap an active card to draw. Your level determines the possible ranks, then Physical, Mental, or Spiritual is rolled. You pay the revealed rank’s cost.</p></div>
-                <div className="fate-level-status"><span>LEVEL {level} DECK</span><strong>{availableRanks.map((item) => item.rank).join(' · ')}</strong><small>{minimumPrice === maximumPrice ? `${formatNumber(minimumPrice)} Gold per draw` : `${formatNumber(minimumPrice)}–${formatNumber(maximumPrice)} Gold per draw`}</small></div>
-                <div className="fate-rank-grid" role="group" aria-label={`Level ${level} rank probabilities`}>
-                    {fateRanks.map((item) => {
+                <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">{t('fate.eyebrow')}</div><h2>{t('fate.title')}</h2><p>{t('fate.description')}</p></div>
+                <div className="fate-level-status"><span>{t('fate.deck', { level })}</span><strong>{availableRanks.map((item) => item.rank).join(' · ')}</strong><small>{minimumPrice === maximumPrice ? `${formatNumber(minimumPrice)} ${t('fate.perDraw')}` : `${formatNumber(minimumPrice)}–${formatNumber(maximumPrice)} ${t('common.gold')}`}</small></div>
+                <div className="fate-rank-grid" role="group" aria-label={t('fate.deck', { level })}>
+                    {fateRanks.map((item, rankIndex) => {
                         const chance = probabilities.find((entry) => entry.rank === item.rank)?.chance || 0;
+                        const displayChance = Number(chance.toFixed(1));
                         return (
-                            <button type="button" key={item.rank} onClick={draw} disabled={!chance || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? '' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank} rank, ${chance}% chance, ${formatNumber(item.price)} Gold${chance ? '. Draw a level-weighted quest' : '. Outside current deck'}`}>
+                            <button type="button" key={item.rank} onClick={draw} disabled={!chance || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? 'is-unlocked' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank}, ${chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}`}>
                                 <span className="fate-rank-letter">{item.rank}</span>
-                                <strong>{item.label}</strong>
+                                <strong>{t(`rank.${item.rank}`)}</strong>
                                 <small><Coins size={11} /> {formatNumber(item.price)}</small>
-                                <em>{chance ? `${chance}% chance` : 'Outside current deck'}</em>
+                                <em>{chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}</em>
                             </button>
                         );
                     })}
                 </div>
                 <button className="button button-primary button-full fate-draw-action" onClick={draw} disabled={gold < minimumPrice}>
-                    <Sparkles size={16} /> {gold < minimumPrice ? `You need ${formatNumber(minimumPrice - gold)} more Gold` : `Draw a Fate card · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} Gold`}
+                    <Sparkles size={16} /> {gold < minimumPrice ? t('fate.needGold', { count: formatNumber(minimumPrice - gold) }) : `${t('fate.draw')} · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} ${t('common.gold')}`}
                 </button>
-                <p className="tarot-odds">Every card contains a real-world quest. Higher levels unlock more demanding ranks.</p>
+                <p className="tarot-odds">{t('fate.odds')}</p>
             </>}
             {stage === 'drawing' && <div className="tarot-drawing">
                 <div className="fate-flip-scene"><div className="fate-flip-card">
                     <div className={`fate-flip-face fate-flip-back fate-shape-${drawnQuest.rank.toLowerCase()}`}><AuraMark size={48} /><span>AURA</span><i /></div>
-                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{drawnQuest.category}</strong></div>
+                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{t(`category.${drawnQuest.category}`)}</strong></div>
                 </div></div>
-                <h2>The deck is turning…</h2><p>Your level has chosen a rank. Fate is choosing a path.</p>
+                <h2>{t('fate.turning')}</h2><p>{t('fate.choosing')}</p>
             </div>}
-            {stage === 'revealed' && <div className="tarot-revealed fate-quest-revealed">
-                <div className="fate-quest-art" style={{ '--rank-color': revealedRank.color }}><Image src={drawnQuest.image} alt={`${drawnQuest.category} ${drawnQuest.rank}-rank quest illustration`} width={640} height={400} unoptimized /></div>
-                <div className="eyebrow">YOUR {drawnQuest.rank}-RANK · {drawnQuest.category.toUpperCase()} QUEST</div>
-                <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{drawnQuest.category}</span></div>
-                <h2>{drawnQuest.text}</h2>
-                <p className="fate-quest-description">{drawnQuest.description}</p>
-                <div className="quest-skill-links" aria-label="Skills advanced by this quest"><span>ADVANCES</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{skillDefinitions.find((skill) => skill.id === id)?.name || id}</strong>)}</div></div>
-                <p className="fate-draw-note">Drawn from your Level {level} deck for {formatNumber(revealedRank.price)} Gold.</p>
+            {stage === 'revealed' && <div className={`tarot-revealed fate-quest-revealed rank-reveal-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}>
+                <div className="fate-quest-art rank-aura"><QuestArtwork quest={drawnQuest} /></div>
+                <div className="eyebrow">{t('fate.yourQuest', { rank: drawnQuest.rank })}</div>
+                <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{t(`category.${drawnQuest.category}`)}</span></div>
+                <h2 dir="auto" lang={language}>{drawnQuest.text}</h2>
+                <p className="fate-quest-description" dir="auto" lang={language}>{drawnQuest.description}</p>
+                <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>
+                <p className="fate-draw-note">{t('fate.drawnFrom', { level, price: formatNumber(revealedRank.price) })}</p>
                 <div className="revealed-rewards"><strong>+{formatNumber(drawnQuest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(drawnQuest.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
-                <button className="button button-primary button-full" onClick={accept}><Check size={16} /> Accept this quest</button>
+                <button className="button button-primary button-full" onClick={accept}><Check size={16} /> {t('common.accept')}</button>
             </div>}
         </Modal>
     );
@@ -383,6 +380,16 @@ export default function AuraApp() {
     const [modalData, setModalData] = useState(null);
     const [toast, setToast] = useState(null);
     const [settings, setSettings] = useState(defaultSettings);
+    const language = settings.language || 'en';
+    const languageRef = useRef(language);
+    const languageTouchedRef = useRef(false);
+    languageRef.current = language;
+    const t = useCallback((key, variables) => translate(language, key, variables), [language]);
+    const onLanguageChange = useCallback((nextLanguage) => {
+        languageTouchedRef.current = true;
+        setSettings((current) => ({ ...current, language: nextLanguage }));
+        setQuests((current) => current.map((quest) => localizeLifeQuest(quest, nextLanguage)));
+    }, []);
 
     const notify = useCallback((message, type = 'success') => setToast({ message, type, id: Date.now() }), []);
     const closeModal = useCallback(() => { setModal(null); setModalData(null); }, []);
@@ -449,7 +456,8 @@ export default function AuraApp() {
         const stored = readStoredGame(email);
         const returningPlayer = Boolean(stored?.profileComplete);
         const game = returningPlayer ? withDailyQuest(stored) : createNewGame(auth);
-        restoreGame(game);
+        const selectedLanguage = languageTouchedRef.current ? languageRef.current : game.settings?.language || languageRef.current;
+        restoreGame({ ...game, settings: { ...game.settings, language: selectedLanguage } });
         const nextSession = { email, provider: auth.provider };
         setSession(nextSession);
         writeSession(nextSession);
@@ -457,6 +465,16 @@ export default function AuraApp() {
         setProfileReady(true);
         setToast(null);
     }, [restoreGame]);
+
+    useEffect(() => {
+        const direction = language === 'ar' ? 'rtl' : 'ltr';
+        document.documentElement.lang = language;
+        document.documentElement.dir = direction;
+        return () => {
+            document.documentElement.lang = 'en';
+            document.documentElement.dir = 'ltr';
+        };
+    }, [language]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
@@ -795,14 +813,15 @@ export default function AuraApp() {
     }
 
     if (!profileReady) {
-        return <div className="aura-boot"><AuraMark size={48} /><strong>AURA</strong><span>PREPARING YOUR JOURNEY</span><i /></div>;
+        return <I18nProvider language={language} onLanguageChange={onLanguageChange}><div className="aura-boot"><AuraMark size={48} /><strong>AURA</strong><span>PREPARING YOUR JOURNEY</span><i /></div></I18nProvider>;
     }
 
     if (!session) {
-        return <AuthScreen onAuthenticate={startSession} />;
+        return <I18nProvider language={language} onLanguageChange={onLanguageChange}><AuthScreen onAuthenticate={startSession} /></I18nProvider>;
     }
 
     return (
+        <I18nProvider language={language} onLanguageChange={onLanguageChange}>
         <div className={`aura-app ${settings.particles ? '' : 'no-particles'} ${settings.reducedMotion ? 'reduce-motion' : ''} ${(initialOnboarding || modal === 'onboarding') ? 'onboarding-active' : ''}`}>
             <div className="ambient-grid" /><div className="ambient-glow" /><div className="ambient-particles"><i /><i /><i /><i /><i /><i /></div>
             {sidebarOpen && <button className="sidebar-dismiss" aria-label="Close navigation" onClick={() => setSidebarOpen(false)} />}
@@ -810,20 +829,21 @@ export default function AuraApp() {
                 <button className="brand" onClick={() => navigate('quests')} aria-label="Aura dashboard"><AuraMark /><span><strong>AURA</strong><small>REAL-LIFE RPG</small></span></button>
                 <button className="sidebar-close icon-button" onClick={() => setSidebarOpen(false)} aria-label="Close menu"><X size={18} /></button>
                 <nav className="sidebar-nav" aria-label="Main navigation">
-                    {navigation.map((group) => <div className="nav-group" key={group.label}><span className="nav-group-label">{group.label}</span>{group.items.map((item) => { const Icon = item.icon; return <button key={item.id} className={`nav-item ${screen === item.id ? 'active' : ''}`} onClick={() => navigate(item.id)}><Icon size={18} strokeWidth={1.6} /><span>{item.label}</span>{item.id === 'duel' && duel && <i className="nav-live-dot" />}</button>; })}</div>)}
+                    {navigation.map((group) => <div className="nav-group" key={group.id}><span className="nav-group-label">{t(`nav.${group.id}`)}</span>{group.items.map((item) => { const Icon = item.icon; return <button key={item.id} className={`nav-item ${screen === item.id ? 'active' : ''}`} onClick={() => navigate(item.id)}><Icon size={18} strokeWidth={1.6} /><span>{t(`nav.${item.id}`)}</span>{item.id === 'duel' && duel && <i className="nav-live-dot" />}</button>; })}</div>)}
                 </nav>
                 <div className="sidebar-bottom">
-                    <button className="sidebar-fate-card" onClick={() => openModal('tarot')}><span className="fate-icon"><Sparkles size={19} /></span><span><strong>Draw your fate</strong><small>Mystery quests await</small></span><ChevronRight size={15} /></button>
-                    <button className={`nav-item ${screen === 'settings' ? 'active' : ''}`} onClick={() => navigate('settings')}><Settings size={18} strokeWidth={1.6} /><span>Settings</span></button>
-                    <div className="sidebar-profile"><Avatar name={player.name} image={activeCharacter.image} size="small" /><div><strong>{player.name}</strong><span>Level {level} · {getRank(level)}</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
+                    <button className="sidebar-fate-card" onClick={() => openModal('tarot')}><span className="fate-icon"><Sparkles size={19} /></span><span><strong>{t('common.drawCard')}</strong><small>{t('dashboard.drawMystery')}</small></span><ChevronRight size={15} /></button>
+                    <button className={`nav-item ${screen === 'settings' ? 'active' : ''}`} onClick={() => navigate('settings')}><Settings size={18} strokeWidth={1.6} /><span>{t('nav.settings')}</span></button>
+                    <div className="sidebar-profile"><Avatar name={player.name} image={activeCharacter.image} size="small" /><div><strong>{player.name}</strong><span>{t('common.level')} {level} · {getRank(level)}</span></div><button className="icon-button" onClick={() => navigate('character')} aria-label="Open profile"><ChevronRight size={15} /></button></div>
                 </div>
             </aside>
 
             <div className="app-shell">
                 <header className="topbar">
-                    <div className="topbar-left"><button className="mobile-menu icon-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={21} /></button><div className="topbar-breadcrumb"><span>AURA</span><ChevronRight size={12} /><strong>{screenLabels[screen]}</strong></div></div>
+                    <div className="topbar-left"><button className="mobile-menu icon-button" onClick={() => setSidebarOpen(true)} aria-label="Open navigation"><Menu size={21} /></button><div className="topbar-breadcrumb"><span>AURA</span><ChevronRight size={12} /><strong>{t(`nav.${screen}`)}</strong></div></div>
                     <div className="topbar-right">
-                        <div className="streak-chip" title={`${streak} day streak`}><Flame size={16} fill="currentColor" /><strong>{streak}</strong><span>day streak</span></div>
+                        <LanguageSwitcher compact />
+                        <div className="streak-chip" title={`${streak} ${t('common.dayStreak')}`}><Flame size={16} fill="currentColor" /><strong>{streak}</strong><span>{t('common.dayStreak')}</span></div>
                         <div className="topbar-currencies"><Currency value={gold} />{devMode && <button className="convert-button" onClick={() => runAdminAction('convert')}>Convert</button>}<Currency type="diamonds" value={diamonds} /></div>
                         <div className="topbar-divider" />
                         <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label={`${unread} unread notifications`}><Bell size={19} strokeWidth={1.6} />{unread > 0 && <span>{unread}</span>}</button>
@@ -846,5 +866,6 @@ export default function AuraApp() {
 
             {toast && <div className={`toast toast-${toast.type}`} role="status" key={toast.id}><span>{toast.type === 'error' ? <CircleAlert size={18} /> : toast.type === 'neutral' ? <Bell size={18} /> : <Check size={18} />}</span><p>{toast.message}</p><button onClick={() => setToast(null)} aria-label="Dismiss notification"><X size={15} /></button></div>}
         </div>
+        </I18nProvider>
     );
 }

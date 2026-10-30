@@ -1297,3 +1297,85 @@ a { color: inherit; }
     .onboarding-content { height: auto; min-height: 0; }
     .onboarding-form-wrap { margin-top: 0; margin-bottom: 0; }
 }
+
+/* AURA 1.11 — generated quest artwork, language selection, and rank auras */
+.quest-generated-art { display: block; width: 100%; height: 100%; }
+.codex-card-art .quest-generated-art { transition: transform .45s ease, filter .3s ease; }
+.codex-card:hover .codex-card-art .quest-generated-art { transform: scale(1.018); filter: saturate(1.12); }
+.quest-thumbnail .quest-generated-art { width: 100%; height: 100%; }
+.quest-detail-art .quest-generated-art, .fate-quest-art .quest-generated-art { width: 100%; height: auto; aspect-ratio: 8 / 5; }
+.language-switcher { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); }
+.language-switcher > span { color: var(--text-soft); font-size: 11px; font-weight: 600; }
+.language-switcher select { min-height: 39px; padding: 0 30px 0 12px; border: 1px solid rgba(255,193,116,.18); border-radius: 6px; background: #15181f; color: var(--text-soft); font-size: 11px; cursor: pointer; }
+.language-switcher.is-compact select { min-width: 92px; min-height: 31px; padding: 0 7px; font-size: 9px; }
+.language-setting-row .language-switcher { flex-shrink: 0; }
+.auth-language { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+.quest-filter { overflow-x: auto; scrollbar-width: thin; }
+.quest-filter button { flex: 0 0 auto; white-space: nowrap; }
+.category-picker { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.codex-card-copy h2, .fate-quest-revealed h2, .quest-detail-modal h2 { overflow-wrap: anywhere; }
+.codex-card-copy h2 { font-size: 15px; line-height: 1.55; }
+.fate-quest-revealed h2 { font-size: 21px; line-height: 1.5; }
+.fate-quest-description, .quest-detail-modal > p { font-size: 11px !important; line-height: 1.8 !important; }
+.rank-aura { position: relative; isolation: isolate; overflow: visible !important; border-color: color-mix(in srgb, var(--rank-color) 58%, transparent) !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--rank-color) 12%, transparent), 0 0 28px color-mix(in srgb, var(--rank-color) 24%, transparent), 0 0 70px color-mix(in srgb, var(--rank-color) 10%, transparent) !important; animation: rank-card-reveal .65s cubic-bezier(.2,.8,.2,1) both; }
+.rank-aura::before { content: ''; position: absolute; inset: -12px; z-index: -1; border-radius: 22px; pointer-events: none; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--rank-color) 34%, transparent), transparent 68%); filter: blur(13px); animation: rank-aura-breathe 2.8s ease-in-out infinite alternate; }
+.rank-aura::after { content: ''; position: absolute; inset: -4px; z-index: 2; border: 1px solid color-mix(in srgb, var(--rank-color) 32%, transparent); border-radius: 14px; pointer-events: none; box-shadow: inset 0 0 18px color-mix(in srgb, var(--rank-color) 8%, transparent); }
+.fate-quest-revealed { position: relative; padding: 18px; border: 1px solid color-mix(in srgb, var(--rank-color) 25%, transparent); border-radius: 15px; background: radial-gradient(circle at 50% 0,color-mix(in srgb,var(--rank-color) 8%,transparent),transparent 52%); }
+.fate-quest-revealed .fate-quest-art { margin-bottom: 22px; }
+.fate-quest-revealed .revealed-rewards { margin-top: 15px; }
+.codex-detail-modal .quest-detail-art { margin-top: 8px; }
+@keyframes rank-card-reveal { from { opacity: .25; transform: translateY(8px) scale(.965); filter: brightness(.7); } to { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); } }
+@keyframes rank-aura-breathe { from { opacity: .48; transform: scale(.97); } to { opacity: .95; transform: scale(1.035); } }
+
+/* Right-to-left layout is structural, not only a text translation. */
+html[dir="rtl"] body { font-family: Arial, sans-serif; }
+html[dir="rtl"] .screen-header h1,
+html[dir="rtl"] .modal-card h2,
+html[dir="rtl"] .codex-card-copy h2,
+html[dir="rtl"] .quest-info h3,
+html[dir="rtl"] .auth-form-wrap > h1,
+html[dir="rtl"] .onboarding-visual-copy h1 { font-family: Arial, sans-serif; letter-spacing: 0; }
+html[dir="rtl"] .sidebar { inset: 0 0 0 auto; border-right: 0; border-left: 1px solid var(--border); }
+html[dir="rtl"] .app-shell { margin-left: 0; margin-right: 232px; }
+html[dir="rtl"] .brand,
+html[dir="rtl"] .nav-item,
+html[dir="rtl"] .sidebar-fate-card,
+html[dir="rtl"] .auth-provider { text-align: right; }
+html[dir="rtl"] .nav-item.active::before { left: auto; right: -1px; }
+html[dir="rtl"] .nav-live-dot { margin-left: 0; margin-right: auto; }
+html[dir="rtl"] .streak-chip { padding-right: 0; padding-left: 14px; border-right: 0; border-left: 1px solid var(--border); }
+html[dir="rtl"] .modal-close { right: auto; left: 13px; }
+html[dir="rtl"] .notification-button > span { right: auto; left: -1px; }
+html[dir="rtl"] .quest-fab { right: auto; left: 28px; }
+html[dir="rtl"] .auth-content { border-left: 0; border-right: 1px solid var(--line); }
+html[dir="rtl"] .auth-input > svg { left: auto; right: 14px; }
+html[dir="rtl"] .auth-input input { padding: 0 42px 0 43px; }
+html[dir="rtl"] .auth-input > button { right: auto; left: 7px; }
+html[dir="rtl"] .quest-info,
+html[dir="rtl"] .codex-card-copy,
+html[dir="rtl"] .setting-row > div,
+html[dir="rtl"] .screen-header,
+html[dir="rtl"] .penalty-copy { text-align: right; }
+html[dir="rtl"] .language-switcher select { padding: 0 12px 0 30px; }
+html[dir="rtl"] .language-switcher.is-compact select { padding: 0 7px; }
+@media (min-width: 1500px) { html[dir="rtl"] .app-shell { margin-right: 248px; } }
+@media (max-width: 1180px) and (min-width: 961px) { html[dir="rtl"] .app-shell { margin-right: 210px; } }
+@media (max-width: 960px) {
+    html[dir="rtl"] .app-shell { margin-right: 0; }
+    html[dir="rtl"] .sidebar { transform: translateX(100%); box-shadow: -20px 0 60px rgba(0,0,0,.4); }
+    html[dir="rtl"] .sidebar.is-open { transform: translateX(0); }
+    html[dir="rtl"] .sidebar-close { right: auto; left: 13px; }
+    html[dir="rtl"] .mobile-menu { margin-right: 0; margin-left: 12px; }
+}
+@media (max-width: 760px) {
+    .language-switcher.is-compact select { min-width: 78px; max-width: 90px; }
+    .topbar-right { gap: 7px; }
+    .category-picker { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .fate-quest-revealed { padding: 12px; }
+}
+@media (max-width: 560px) {
+    .topbar-right > .language-switcher > svg { display: none; }
+    .language-switcher.is-compact select { min-width: 70px; max-width: 76px; font-size: 8px; }
+    .codex-card-copy h2 { font-size: 14px; }
+    .fate-quest-revealed h2 { font-size: 18px; }
+}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { ArrowRight, Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
+import { LanguageSwitcher, useI18n } from './i18n';
 
 function AuthMark({ size = 38 }) {
     return (
@@ -21,6 +22,7 @@ function nameFromEmail(email) {
 }
 
 export default function AuthScreen({ onAuthenticate }) {
+    const { t } = useI18n();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -37,11 +39,11 @@ export default function AuthScreen({ onAuthenticate }) {
         event.preventDefault();
         const normalized = email.trim().toLowerCase();
         if (!/^\S+@\S+\.\S+$/.test(normalized)) {
-            setError('Enter a valid email address to continue.');
+            setError(t('auth.validEmail'));
             return;
         }
         if (password.length < 6) {
-            setError('Your password must contain at least 6 characters.');
+            setError(t('auth.passwordLength'));
             return;
         }
         authenticate('email', normalized, nameFromEmail(normalized));
@@ -54,9 +56,9 @@ export default function AuthScreen({ onAuthenticate }) {
                 <div className="onboarding-visual-shade" />
                 <div className="onboarding-visual-brand"><AuthMark size={38} /><span>AURA</span></div>
                 <div className="onboarding-visual-copy">
-                    <div className="eyebrow">YOUR REAL-LIFE OPERATING SYSTEM</div>
-                    <h1>The quest is real.<br />The legend is you.</h1>
-                    <p>Turn daily discipline into an epic journey. Your progress begins the moment you decide to show up.</p>
+                    <div className="eyebrow">{t('auth.eyebrow')}</div>
+                    <h1>{t('auth.heroTitle')}</h1>
+                    <p>{t('auth.heroDescription')}</p>
                     <div className="auth-benefits">
                         <span><Check size={13} /> Daily real-world quests</span>
                         <span><Check size={13} /> Character progression</span>
@@ -66,10 +68,11 @@ export default function AuthScreen({ onAuthenticate }) {
             </div>
             <main className="auth-content">
                 <div className="auth-form-wrap">
+                    <div className="auth-language"><LanguageSwitcher /></div>
                     <div className="auth-mobile-brand"><AuthMark size={31} /><span>AURA</span></div>
-                    <div className="eyebrow">WELCOME, CHALLENGER</div>
-                    <h1>Enter your Aura.</h1>
-                    <p>Log in to begin your journey and receive your first daily quest.</p>
+                    <div className="eyebrow">{t('auth.welcome')}</div>
+                    <h1>{t('auth.title')}</h1>
+                    <p>{t('auth.description')}</p>
 
                     <div className="auth-provider-stack">
                         <button className="auth-provider google" disabled={!!busy} onClick={() => authenticate('google', 'google.player@aura.demo', 'Aura Player')}>
@@ -84,20 +87,20 @@ export default function AuthScreen({ onAuthenticate }) {
                         </button>
                     </div>
 
-                    <div className="auth-divider"><i /><span>OR CONTINUE WITH EMAIL</span><i /></div>
+                    <div className="auth-divider"><i /><span>{t('auth.orEmail')}</span><i /></div>
                     <form className="aura-form auth-email-form" onSubmit={submitEmail} noValidate>
                         <label>
-                            <span>Email address</span>
+                            <span>{t('auth.email')}</span>
                             <div className="auth-input"><Mail size={16} /><input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></div>
                         </label>
                         <label>
-                            <span>Password</span>
-                            <div className="auth-input"><LockKeyhole size={16} /><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 6 characters" required /><button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
+                            <span>{t('auth.password')}</span>
+                            <div className="auth-input"><LockKeyhole size={16} /><input type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder={t('auth.passwordPlaceholder')} required /><button type="button" onClick={() => setShowPassword((current) => !current)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
                         </label>
                         {error && <div className="auth-error" role="alert">{error}</div>}
-                        <button className="button button-primary button-full auth-submit" type="submit" disabled={!!busy}>{busy === 'email' ? 'Opening your Aura…' : 'Log in with email'}<ArrowRight size={16} /></button>
+                        <button className="button button-primary button-full auth-submit" type="submit" disabled={!!busy}>{busy === 'email' ? '…' : t('auth.login')}<ArrowRight size={16} /></button>
                     </form>
-                    <div className="auth-local-note"><ShieldCheck size={14} /><span>Preview authentication · your session and progress are stored on this device.</span></div>
+                    <div className="auth-local-note"><ShieldCheck size={14} /><span>{t('auth.local')}</span></div>
                     <p className="auth-terms">By continuing, you choose to show up for yourself—one real quest at a time.</p>
                 </div>
             </main>

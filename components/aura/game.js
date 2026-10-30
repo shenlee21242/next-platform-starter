@@ -11,6 +11,7 @@ export const defaultPlayer = {
 };
 
 export const defaultSettings = {
+    language: 'en',
     sound: true,
     particles: true,
     notifications: true,

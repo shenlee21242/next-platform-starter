@@ -51,6 +51,7 @@ import { friends, skills, storeItems, XP_TO_LEVEL, getRank } from './data';
 import { characters, getCharacter } from './characters';
 import CharacterLoreModal from './character-lore';
 import CharacterRoster from './character-roster';
+import { LanguageSwitcher, useI18n } from './i18n';
 import {
     Avatar,
     CategoryIcon,
@@ -486,33 +487,35 @@ function SettingToggle({ settings, onSettingChange, setting, title, description 
 }
 
 export function SettingsScreen({ settings, onSettingChange, onOpenModal, player, session, onLogout }) {
+    const { t } = useI18n();
     return (
         <div className="screen settings-screen">
-            <ScreenHeader eyebrow="MAKE AURA YOURS" title="Settings" description="Tune the system. Keep the discipline." />
+            <ScreenHeader eyebrow={t('settings.eyebrow')} title={t('settings.title')} description={t('settings.description')} />
             <div className="settings-layout">
                 <div>
                     <section className="panel settings-section">
-                        <PanelTitle title="Experience" eyebrow="INTERFACE & AUDIO" />
-                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="sound" title="Sound effects" description="Subtle audio for rewards and interactions." />
-                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="particles" title="Ambient particles" description="Floating dust and constellation effects." />
-                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="notifications" title="Quest reminders" description="Deadlines, gifts, and duel updates." />
-                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="reducedMotion" title="Reduce motion" description="Minimize transitions and celebration effects." />
+                        <PanelTitle title={t('settings.experience')} eyebrow={t('settings.interface')} />
+                        <div className="setting-row language-setting-row"><div><strong>{t('common.language')}</strong><p>{t('settings.languageDescription')}</p></div><LanguageSwitcher compact /></div>
+                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="sound" title={t('settings.sound')} description={t('settings.soundDescription')} />
+                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="particles" title={t('settings.particles')} description={t('settings.particlesDescription')} />
+                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="notifications" title={t('settings.notifications')} description={t('settings.notificationsDescription')} />
+                        <SettingToggle settings={settings} onSettingChange={onSettingChange} setting="reducedMotion" title={t('settings.reducedMotion')} description={t('settings.reducedMotionDescription')} />
                     </section>
                     <section className="panel settings-section">
-                        <PanelTitle title="Discipline" eyebrow="DIFFICULTY" />
-                        <div className="setting-row"><div><strong>Penalty severity</strong><p>Applied when daily quests expire incomplete.</p></div><select value={settings.penalty} onChange={(event) => onSettingChange('penalty', event.target.value)}><option>Forgiving</option><option>Standard</option><option>Relentless</option></select></div>
-                        <div className="setting-row"><div><strong>Daily reset</strong><p>Your quest day resets at midnight.</p></div><span className="setting-static"><Clock3 size={15} /> 00:00 local</span></div>
+                        <PanelTitle title={t('settings.discipline')} eyebrow={t('settings.difficulty')} />
+                        <div className="setting-row"><div><strong>{t('settings.penalty')}</strong><p>{t('settings.penaltyDescription')}</p></div><select value={settings.penalty} onChange={(event) => onSettingChange('penalty', event.target.value)}><option>Forgiving</option><option>Standard</option><option>Relentless</option></select></div>
+                        <div className="setting-row"><div><strong>{t('settings.dailyReset')}</strong><p>{t('settings.resetDescription')}</p></div><span className="setting-static"><Clock3 size={15} /> 00:00</span></div>
                     </section>
                 </div>
                 <aside>
                     <section className="panel settings-section account-card">
-                        <PanelTitle title="Account" eyebrow="PLAYER RECORD" />
-                        <div className="account-profile"><Avatar name={player.name} image={getCharacter(player.characterId).image} size="large" /><div><strong>{player.name}</strong><span>{session?.email}</span><small>Signed in with {session?.provider}</small></div></div>
+                        <PanelTitle title={t('settings.account')} eyebrow={t('settings.playerRecord')} />
+                        <div className="account-profile"><Avatar name={player.name} image={getCharacter(player.characterId).image} size="large" /><div><strong>{player.name}</strong><span>{session?.email}</span><small>{session?.provider}</small></div></div>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><Settings2 size={15} /> Edit player details</button>
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
-                        <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> Sign out</button>
+                        <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> {t('settings.signOut')}</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.10</strong><p>Progress is stored locally in this interactive preview.</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.11</strong><p>{t('settings.local')}</p></div></section>
                 </aside>
             </div>
         </div>

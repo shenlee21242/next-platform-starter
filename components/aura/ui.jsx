@@ -11,7 +11,10 @@ import {
     Coins,
     Diamond,
     Dumbbell,
+    HeartPulse,
+    HeartHandshake,
     MoonStar,
+    Rocket,
     Sparkles,
     X,
 } from 'lucide-react';
@@ -38,7 +41,10 @@ export function formatShortClock(totalSeconds) {
 export function CategoryIcon({ category, size = 18, ...props }) {
     if (category === 'Physical') return <Dumbbell size={size} strokeWidth={1.7} {...props} />;
     if (category === 'Mental') return <Brain size={size} strokeWidth={1.7} {...props} />;
-    if (category === 'Spiritual') return <MoonStar size={size} strokeWidth={1.7} {...props} />;
+    if (category === 'Religious' || category === 'Spiritual') return <MoonStar size={size} strokeWidth={1.7} {...props} />;
+    if (category === 'Psychological') return <HeartPulse size={size} strokeWidth={1.7} {...props} />;
+    if (category === 'SelfDevelopment') return <Rocket size={size} strokeWidth={1.7} {...props} />;
+    if (category === 'Social') return <HeartHandshake size={size} strokeWidth={1.7} {...props} />;
     return <Sparkles size={size} strokeWidth={1.7} {...props} />;
 }
 

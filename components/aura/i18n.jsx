@@ -1,0 +1,208 @@
+'use client';
+
+import { createContext, useContext, useMemo } from 'react';
+import { Globe } from 'lucide-react';
+
+const m = (en, ar, fr, es) => [en, ar, fr, es];
+const languageIndex = { en: 0, ar: 1, fr: 2, es: 3 };
+export const languageOptions = [
+    { id: 'en', label: 'English', dir: 'ltr' },
+    { id: 'ar', label: 'العربية', dir: 'rtl' },
+    { id: 'fr', label: 'Français', dir: 'ltr' },
+    { id: 'es', label: 'Español', dir: 'ltr' },
+];
+
+const messages = {
+    'nav.journey': m('YOUR JOURNEY', 'رحلتك', 'VOTRE PARCOURS', 'TU RECORRIDO'),
+    'nav.circle': m('YOUR CIRCLE', 'دائرتك', 'VOTRE CERCLE', 'TU CÍRCULO'),
+    'nav.quests': m('Quest dashboard', 'لوحة المهام', 'Tableau des quêtes', 'Panel de misiones'),
+    'nav.codex': m('Quest Codex', 'موسوعة المهام', 'Codex des quêtes', 'Códice de misiones'),
+    'nav.skills': m('Skill tree', 'شجرة المهارات', 'Arbre de compétences', 'Árbol de habilidades'),
+    'nav.character': m('Character', 'الشخصية', 'Personnage', 'Personaje'),
+    'nav.store': m('Imperial Vault', 'الخزينة الإمبراطورية', 'Coffre impérial', 'Cofre imperial'),
+    'nav.focus': m('Focus Sanctuary', 'ملاذ التركيز', 'Sanctuaire de concentration', 'Santuario de concentración'),
+    'nav.social': m('Social hub', 'المركز الاجتماعي', 'Centre social', 'Centro social'),
+    'nav.leaderboard': m('Leaderboard', 'لوحة المتصدرين', 'Classement', 'Clasificación'),
+    'nav.duel': m('Duel arena', 'ساحة النزال', 'Arène de duel', 'Arena de duelo'),
+    'nav.settings': m('Settings', 'الإعدادات', 'Paramètres', 'Ajustes'),
+    'nav.notifications': m('Notifications', 'التنبيهات', 'Notifications', 'Notificaciones'),
+    'common.language': m('Language', 'اللغة', 'Langue', 'Idioma'),
+    'common.level': m('Level', 'المستوى', 'Niveau', 'Nivel'),
+    'common.gold': m('Gold', 'ذهب', 'Or', 'Oro'),
+    'common.xp': m('XP', 'نقطة خبرة', 'XP', 'XP'),
+    'common.all': m('All', 'الكل', 'Tous', 'Todos'),
+    'common.close': m('Close', 'إغلاق', 'Fermer', 'Cerrar'),
+    'common.search': m('Search', 'بحث', 'Rechercher', 'Buscar'),
+    'common.reset': m('Reset', 'إعادة ضبط', 'Réinitialiser', 'Restablecer'),
+    'common.previous': m('Previous', 'السابق', 'Précédent', 'Anterior'),
+    'common.next': m('Next', 'التالي', 'Suivant', 'Siguiente'),
+    'common.newQuest': m('New quest', 'مهمة جديدة', 'Nouvelle quête', 'Nueva misión'),
+    'common.minutesShort': m('min', 'دقيقة', 'min', 'min'),
+    'common.dayStreak': m('day streak', 'يوم متتالٍ', 'jours consécutifs', 'días consecutivos'),
+    'common.completed': m('completed', 'مكتملة', 'terminées', 'completadas'),
+    'common.drawCard': m('Draw a Fate card', 'اسحب بطاقة قدر', 'Tirer une carte du destin', 'Robar una carta del destino'),
+    'common.accept': m('Accept this quest', 'اقبل هذه المهمة', 'Accepter cette quête', 'Aceptar esta misión'),
+    'common.back': m('Back', 'رجوع', 'Retour', 'Volver'),
+    'category.Religious': m('Religious', 'دينية', 'Religieuse', 'Religiosa'),
+    'category.Psychological': m('Psychological', 'نفسية', 'Psychologique', 'Psicológica'),
+    'category.Physical': m('Physical', 'جسدية', 'Physique', 'Física'),
+    'category.Mental': m('Mental', 'عقلية', 'Cognitive', 'Cognitiva'),
+    'category.SelfDevelopment': m('Self-development', 'تطوير الذات', 'Développement personnel', 'Desarrollo personal'),
+    'category.Social': m('Social', 'اجتماعية', 'Sociale', 'Social'),
+    'category.Spiritual': m('Spiritual', 'روحية', 'Spirituelle', 'Espiritual'),
+    'rank.F': m('Initiate', 'المبتدئ', 'Initié', 'Iniciado'),
+    'rank.E': m('Novice', 'المستكشف', 'Novice', 'Novato'),
+    'rank.D': m('Apprentice', 'المتدرب', 'Apprenti', 'Aprendiz'),
+    'rank.C': m('Adept', 'الممارس', 'Adepte', 'Adepto'),
+    'rank.B': m('Expert', 'المتقدم', 'Expert', 'Experto'),
+    'rank.A': m('Master', 'المتقن', 'Maître', 'Maestro'),
+    'rank.S': m('Grandmaster', 'الخبير', 'Grand maître', 'Gran maestro'),
+    'rank.SS': m('Heroic', 'البطل', 'Héroïque', 'Heroico'),
+    'rank.SSS': m('Legendary', 'الأسطوري', 'Légendaire', 'Legendario'),
+    'skill.discipline': m('Discipline', 'الانضباط', 'Discipline', 'Disciplina'),
+    'skill.iron-body': m('Iron Body', 'الجسد الحديدي', 'Corps de fer', 'Cuerpo de hierro'),
+    'skill.deep-work': m('Deep Work', 'العمل العميق', 'Travail profond', 'Trabajo profundo'),
+    'skill.golden-touch': m('Golden Touch', 'اللمسة الذهبية', 'Touche dorée', 'Toque dorado'),
+    'skill.second-wind': m('Second Wind', 'النَفَس الثاني', 'Second souffle', 'Segundo aliento'),
+    'skill.inner-peace': m('Inner Peace', 'السلام الداخلي', 'Paix intérieure', 'Paz interior'),
+    'skill.swift-strike': m('Swift Strike', 'الضربة السريعة', 'Frappe rapide', 'Golpe rápido'),
+    'skill.mind-palace': m('Mind Palace', 'قصر الذهن', 'Palais mental', 'Palacio mental'),
+    'dashboard.eyebrow': m('YOUR DAILY ADVENTURE', 'مغامرتك اليومية', 'VOTRE AVENTURE QUOTIDIENNE', 'TU AVENTURA DIARIA'),
+    'dashboard.title': m('Ready for today’s quests?', 'هل أنت مستعد لمهام اليوم؟', 'Prêt pour les quêtes du jour ?', '¿Listo para las misiones de hoy?'),
+    'dashboard.description': m('Small victories. Legendary outcomes.', 'انتصارات صغيرة. نتائج أسطورية.', 'Petites victoires. Résultats légendaires.', 'Pequeñas victorias. Resultados legendarios.'),
+    'dashboard.dailyQuests': m('Daily quests', 'مهام اليوم', 'Quêtes du jour', 'Misiones diarias'),
+    'dashboard.noQuests': m('No quests yet', 'لا توجد مهام بعد', 'Aucune quête', 'Aún no hay misiones'),
+    'dashboard.addAnother': m('Add another quest', 'أضف مهمة أخرى', 'Ajouter une autre quête', 'Añadir otra misión'),
+    'dashboard.addFirst': m('Add your first quest', 'أضف مهمتك الأولى', 'Ajoutez votre première quête', 'Añade tu primera misión'),
+    'dashboard.createQuest': m('Create a quest', 'أنشئ مهمة', 'Créer une quête', 'Crear una misión'),
+    'dashboard.emptyTitle': m('Your adventure starts here', 'مغامرتك تبدأ هنا', 'Votre aventure commence ici', 'Tu aventura empieza aquí'),
+    'dashboard.emptyDescription': m('Add your first quest and turn today into progress.', 'أضف مهمتك الأولى وحوّل اليوم إلى تقدم.', 'Ajoutez une première quête et transformez la journée en progrès.', 'Añade tu primera misión y convierte hoy en progreso.'),
+    'dashboard.drawMystery': m('Draw a mystery quest', 'اسحب مهمة غامضة', 'Tirez une quête mystère', 'Roba una misión misteriosa'),
+    'dashboard.unknown': m('THE UNKNOWN AWAITS', 'المجهول بانتظارك', 'L’INCONNU VOUS ATTEND', 'LO DESCONOCIDO ESPERA'),
+    'dashboard.fromGold': m('From 50 Gold', 'ابتداءً من 50 ذهبًا', 'Dès 50 pièces d’or', 'Desde 50 de oro'),
+    'dashboard.timeRemaining': m('TIME REMAINING', 'الوقت المتبقي', 'TEMPS RESTANT', 'TIEMPO RESTANTE'),
+    'dashboard.streakWarning': m('Your streak is on the line.', 'سلسلتك اليومية على المحك.', 'Votre série est en jeu.', 'Tu racha está en juego.'),
+    'dashboard.remaining': m('{count} remaining quests before the day ends', '{count} مهام متبقية قبل نهاية اليوم', '{count} quêtes restantes avant la fin du jour', '{count} misiones restantes antes de terminar el día'),
+    'dashboard.missedPenalty': m('MISSED PENALTY', 'غرامة الإخفاق', 'PÉNALITÉ D’ÉCHEC', 'PENALIZACIÓN POR FALLO'),
+    'codex.eyebrow': m('THE COMPLETE REAL-WORLD ARCHIVE', 'أرشيف الحياة الواقعية الكامل', 'LES ARCHIVES COMPLÈTES DU MONDE RÉEL', 'EL ARCHIVO COMPLETO DEL MUNDO REAL'),
+    'codex.title': m('Quest Codex', 'موسوعة المهام', 'Codex des quêtes', 'Códice de misiones'),
+    'codex.description': m('Explore 22,500 quests across six life paths. Your level-weighted Deck decides which quest you accept.', 'استكشف 22,500 مهمة في ستة مسارات للحياة. مجموعة القدر المرجحة بمستواك تحدد المهمة التي تقبلها.', 'Explorez 22 500 quêtes sur six voies. Votre paquet pondéré par niveau décide de la quête acceptée.', 'Explora 22.500 misiones en seis caminos. Tu mazo ponderado por nivel decide qué misión aceptas.'),
+    'codex.searchPlaceholder': m('Search by quest, source, or ID…', 'ابحث بالمهمة أو المصدر أو المعرّف…', 'Rechercher par quête, source ou identifiant…', 'Buscar por misión, fuente o ID…'),
+    'codex.searchLabel': m('Search all 22,500 quests', 'ابحث في جميع المهام الـ22,500', 'Rechercher les 22 500 quêtes', 'Buscar las 22.500 misiones'),
+    'codex.path': m('Path', 'المسار', 'Voie', 'Camino'),
+    'codex.rank': m('Rank', 'الرتبة', 'Rang', 'Rango'),
+    'codex.skill': m('Linked skill', 'المهارة المرتبطة', 'Compétence liée', 'Habilidad vinculada'),
+    'codex.entries': m('entries', 'مهمة', 'entrées', 'entradas'),
+    'codex.fromTotal': m('from 22,500 quests', 'من أصل 22,500 مهمة', 'sur 22 500 quêtes', 'de 22.500 misiones'),
+    'codex.resetFilters': m('Reset filters', 'إعادة ضبط المرشحات', 'Réinitialiser les filtres', 'Restablecer filtros'),
+    'codex.page': m('Page', 'الصفحة', 'Page', 'Página'),
+    'codex.of': m('of', 'من', 'sur', 'de'),
+    'codex.noResults': m('No quests found', 'لم يتم العثور على مهام', 'Aucune quête trouvée', 'No se encontraron misiones'),
+    'codex.noResultsDescription': m('Try a different ID, path, rank, source, or linked skill.', 'جرّب معرّفًا أو مسارًا أو رتبة أو مصدرًا أو مهارة أخرى.', 'Essayez un autre identifiant, rang, source ou chemin.', 'Prueba otro ID, camino, rango, fuente o habilidad.'),
+    'codex.advances': m('ADVANCES', 'تطوّر', 'DÉVELOPPE', 'DESARROLLA'),
+    'codex.experience': m('Experience', 'الخبرة', 'Expérience', 'Experiencia'),
+    'codex.goldReward': m('Gold reward', 'مكافأة الذهب', 'Récompense en or', 'Recompensa de oro'),
+    'codex.baseAction': m('Base action', 'العمل الأساسي', 'Action de base', 'Acción base'),
+    'codex.reference': m('Reference codes', 'رموز المراجع', 'Codes de référence', 'Códigos de referencia'),
+    'codex.note': m('Codex entries are for exploration. Quests are accepted through your level-weighted Deck of Fate.', 'المدخل هنا للاستكشاف فقط. تُقبل المهام عبر مجموعة القدر المرجحة بمستواك.', 'Ces entrées servent à explorer. Les quêtes sont acceptées via votre paquet du destin.', 'Estas entradas son para explorar. Las misiones se aceptan mediante tu mazo del destino.'),
+    'codex.openDeck': m('Open the Deck of Fate', 'افتح مجموعة القدر', 'Ouvrir le paquet du destin', 'Abrir el mazo del destino'),
+    'quest.daily': m('DAILY QUEST', 'مهمة يومية', 'QUÊTE QUOTIDIENNE', 'MISIÓN DIARIA'),
+    'quest.fate': m('{rank}-RANK FATE QUEST', 'مهمة قدر من الرتبة {rank}', 'QUÊTE DU DESTIN · RANG {rank}', 'MISIÓN DEL DESTINO · RANGO {rank}'),
+    'quest.estimatedTime': m('Estimated time', 'الوقت التقديري', 'Durée estimée', 'Tiempo estimado'),
+    'quest.markComplete': m('Mark quest complete', 'تحديد المهمة كمكتملة', 'Marquer la quête comme terminée', 'Marcar misión como completada'),
+    'quest.markIncomplete': m('Mark as incomplete', 'تحديد كغير مكتملة', 'Marquer comme inachevée', 'Marcar como incompleta'),
+    'fate.eyebrow': m('THE DECK OF FATE', 'مجموعة القدر', 'LE PAQUET DU DESTIN', 'EL MAZO DEL DESTINO'),
+    'fate.title': m('Your level shapes the unknown.', 'مستواك يشكّل المجهول.', 'Votre niveau façonne l’inconnu.', 'Tu nivel da forma a lo desconocido.'),
+    'fate.description': m('Draw from the ranks unlocked by your level. Six life paths are rolled evenly, and you pay the revealed rank’s cost.', 'اسحب من الرتب التي فتحها مستواك. تُختار مسارات الحياة الستة بالتساوي، وتدفع تكلفة الرتبة الظاهرة.', 'Tirez parmi les rangs débloqués. Les six voies ont une chance égale et vous payez le rang révélé.', 'Roba entre los rangos desbloqueados. Los seis caminos tienen la misma probabilidad y pagas el rango revelado.'),
+    'fate.deck': m('LEVEL {level} DECK', 'مجموعة المستوى {level}', 'PAQUET · NIVEAU {level}', 'MAZO · NIVEL {level}'),
+    'fate.perDraw': m('Gold per draw', 'ذهبًا لكل سحب', 'd’or par tirage', 'de oro por tirada'),
+    'fate.chance': m('{chance}% chance', 'احتمال {chance}%', '{chance} % de chance', '{chance} % de probabilidad'),
+    'fate.locked': m('Unlocks at level {level}', 'تُفتح في المستوى {level}', 'Se débloque au niveau {level}', 'Se desbloquea en el nivel {level}'),
+    'fate.outside': m('Outside current deck', 'خارج المجموعة الحالية', 'Hors du paquet actuel', 'Fuera del mazo actual'),
+    'fate.draw': m('Draw a Fate card', 'اسحب بطاقة قدر', 'Tirer une carte du destin', 'Robar una carta del destino'),
+    'fate.needGold': m('You need {count} more Gold', 'تحتاج إلى {count} ذهبًا إضافيًا', 'Il vous manque {count} pièces d’or', 'Necesitas {count} más de oro'),
+    'fate.odds': m('A new rank unlocks every 10 levels and earlier ranks stay in your deck. Every card contains a real-world quest.', 'تُفتح رتبة جديدة كل 10 مستويات وتبقى الرتب السابقة في مجموعتك. كل بطاقة تحوي مهمة واقعية.', 'Un nouveau rang se débloque tous les 10 niveaux et les anciens restent. Chaque carte contient une quête réelle.', 'Un nuevo rango se desbloquea cada 10 niveles y los anteriores permanecen. Cada carta contiene una misión real.'),
+    'fate.turning': m('The deck is turning…', 'المجموعة تدور…', 'Le paquet tourne…', 'El mazo está girando…'),
+    'fate.choosing': m('Your level has chosen a rank. Fate is choosing one of six paths.', 'اختار مستواك رتبة، والقدر يختار أحد المسارات الستة.', 'Votre niveau a choisi un rang. Le destin choisit une des six voies.', 'Tu nivel eligió un rango. El destino está eligiendo uno de seis caminos.'),
+    'fate.yourQuest': m('YOUR {rank}-RANK QUEST', 'مهمتك من الرتبة {rank}', 'VOTRE QUÊTE DE RANG {rank}', 'TU MISIÓN DE RANGO {rank}'),
+    'fate.drawnFrom': m('Drawn from your Level {level} deck for {price} Gold.', 'سُحبت من مجموعة المستوى {level} مقابل {price} ذهبًا.', 'Tirée de votre paquet de niveau {level} pour {price} d’or.', 'Robada de tu mazo de nivel {level} por {price} de oro.'),
+    'settings.eyebrow': m('MAKE AURA YOURS', 'اجعل AURA لك', 'FAITES AURA VÔTRE', 'HAZ AURA TUYA'),
+    'settings.title': m('Settings', 'الإعدادات', 'Paramètres', 'Ajustes'),
+    'settings.description': m('Tune the system. Keep the discipline.', 'اضبط النظام وحافظ على الانضباط.', 'Réglez le système. Gardez la discipline.', 'Ajusta el sistema. Mantén la disciplina.'),
+    'settings.experience': m('Experience', 'التجربة', 'Expérience', 'Experiencia'),
+    'settings.interface': m('INTERFACE, LANGUAGE & AUDIO', 'الواجهة واللغة والصوت', 'INTERFACE, LANGUE ET AUDIO', 'INTERFAZ, IDIOMA Y AUDIO'),
+    'settings.languageDescription': m('Changes the interface and all 22,500 generated quests.', 'تغيّر الواجهة وجميع المهام المولدة الـ22,500.', 'Change l’interface et les 22 500 quêtes générées.', 'Cambia la interfaz y las 22.500 misiones generadas.'),
+    'settings.sound': m('Sound effects', 'المؤثرات الصوتية', 'Effets sonores', 'Efectos de sonido'),
+    'settings.soundDescription': m('Subtle audio for rewards and interactions.', 'صوت هادئ للمكافآت والتفاعلات.', 'Audio subtil pour les récompenses et interactions.', 'Audio sutil para recompensas e interacciones.'),
+    'settings.particles': m('Ambient particles', 'الجسيمات المحيطة', 'Particules ambiantes', 'Partículas ambientales'),
+    'settings.particlesDescription': m('Floating dust and constellation effects.', 'غبار عائم وتأثيرات نجمية.', 'Poussière flottante et effets de constellation.', 'Polvo flotante y efectos de constelación.'),
+    'settings.notifications': m('Quest reminders', 'تذكيرات المهام', 'Rappels de quêtes', 'Recordatorios de misiones'),
+    'settings.notificationsDescription': m('Deadlines, gifts, and duel updates.', 'المواعيد والهدايا وتحديثات النزال.', 'Échéances, cadeaux et duels.', 'Plazos, regalos y duelos.'),
+    'settings.reducedMotion': m('Reduce motion', 'تقليل الحركة', 'Réduire les animations', 'Reducir movimiento'),
+    'settings.reducedMotionDescription': m('Minimize transitions and celebration effects.', 'قلل الانتقالات وتأثيرات الاحتفال.', 'Réduisez les transitions et célébrations.', 'Minimiza transiciones y celebraciones.'),
+    'settings.discipline': m('Discipline', 'الانضباط', 'Discipline', 'Disciplina'),
+    'settings.difficulty': m('DIFFICULTY', 'الصعوبة', 'DIFFICULTÉ', 'DIFICULTAD'),
+    'settings.penalty': m('Penalty severity', 'شدة الغرامة', 'Sévérité de la pénalité', 'Gravedad de la penalización'),
+    'settings.penaltyDescription': m('Applied when daily quests expire incomplete.', 'تُطبق عند انتهاء مهام اليوم دون إكمال.', 'Appliquée aux quêtes quotidiennes inachevées.', 'Se aplica cuando las misiones diarias quedan incompletas.'),
+    'settings.dailyReset': m('Daily reset', 'إعادة اليوم', 'Réinitialisation quotidienne', 'Reinicio diario'),
+    'settings.resetDescription': m('Your quest day resets at midnight.', 'يتجدد يوم المهام عند منتصف الليل.', 'Votre journée de quêtes recommence à minuit.', 'Tu día de misiones se reinicia a medianoche.'),
+    'settings.account': m('Account', 'الحساب', 'Compte', 'Cuenta'),
+    'settings.playerRecord': m('PLAYER RECORD', 'سجل اللاعب', 'FICHE DU JOUEUR', 'REGISTRO DEL JUGADOR'),
+    'settings.signOut': m('Sign out', 'تسجيل الخروج', 'Se déconnecter', 'Cerrar sesión'),
+    'settings.local': m('Progress is stored locally in this interactive preview.', 'يُحفظ تقدمك محليًا في هذه النسخة التفاعلية.', 'La progression est stockée localement dans cet aperçu.', 'El progreso se guarda localmente en esta versión interactiva.'),
+    'auth.eyebrow': m('YOUR REAL-LIFE OPERATING SYSTEM', 'نظام تشغيل حياتك الواقعية', 'LE SYSTÈME DE VOTRE VIE RÉELLE', 'EL SISTEMA DE TU VIDA REAL'),
+    'auth.heroTitle': m('The quest is real. The legend is you.', 'المهمة حقيقية. والأسطورة هي أنت.', 'La quête est réelle. La légende, c’est vous.', 'La misión es real. La leyenda eres tú.'),
+    'auth.heroDescription': m('Turn daily discipline into an epic journey. Your progress begins the moment you decide to show up.', 'حوّل الانضباط اليومي إلى رحلة ملحمية. يبدأ تقدمك عندما تقرر الحضور.', 'Transformez la discipline quotidienne en voyage épique.', 'Convierte la disciplina diaria en un viaje épico.'),
+    'auth.welcome': m('WELCOME, CHALLENGER', 'مرحبًا أيها المتحدي', 'BIENVENUE, CHALLENGER', 'BIENVENIDO, RETADOR'),
+    'auth.title': m('Enter your Aura.', 'ادخل إلى هالتك.', 'Entrez dans votre Aura.', 'Entra en tu Aura.'),
+    'auth.description': m('Log in to begin your journey and receive your first daily quest.', 'سجّل الدخول لتبدأ رحلتك وتحصل على مهمتك اليومية الأولى.', 'Connectez-vous pour commencer et recevoir votre première quête.', 'Inicia sesión para comenzar y recibir tu primera misión.'),
+    'auth.email': m('Email address', 'البريد الإلكتروني', 'Adresse e-mail', 'Correo electrónico'),
+    'auth.password': m('Password', 'كلمة المرور', 'Mot de passe', 'Contraseña'),
+    'auth.passwordPlaceholder': m('At least 6 characters', 'ستة أحرف على الأقل', 'Au moins 6 caractères', 'Al menos 6 caracteres'),
+    'auth.login': m('Log in with email', 'الدخول بالبريد الإلكتروني', 'Connexion par e-mail', 'Iniciar sesión con correo'),
+    'auth.orEmail': m('OR CONTINUE WITH EMAIL', 'أو تابع بالبريد الإلكتروني', 'OU CONTINUER PAR E-MAIL', 'O CONTINÚA CON CORREO'),
+    'auth.validEmail': m('Enter a valid email address to continue.', 'أدخل بريدًا إلكترونيًا صالحًا للمتابعة.', 'Saisissez une adresse e-mail valide.', 'Introduce un correo válido para continuar.'),
+    'auth.passwordLength': m('Your password must contain at least 6 characters.', 'يجب أن تحتوي كلمة المرور على ستة أحرف على الأقل.', 'Le mot de passe doit contenir au moins 6 caractères.', 'La contraseña debe tener al menos 6 caracteres.'),
+    'auth.local': m('Preview authentication · your session and progress are stored on this device.', 'دخول تجريبي · تُحفظ جلستك وتقدمك على هذا الجهاز.', 'Connexion d’aperçu · session et progression stockées sur cet appareil.', 'Acceso de prueba · tu sesión y progreso se guardan en este dispositivo.'),
+};
+
+const I18nContext = createContext(null);
+
+export function translate(language, key, variables = {}) {
+    const entry = messages[key];
+    let value = entry?.[languageIndex[language] ?? 0] ?? entry?.[0] ?? key;
+    for (const [name, replacement] of Object.entries(variables)) value = value.replaceAll(`{${name}}`, String(replacement));
+    return value;
+}
+
+export function I18nProvider({ language = 'en', onLanguageChange = () => {}, children }) {
+    const value = useMemo(() => {
+        const option = languageOptions.find((item) => item.id === language) || languageOptions[0];
+        return {
+            language: option.id,
+            dir: option.dir,
+            onLanguageChange,
+            t: (key, variables) => translate(option.id, key, variables),
+        };
+    }, [language, onLanguageChange]);
+    return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n() {
+    return useContext(I18nContext) || {
+        language: 'en', dir: 'ltr', onLanguageChange: () => {}, t: (key, variables) => translate('en', key, variables),
+    };
+}
+
+export function LanguageSwitcher({ compact = false }) {
+    const { language, onLanguageChange, t } = useI18n();
+    return (
+        <label className={`language-switcher ${compact ? 'is-compact' : ''}`}>
+            <Globe size={compact ? 15 : 17} aria-hidden="true" />
+            {!compact && <span>{t('common.language')}</span>}
+            <select value={language} onChange={(event) => onLanguageChange(event.target.value)} aria-label={t('common.language')}>
+                {languageOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+            </select>
+        </label>
+    );
+}
