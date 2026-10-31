@@ -22,6 +22,13 @@ assert(lifeQuestChainCount === 1250, `Expected 1,250 chains, found ${lifeQuestCh
 assert(lifeQuestSequentialCount === 11250, `Expected 11,250 sequential tasks, found ${lifeQuestSequentialCount}`);
 assert(lifeQuestSequentialCount * 2 === lifeQuestCount, 'Exactly half of all quests must belong to chains');
 assert(lifeCategories.length === 6, 'Expected six life paths');
+const expectedDrawFees = { F: 2, E: 5, D: 10, C: 20, B: 50, A: 100, S: 200, SS: 500, SSS: 1000 };
+for (const rank of rankDefinitions) {
+    assert(rank.price === expectedDrawFees[rank.rank], `${rank.rank}: incorrect Fate draw fee`);
+    assert(rank.gold === rank.price * 5, `${rank.rank}: base Gold reward must be five times the draw fee`);
+    assert(rank.gold - rank.price > 0, `${rank.rank}: Fate draw does not produce a positive base Gold net`);
+}
+console.log('PASS Fate economy: F–SSS draw fees are 20% of base Gold rewards with a positive base net');
 for (const category of lifeCategories) {
     assert(category.actions.length * category.contexts.length === category.perRank, `${category.id}: action/context matrix does not match per-rank count`);
     assert(category.actions.length === (category.id === 'Religious' ? 25 : 20), `${category.id}: unexpected base action count`);

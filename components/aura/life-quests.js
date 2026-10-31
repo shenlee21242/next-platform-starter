@@ -10,17 +10,21 @@ export const SUPPORTED_LANGUAGES = ['en', 'ar', 'fr', 'es'];
 export const lifeCategories = [religious, psychological, physical, mental, selfDevelopment, social];
 export const lifeQuestCount = lifeCategories.reduce((total, category) => total + category.perRank * 9, 0);
 
+export const FATE_DRAW_FEE_RATIO = 0.2;
+
+// A Fate draw is a small commitment fee, not a guaranteed economic loss.
+// The base completion reward is five times the draw fee; the regular daily cap still applies.
 export const rankDefinitions = [
-    { rank: 'F', label: 'Initiate', price: 50, xp: 20, gold: 10, diamonds: 0, duration: 10, color: '#a9b0ba' },
-    { rank: 'E', label: 'Novice', price: 75, xp: 50, gold: 25, diamonds: 0, duration: 15, color: '#75d6ae' },
-    { rank: 'D', label: 'Apprentice', price: 100, xp: 100, gold: 50, diamonds: 0, duration: 20, color: '#75b9d1' },
-    { rank: 'C', label: 'Adept', price: 150, xp: 250, gold: 100, diamonds: 0, duration: 25, color: '#4cd7f6' },
-    { rank: 'B', label: 'Expert', price: 250, xp: 500, gold: 250, diamonds: 0, duration: 45, color: '#7f9ee8' },
-    { rank: 'A', label: 'Master', price: 600, xp: 1000, gold: 500, diamonds: 0, duration: 60, color: '#c4a5ff' },
-    { rank: 'S', label: 'Grandmaster', price: 1200, xp: 2500, gold: 1000, diamonds: 1, duration: 90, color: '#ffc174' },
-    { rank: 'SS', label: 'Heroic', price: 5000, xp: 5000, gold: 2500, diamonds: 2, duration: 120, color: '#ef8d72' },
-    { rank: 'SSS', label: 'Legendary', price: 20000, xp: 10000, gold: 5000, diamonds: 3, duration: 180, color: '#f0a8e0' },
-];
+    { rank: 'F', label: 'Initiate', xp: 20, gold: 10, diamonds: 0, duration: 10, color: '#a9b0ba' },
+    { rank: 'E', label: 'Novice', xp: 50, gold: 25, diamonds: 0, duration: 15, color: '#75d6ae' },
+    { rank: 'D', label: 'Apprentice', xp: 100, gold: 50, diamonds: 0, duration: 20, color: '#75b9d1' },
+    { rank: 'C', label: 'Adept', xp: 250, gold: 100, diamonds: 0, duration: 25, color: '#4cd7f6' },
+    { rank: 'B', label: 'Expert', xp: 500, gold: 250, diamonds: 0, duration: 45, color: '#7f9ee8' },
+    { rank: 'A', label: 'Master', xp: 1000, gold: 500, diamonds: 0, duration: 60, color: '#c4a5ff' },
+    { rank: 'S', label: 'Grandmaster', xp: 2500, gold: 1000, diamonds: 1, duration: 90, color: '#ffc174' },
+    { rank: 'SS', label: 'Heroic', xp: 5000, gold: 2500, diamonds: 2, duration: 120, color: '#ef8d72' },
+    { rank: 'SSS', label: 'Legendary', xp: 10000, gold: 5000, diamonds: 3, duration: 180, color: '#f0a8e0' },
+].map((rank) => ({ ...rank, price: Math.max(1, Math.round(rank.gold * FATE_DRAW_FEE_RATIO)) }));
 
 export const LIFE_CHAIN_LENGTH = rankDefinitions.length;
 export const lifeQuestChainCount = lifeCategories.reduce((total, category) => total + category.perRank / 2, 0);

@@ -237,6 +237,7 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = f
                     <Sparkles size={16} /> {gold < minimumPrice ? t('fate.needGold', { count: formatNumber(minimumPrice - gold) }) : `${t('fate.draw')} · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} ${t('common.gold')}`}
                 </button>
                 <p className="tarot-odds">{t('fate.odds')}</p>
+                <p className="tarot-odds fate-value-note">{t('fate.valueNote')}</p>
             </>}
             {stage === 'drawing' && <div className={`tarot-drawing reveal-stage-${revealStep}`}>
                 <QuestRankCard
@@ -256,7 +257,7 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = f
                 <p className="fate-quest-description" dir="auto" lang={language}>{drawnQuest.description}</p>
                 <QuestChainPanel quest={drawnQuest} level={level} />
                 <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>
-                <p className="fate-draw-note">{t('fate.drawnFrom', { level, price: formatNumber(revealedRank.price) })}</p>
+                <p className="fate-draw-note">{t('fate.drawnFrom', { level, price: formatNumber(revealedRank.price), reward: formatNumber(drawnQuest.gold), net: formatNumber(drawnQuest.gold - revealedRank.price) })}</p>
                 <div className="revealed-rewards"><strong>+{formatNumber(drawnQuest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(drawnQuest.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
                 <button className="button button-primary button-full" onClick={accept}><Check size={16} /> {t('common.accept')}</button>
             </div>}

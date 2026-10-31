@@ -16,6 +16,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { useI18n } from './i18n';
+import { getFateRank } from './fate';
 import QuestArtwork from './quest-artwork';
 import { AuraCoverArtwork } from './quest-card';
 import {
@@ -48,6 +49,7 @@ export default function Dashboard({
     const completed = quests.filter((quest) => quest.done).length;
     const remaining = quests.length - completed;
     const filteredQuests = filter === 'All' ? quests : quests.filter((quest) => quest.category === filter);
+    const fateStartingPrice = getFateRank('F').price;
 
     return (
         <div className="screen dashboard-screen">
@@ -177,7 +179,7 @@ export default function Dashboard({
                         <span className="tarot-widget-copy">
                             <small>{t('dashboard.unknown')}</small>
                             <strong>{t('dashboard.drawMystery')}</strong>
-                            <span>{t('dashboard.fromGold')} <ArrowRight size={13} /></span>
+                            <span>{t('dashboard.fromGold', { price: fateStartingPrice })} <ArrowRight size={13} /></span>
                         </span>
                     </button>
                 </aside>

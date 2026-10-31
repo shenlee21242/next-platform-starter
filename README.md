@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.14 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, a workday-balanced reward store, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.15 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, a workday-balanced reward store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.14 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.15 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,8 +31,9 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.14 highlights
+## AURA 1.15 highlights
 
+- **Positive-net Fate draw economics:** every F–SSS draw fee is exactly 20% of that rank’s base Gold reward, so the base reward is five times the fee (F: 2 Gold to draw, 10 Gold on completion, +8 base net); the regular daily Gold cap still applies
 - **Focused real-life quest dashboard:** the Weekly Boss and character selector are removed from the quest area; the complete selectable roster and backstories remain on the Character screen
 - **Workday-balanced Imperial Vault:** every price is a percentage of the Gold offered by the current quest list, with 100% representing one full workday
 - Six real-life rewards (40–300%), custom rewards with player-selected percentages, five consumable power-ups (40–150%) with daily purchase limits, four one-time cosmetics (250–400%), and permanent quest-slot, Gold-cap, and monthly Second Chance upgrades (600–1000%)
@@ -96,7 +97,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 ### Validate and export
 
 ```bash
-npm run validate:life-quests   # All 22,500 × 4 locales, 1,250 chain graphs, counts, sources, skills, and level gates
+npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
 npm run validate:store         # All 18 workday prices, four-language copy, balance ranges, and daily protection
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
