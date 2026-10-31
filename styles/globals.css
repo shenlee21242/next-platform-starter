@@ -1593,3 +1593,124 @@ html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-s
 @media (prefers-reduced-motion: reduce) {
     .themed-surface { animation: none !important; }
 }
+
+/* AURA 1.14 — real-life workday store and focused daily quests */
+.workday-baseline-card { display: flex; align-items: center; gap: 15px; margin-bottom: 14px; padding: 17px 19px; border-color: rgba(229,184,107,.22); background: radial-gradient(circle at 12% 50%,rgba(229,184,107,.08),transparent 30%),linear-gradient(135deg,#17171d,#11141a); }
+.workday-baseline-icon { width: 46px; height: 46px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(229,184,107,.3); border-radius: 50%; color: var(--gold); background: rgba(229,184,107,.05); }
+.workday-baseline-card > div:nth-child(2) { min-width: 0; }
+.workday-baseline-card > div:nth-child(2) > span { color: var(--gold); font-size: 7px; font-weight: 700; letter-spacing: .15em; }
+.workday-baseline-card h2 { margin-top: 4px; font-family: var(--font-display); font-size: 20px; font-weight: 500; direction: ltr; text-align: start; }
+.workday-baseline-card h2 strong { color: var(--gold); font-weight: 600; }
+.workday-baseline-card p { margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.6; }
+.workday-baseline-card > small { margin-inline-start: auto; flex: 0 0 auto; color: #8992a1; font-size: 8px; }
+.store-active-effects { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.store-active-effects > span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border: 1px solid rgba(185,154,251,.2); border-radius: 5px; color: #c7b4f4; background: rgba(185,154,251,.05); font-size: 8px; }
+.workday-store-tabs { gap: 20px; overflow-x: auto; scrollbar-width: none; }
+.workday-store-tabs::-webkit-scrollbar { display: none; }
+.workday-store-tabs > button { flex: 0 0 auto; white-space: nowrap; }
+.workday-category-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 0 0 15px; }
+.workday-category-heading h2 { font-family: var(--font-display); font-size: 19px; font-weight: 500; }
+.workday-category-heading p { margin-top: 5px; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.workday-category-heading > .button { flex: 0 0 auto; }
+.custom-reward-form { display: grid; grid-template-columns: minmax(0,1fr) 150px 130px auto; align-items: end; gap: 12px; margin-bottom: 16px; padding: 15px; }
+.custom-reward-form > label { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.custom-reward-form > label > span { color: #9aa3b1; font-size: 8px; }
+.custom-reward-form input { width: 100%; height: 38px; padding: 0 11px; border: 1px solid var(--border); border-radius: 5px; outline: 0; background: #0e1117; color: var(--text); font-size: 10px; }
+.custom-reward-form input:focus { border-color: var(--gold); }
+.custom-percent-input { position: relative; }
+.custom-percent-input > strong { position: absolute; top: 11px; inset-inline-end: 11px; color: var(--gold); font-size: 11px; }
+.custom-reward-preview { height: 38px; display: flex; flex-direction: column; justify-content: center; gap: 2px; direction: ltr; }
+.custom-reward-preview > span { color: var(--gold); font-size: 10px; font-weight: 600; }
+.custom-reward-preview > small { color: var(--muted); font-size: 7px; }
+.custom-reward-actions { display: flex; gap: 7px; }
+.custom-reward-actions .button { height: 38px; padding: 0 12px; font-size: 8px; }
+.workday-store-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
+.workday-store-item { min-width: 0; min-height: 255px; display: flex; flex-direction: column; padding: 17px; border-color: rgba(132,143,163,.15); background: linear-gradient(145deg,rgba(25,27,35,.96),rgba(15,18,24,.98)); }
+.workday-store-item:hover { transform: translateY(-2px); border-color: rgba(229,184,107,.3); }
+.workday-item-top { display: flex; align-items: center; gap: 9px; }
+.workday-item-icon { width: 48px; height: 48px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(229,184,107,.2); border-radius: 9px; color: var(--gold); background: radial-gradient(circle,rgba(229,184,107,.09),transparent 75%); }
+.category-powerups .workday-item-icon { color: var(--cyan); border-color: rgba(76,215,246,.2); background: radial-gradient(circle,rgba(76,215,246,.08),transparent 75%); }
+.category-cosmetics .workday-item-icon { color: var(--violet); border-color: rgba(185,154,251,.22); background: radial-gradient(circle,rgba(185,154,251,.09),transparent 75%); }
+.category-upgrades .workday-item-icon { color: #7ed5ac; border-color: rgba(77,194,139,.22); background: radial-gradient(circle,rgba(77,194,139,.08),transparent 75%); }
+.category-arena .workday-item-icon { color: #ef7d83; border-color: rgba(239,68,68,.22); }
+.workday-item-badge { margin-inline-start: auto; color: #6f7887; font-size: 6px; font-weight: 700; letter-spacing: .12em; text-align: end; }
+.custom-reward-delete { width: 28px; height: 28px; color: #9a7076; }
+.workday-store-item .store-item-copy { min-height: 78px; padding: 14px 0 10px; }
+.workday-store-item .store-item-copy h3 { font-size: 15px; line-height: 1.4; }
+.workday-store-item .store-item-copy p { font-size: 8px; line-height: 1.65; }
+.workday-item-meta { min-height: 21px; display: flex; flex-wrap: wrap; gap: 5px 10px; color: #737e8e; font-size: 7px; }
+.workday-item-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+.workday-store-item .workday-item-bottom { gap: 10px; margin-top: auto; padding: 12px 0 0; }
+.workday-price { flex: 0 0 auto; display: flex; flex-direction: column; gap: 3px; direction: ltr; }
+.workday-price > strong { color: var(--gold); font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.workday-price > small { display: inline-flex; align-items: center; gap: 4px; color: #a7afbc; font-size: 7px; white-space: nowrap; }
+.workday-item-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.workday-item-actions .button { min-height: 32px; padding: 6px 10px; font-size: 7px; }
+.store-armed { display: inline-flex; align-items: center; gap: 4px; color: #78b99a; font-size: 7px; }
+.upgrade-status-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-bottom: 15px; }
+.upgrade-status-grid > section { display: flex; align-items: center; gap: 12px; padding: 13px 15px; color: #7ed5ac; }
+.upgrade-status-grid > section > div { display: flex; flex-direction: column; gap: 3px; }
+.upgrade-status-grid span { color: #8c96a5; font-size: 8px; }
+.upgrade-status-grid strong { color: #d5dce5; font-size: 12px; }
+.upgrade-status-grid small { color: #6f7a8b; font-size: 7px; }
+.upgrade-status-grid > p { grid-column: 1 / -1; margin: 0; color: #737d8c; font-size: 8px; }
+.workday-balance-table { display: grid; grid-template-columns: minmax(190px,.7fr) minmax(0,1.5fr); gap: 22px; padding: 20px; }
+.workday-balance-table h2 { margin-top: 5px; font-family: var(--font-display); font-size: 20px; font-weight: 500; }
+.workday-balance-table p { margin-top: 7px; color: var(--muted); font-size: 8px; line-height: 1.7; }
+.balance-table { min-width: 0; }
+.balance-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; padding: 10px 8px; border-bottom: 1px solid rgba(134,146,165,.09); color: #959fac; font-size: 8px; }
+.balance-row:last-child { border-bottom: 0; }
+.balance-row > strong { color: #d0d5dd; font-weight: 500; }
+.balance-row > span { direction: ltr; text-align: end; }
+.balance-header { color: #687384; font-size: 6px; letter-spacing: .08em; text-transform: uppercase; }
+.balance-header > span:first-child { text-align: start; }
+.store-quest-modal { max-width: 590px; }
+.store-quest-choices { max-height: 450px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.store-quest-choice { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 7px; background: #11151c; color: var(--cyan); text-align: start; }
+.store-quest-choice:hover { border-color: rgba(76,215,246,.35); background: #141a23; }
+.store-quest-choice > div { min-width: 0; flex: 1; }
+.store-quest-choice strong { display: block; overflow: hidden; color: #d5d9e0; font-size: 10px; font-weight: 500; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.store-quest-choice span { display: block; margin-top: 4px; color: #758192; font-size: 7px; direction: ltr; text-align: start; }
+.store-quest-choice > svg:last-child { flex: 0 0 auto; }
+html[dir="rtl"] .store-quest-choice > svg:last-child { transform: scaleX(-1); }
+.store-quest-empty { padding: 30px 15px; color: #78b99a; text-align: center; }
+.store-quest-empty strong { display: block; margin-top: 10px; color: #d2d8df; }
+.store-quest-empty p { margin-top: 5px; color: var(--muted); font-size: 9px; }
+.quest-row.is-skipped { border-color: rgba(126,213,172,.15); background: rgba(34,68,54,.08); }
+.quest-row.is-skipped h3 { color: #8f9b96; text-decoration: none; }
+.quest-skipped-label { color: #7ed5ac !important; font-size: 8px; }
+.quest-rest-day-detail > div { border-color: rgba(126,213,172,.2); color: #7ed5ac; }
+.profile-player-title { display: inline-block; margin-top: 7px; padding: 4px 8px; border: 1px solid rgba(229,184,107,.28); border-radius: 3px; color: var(--gold); font-size: 8px; font-weight: 600; letter-spacing: .08em; }
+.cosmetic-profile-background .profile-hero-gradient { background: radial-gradient(circle at 72% 17%,rgba(165,140,245,.42),transparent 33%),radial-gradient(circle at 20% 38%,rgba(76,215,246,.15),transparent 30%),linear-gradient(0deg,rgba(11,13,18,.98),rgba(11,13,18,.12) 60%,rgba(11,13,18,.04)); }
+.cosmetic-avatar-frame .avatar { border: 2px solid #e5b86b; box-shadow: 0 0 0 3px rgba(185,154,251,.2),0 0 15px rgba(229,184,107,.22); }
+.cosmetic-royal-theme { --gold: #b99afb; --gold-bright: #d8c7ff; --cyan: #83d4f5; }
+.cosmetic-royal-theme .app-shell { background-image: radial-gradient(circle at 78% 4%,rgba(117,75,170,.09),transparent 28%),radial-gradient(circle at 15% 90%,rgba(76,215,246,.035),transparent 30%); }
+@media (max-width: 1180px) {
+    .workday-store-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .custom-reward-form { grid-template-columns: minmax(0,1fr) 140px 120px; }
+    .custom-reward-actions { grid-column: 1 / -1; justify-content: flex-end; }
+}
+@media (max-width: 760px) {
+    .workday-baseline-card { align-items: flex-start; }
+    .workday-baseline-card > small { display: none; }
+    .workday-category-heading { align-items: flex-start; }
+    .workday-balance-table { grid-template-columns: 1fr; }
+    .custom-reward-form { grid-template-columns: minmax(0,1fr) 130px; }
+    .custom-reward-preview { grid-column: 1 / -1; }
+}
+@media (max-width: 560px) {
+    .workday-store-grid { grid-template-columns: 1fr; }
+    .workday-store-item { min-height: 235px; }
+    .workday-baseline-card { padding: 14px; gap: 11px; }
+    .workday-baseline-icon { width: 39px; height: 39px; }
+    .workday-baseline-card h2 { font-size: 17px; }
+    .workday-category-heading { flex-direction: column; }
+    .workday-category-heading > .button { width: 100%; }
+    .custom-reward-form { grid-template-columns: 1fr; }
+    .custom-reward-preview,.custom-reward-actions { grid-column: auto; }
+    .custom-reward-actions .button { flex: 1; }
+    .upgrade-status-grid { grid-template-columns: 1fr; }
+    .workday-balance-table { padding: 15px 10px; }
+    .balance-row { gap: 5px; padding-inline: 4px; font-size: 7px; }
+    .store-quest-choice strong { white-space: normal; }
+}

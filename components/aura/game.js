@@ -74,6 +74,13 @@ export function createNewGame(auth = {}) {
         unlockedSkills: ['discipline'],
         skillQuestProgress: {},
         inventory: [],
+        customRewards: [],
+        purchaseHistory: [],
+        upgrades: { questSlots: 0, goldCap: 0, secondChance: 0 },
+        effects: {},
+        dailyGoldEarned: 0,
+        dailyGoldDay: localDayKey(),
+        secondChanceMonth: null,
         activeSkin: 'kael',
         duel: null,
         streak: 0,
@@ -118,6 +125,39 @@ export function createDailyQuest(player, previousQuestDate = null) {
     };
 }
 
+export function resolveDailyProtection({ quests = [], severity = 'Standard', inventory = [], upgrades = {}, secondChanceMonth = null }, date = new Date()) {
+    const penalty = getMissedQuestPenalty(quests, severity);
+    const nextInventory = [...inventory];
+    const month = localDayKey(date).slice(0, 7);
+    let nextSecondChanceMonth = secondChanceMonth;
+    let gold = penalty.gold;
+    let streakReset = penalty.incomplete > 0;
+    let protection = null;
+    const consume = (itemId) => {
+        const index = nextInventory.indexOf(itemId);
+        if (index >= 0) nextInventory.splice(index, 1);
+    };
+
+    if (penalty.incomplete) {
+        if (upgrades.secondChance && secondChanceMonth !== month) {
+            nextSecondChanceMonth = month;
+            gold = 0;
+            streakReset = false;
+            protection = 'Second Chance';
+        } else if (nextInventory.includes('power-penalty-shield')) {
+            consume('power-penalty-shield');
+            gold = 0;
+            streakReset = false;
+            protection = 'Penalty Shield';
+        } else if (nextInventory.includes('power-streak-freeze')) {
+            consume('power-streak-freeze');
+            streakReset = false;
+            protection = 'Streak Freeze';
+        }
+    }
+    return { ...penalty, gold, streakReset, protection, inventory: nextInventory, secondChanceMonth: nextSecondChanceMonth };
+}
+
 export function withDailyQuest(game) {
     if (!game.profileComplete) return game;
     const today = localDayKey();
@@ -125,14 +165,22 @@ export function withDailyQuest(game) {
 
     const isNewDay = game.lastQuestDate !== today;
     const dailyQuest = createDailyQuest(game.player, game.lastQuestDate);
-    const penalty = game.lastQuestDate && isNewDay ? getMissedQuestPenalty(game.quests, game.settings?.penalty) : { incomplete: 0, gold: 0 };
+    const penalty = resolveDailyProtection({
+        quests: game.lastQuestDate && isNewDay ? game.quests : [],
+        severity: game.settings?.penalty,
+        inventory: game.inventory,
+        upgrades: game.upgrades,
+        secondChanceMonth: game.secondChanceMonth,
+    });
     const previousWeek = game.lastQuestDate ? localWeekKey(new Date(`${game.lastQuestDate}T12:00:00`)) : null;
     const isNewWeek = previousWeek && previousWeek !== localWeekKey();
     const penaltyNotification = penalty.incomplete ? {
         id: `penalty-${today}`,
         type: 'quest',
-        title: 'Daily quest penalty',
-        description: `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
+        title: penalty.protection || 'Daily quest penalty',
+        description: penalty.protection
+            ? `${penalty.protection} protected your record. ${penalty.gold ? `${penalty.gold} Gold was deducted; your streak is safe.` : 'The Gold and streak penalty was canceled.'}`
+            : `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
         time: 'Daily reset',
         read: false,
     } : null;
@@ -142,8 +190,12 @@ export function withDailyQuest(game) {
         quests: [...(game.quests || []).filter((quest) => !quest.generated), dailyQuest],
         lastQuestDate: today,
         gold: Math.max(0, (game.gold ?? 100) - penalty.gold),
-        streak: penalty.incomplete ? 0 : game.streak ?? 0,
+        streak: penalty.streakReset ? 0 : game.streak ?? 0,
         bestStreak: Math.max(game.bestStreak ?? 0, game.streak ?? 0),
+        inventory: penalty.inventory,
+        secondChanceMonth: penalty.secondChanceMonth,
+        dailyGoldEarned: 0,
+        dailyGoldDay: today,
         focusSessions: isNewWeek ? 0 : game.focusSessions ?? 0,
         focusMinutes: isNewWeek ? 0 : game.focusMinutes ?? 0,
         focusWeek: localWeekKey(),

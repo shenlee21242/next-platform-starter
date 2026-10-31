@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.13 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.14 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, a workday-balanced reward store, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.13 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.14 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,8 +31,12 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.13 highlights
+## AURA 1.14 highlights
 
+- **Focused real-life quest dashboard:** the Weekly Boss and character selector are removed from the quest area; the complete selectable roster and backstories remain on the Character screen
+- **Workday-balanced Imperial Vault:** every price is a percentage of the Gold offered by the current quest list, with 100% representing one full workday
+- Six real-life rewards (40–300%), custom rewards with player-selected percentages, five consumable power-ups (40–150%) with daily purchase limits, four one-time cosmetics (250–400%), and permanent quest-slot, Gold-cap, and monthly Second Chance upgrades (600–1000%)
+- Rest-day quest selection skips one quest without rewards or penalties; rerolls replace rather than duplicate daily quests; XP/Gold boosts, daily caps, purchases, cosmetics, upgrades, and custom rewards persist locally
 - **22,500 active real-world quests** across Religious, Psychological, Physical, Mental, Self-development, and Social paths
 - Exactly **2,500 quests per rank** across F, E, D, C, B, A, S, SS, and SSS
 - Exactly **11,250 sequential quests** in **1,250 themed chains**; every chain preserves its action/context while progressing through all nine ranks, leaving 11,250 standalone quests
@@ -47,7 +51,7 @@ The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.a
 - Searchable Codex with full-text/ID/source search, path/rank/skill filters, 24-entry pagination, detailed entries, and Deck handoff
 - Deterministic inline SVG artwork for every quest ID—no 22,500-file image payload—and a distinctive colored reveal aura for every rank
 - Respectful family, marriage, professional mixed-gender, and cross-gender communication tasks based on consent, truthful persuasion, privacy, and freedom to refuse
-- Thirty-eight selectable heroes, persistent skill progression, daily quests, Focus Sanctuary, boss trials, local social previews, and the existing reward systems
+- Thirty-eight selectable heroes with readable backstories, persistent skill progression, daily quests, Focus Sanctuary, local social previews, and the workday reward economy
 
 The Deck accepts quests; Codex browsing itself is read-only. Existing device-local authentication/storage and social opponents remain preview systems, not production backend services.
 
@@ -78,6 +82,8 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
+- `components/aura/store-catalog.js` — localized workday items, percentages, pricing helpers, and balance ranges
+- `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
 
 Every record exposes `id`, `rank`, `category`, `text`, `xp`, `gold`, `description`, `image`, `skillIds`, `baseAction`, `completion`, and `sourceCodes`. Sequential records also expose `chainId`, `chainStep`, `chainLength`, `previousQuestId`, and `nextQuestId`. `image` is a unique `aura-art://` identity rendered by the local SVG engine. Accepted quests retain their source ID and are regenerated in the newly selected language.
 
@@ -91,6 +97,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 
 ```bash
 npm run validate:life-quests   # All 22,500 × 4 locales, 1,250 chain graphs, counts, sources, skills, and level gates
+npm run validate:store         # All 18 workday prices, four-language copy, balance ranges, and daily protection
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
@@ -129,7 +136,8 @@ npm run build:mobile        # Native web bundle
 npm run cap:sync            # Build and copy the bundle into Android
 npm run build:apk           # Build an installable debug APK (requires Android SDK)
 npm run lint                # ESLint
-npm run validate:life-quests# Validate the active 22,500-quest engine and level gates
+npm run validate:life-quests # Validate the active 22,500-quest engine and level gates
+npm run validate:store        # Validate workday prices, limits metadata, and protection rules
 npm run generate:life-codex # Rebuild the Arabic Word codex
 npm run generate:quests     # Rebuild the legacy 2,700-quest archive
 npm run validate:quests     # Validate the legacy archive

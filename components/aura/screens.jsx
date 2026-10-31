@@ -158,7 +158,7 @@ export function SkillTreeScreen({ unlockedSkills, skillPoints, skillQuestProgres
     );
 }
 
-export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, attributes }) {
+export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, playerTitle = '', attributes }) {
     const [storyCharacter, setStoryCharacter] = useState(null);
     const activeCharacter = getCharacter(player.characterId || activeSkin);
 
@@ -176,6 +176,7 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                     <div className="profile-hero-copy">
                         <span>{activeCharacter.heroClass.toUpperCase()}</span>
                         <h2>{player.name}</h2>
+                        {playerTitle && <strong className="profile-player-title">{playerTitle}</strong>}
                         <small>{activeCharacter.name} · {activeCharacter.title}</small>
                         <p>“{activeCharacter.quote}”</p>
                     </div>
@@ -515,7 +516,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> {t('settings.signOut')}</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.13</strong><p>{t('settings.local')}</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.14</strong><p>{t('settings.local')}</p></div></section>
                 </aside>
             </div>
         </div>

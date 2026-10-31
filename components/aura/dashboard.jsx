@@ -4,35 +4,26 @@ import { useState } from 'react';
 import Image from 'next/image';
 import {
     ArrowRight,
-    BookOpen,
-    CalendarDays,
     ChevronRight,
-    CircleAlert,
     Clock3,
     Coins,
     Diamond,
-    Flame,
     Focus,
     Link2,
     Plus,
     ShieldAlert,
     Sparkles,
-    Swords,
     Zap,
 } from 'lucide-react';
-import { XP_TO_LEVEL, getRank } from './data';
-import { getCharacter } from './characters';
 import { useI18n } from './i18n';
 import QuestArtwork from './quest-artwork';
 import { AuraCoverArtwork } from './quest-card';
-import CharacterLoreModal from './character-lore';
 import {
     CategoryIcon,
     CheckButton,
     Currency,
     EmptyState,
     formatClock,
-    formatNumber,
     formatShortClock,
     PanelTitle,
     ProgressBar,
@@ -45,23 +36,15 @@ export default function Dashboard({
     onAddQuest,
     onNavigate,
     onOpenModal,
-    level,
-    xp,
-    bossProgress,
     deadline,
     focusSeconds,
     focusRunning,
     onFocusToggle,
-    activeSkin,
-    player,
-    attributes,
-    streak,
     penaltyGold,
+    questSlotLimit = 3,
 }) {
     const { t, language } = useI18n();
     const [filter, setFilter] = useState('All');
-    const [storyOpen, setStoryOpen] = useState(false);
-    const character = getCharacter(player.characterId || activeSkin);
     const completed = quests.filter((quest) => quest.done).length;
     const remaining = quests.length - completed;
     const filteredQuests = filter === 'All' ? quests : quests.filter((quest) => quest.category === filter);
@@ -102,7 +85,7 @@ export default function Dashboard({
                         <div className="quests-panel-heading">
                             <PanelTitle
                                 title={t('dashboard.dailyQuests')}
-                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')}` : t('dashboard.noQuests')}
+                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')} · ${t('dashboard.slots', { count: quests.length, limit: questSlotLimit })}` : t('dashboard.noQuests')}
                             />
                             {quests.length > 0 && (
                                 <div className="quest-progress-summary">
@@ -128,7 +111,7 @@ export default function Dashboard({
 
                         <div className="quest-list">
                             {filteredQuests.length ? filteredQuests.map((quest) => (
-                                <article className={`quest-row ${quest.image || quest.generatedArt ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''}`} key={quest.id}>
+                                <article className={`quest-row ${quest.image || quest.generatedArt ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''} ${quest.skipped ? 'is-skipped' : ''}`} key={quest.id}>
                                     <CheckButton
                                         checked={quest.done}
                                         onClick={() => onToggleQuest(quest.id)}
@@ -148,9 +131,11 @@ export default function Dashboard({
                                         </div>
                                     </div>
                                     <div className="quest-rewards">
-                                        <span className="xp-reward">+{quest.xp} <small>XP</small></span>
-                                        <span className="gold-reward"><Coins size={13} /> +{quest.gold}</span>
-                                        {quest.diamonds > 0 && <span className="diamond-reward"><Diamond size={13} /> +{quest.diamonds}</span>}
+                                        {quest.skipped ? <span className="quest-skipped-label">{t('dashboard.restDaySkip')}</span> : <>
+                                            <span className="xp-reward">+{quest.xp} <small>XP</small></span>
+                                            <span className="gold-reward"><Coins size={13} /> +{quest.gold}</span>
+                                            {quest.diamonds > 0 && <span className="diamond-reward"><Diamond size={13} /> +{quest.diamonds}</span>}
+                                        </>}
                                     </div>
                                     <button className="quest-more" aria-label={`View ${quest.title}`} onClick={() => onOpenModal('quest-detail', quest)}>
                                         <ChevronRight size={17} />
@@ -171,63 +156,9 @@ export default function Dashboard({
                         </button>
                     </section>
 
-                    <section className="boss-card">
-                        <Image src="/images/void-colossus.png" alt="The Void Colossus in an ancient arena" fill sizes="(max-width: 900px) 100vw, 55vw" />
-                        <div className="boss-card-shade" />
-                        <div className="boss-card-top">
-                            <span className="boss-label"><Swords size={14} /> WEEKLY BOSS</span>
-                            <span className="rank-badge rank-s">S RANK</span>
-                        </div>
-                        <div className="boss-card-content">
-                            <div className="boss-title-row">
-                                <div>
-                                    <span>THE FOURTH TRIAL</span>
-                                    <h2>The Void Colossus</h2>
-                                </div>
-                                <button className="round-arrow" onClick={() => onOpenModal('boss')} aria-label="View boss details"><ArrowRight size={19} /></button>
-                            </div>
-                            <div className="boss-status">
-                                <div className="boss-health">
-                                    <div><span>COLOSSUS INTEGRITY</span><strong>{bossProgress}%</strong></div>
-                                    <ProgressBar value={bossProgress} tone="crimson" />
-                                </div>
-                                <div className="boss-time"><Clock3 size={15} /><span><strong>4d 13h</strong> remaining</span></div>
-                            </div>
-                        </div>
-                    </section>
                 </div>
 
                 <aside className="dashboard-side-column">
-                    <section className={`character-card skin-${activeSkin}`}>
-                        <button type="button" className="character-art" onClick={() => setStoryOpen(true)} aria-label={`Read ${character.name}'s backstory`}>
-                            <Image src={character.image} alt={`${player.name} as ${character.name}, ${character.title}`} fill priority sizes="(max-width: 900px) 100vw, 30vw" />
-                            <div className="character-art-overlay" />
-                            <div className="character-card-top">
-                                <span className="level-chip">LEVEL {level}</span>
-                                <span className="class-chip">{character.heroClass.toUpperCase()}</span>
-                            </div>
-                            <span className="dashboard-lore-hint"><BookOpen size={13} /> Story</span>
-                        </button>
-                        <div className="character-card-body">
-                            <div className="character-name-row">
-                                <div>
-                                    <h2>{player.name}</h2>
-                                    <span>{character.name} · {getRank(level)} <i /> {streak} day streak</span>
-                                </div>
-                                <button className="icon-button" onClick={() => onNavigate('character')} aria-label="Open character profile"><ArrowRight size={18} /></button>
-                            </div>
-                            <div className="character-xp">
-                                <div><span>EXPERIENCE</span><strong>{formatNumber(xp)} <small>/ {formatNumber(XP_TO_LEVEL)} XP</small></strong></div>
-                                <ProgressBar value={xp} max={XP_TO_LEVEL} />
-                            </div>
-                            <div className="attribute-grid">
-                                {Object.entries(attributes).map(([name, value]) => (
-                                    <div key={name}><span>{name}</span><strong>{value}</strong><i>{level > 0 ? `+${level}` : '—'}</i></div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
                     <section className="panel sanctuary-widget">
                         <div className="sanctuary-widget-icon"><Focus size={21} strokeWidth={1.5} /></div>
                         <div className="sanctuary-widget-copy">
@@ -251,7 +182,6 @@ export default function Dashboard({
                     </button>
                 </aside>
             </div>
-            {storyOpen && <CharacterLoreModal character={character} onClose={() => setStoryOpen(false)} />}
             <button className="quest-fab" onClick={onAddQuest} aria-label="Add a new daily quest">
                 <Plus size={21} strokeWidth={1.8} />
                 <span>{t('common.newQuest')}</span>

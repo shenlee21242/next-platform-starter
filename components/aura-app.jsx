@@ -45,26 +45,27 @@ import {
     SettingsScreen,
     SkillTreeScreen,
     SocialScreen,
-    StoreScreen,
 } from './aura/screens';
+import StoreScreen from './aura/store-screen';
+import { getWorkdayBaseline, getWorkdayPrice, getStoreItemName, workdayStoreItems } from './aura/store-catalog';
 import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from './aura/data';
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
 import { localizeLifeQuest } from './aura/life-quests';
 import QuestRankCard, { AuraCoverArtwork } from './aura/quest-card';
 import QuestChainPanel from './aura/quest-chain';
-import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
+import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal } from './aura/ui';
 import {
     createDailyQuest,
     createNewGame,
     DAILY_PENALTY_GOLD,
     defaultPlayer,
     defaultSettings,
-    getMissedQuestPenalty,
     localDayKey,
     localWeekKey,
     readSession,
     readStoredGame,
+    resolveDailyProtection,
     secondsUntilMidnight,
     withDailyQuest,
     writeSession,
@@ -149,21 +150,27 @@ function QuestDetailModal({ quest, onClose, onToggle, onAddNext, level, quests =
             <p dir="auto" lang={language}>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
             <QuestChainPanel quest={quest} onAddNext={onAddNext} level={level} completedSourceIds={completedSourceIds} acceptedSourceIds={acceptedSourceIds} />
             {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
-            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>
+            {quest.skipped ? <div className="quest-detail-grid quest-rest-day-detail"><div><Check size={17} /><span>{t('dashboard.restDaySkip')}</span><strong>{t('quest.restDayNoPenalty')}</strong></div></div> : <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>}
             <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); if (!quest.chainId) onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
         </Modal>
     );
 }
 
-function BossModal({ progress, onClose, onTrial }) {
+function StoreItemQuestModal({ item, quests, onClose, onSelect }) {
+    const { t, language } = useI18n();
+    const itemName = getStoreItemName(item, language);
+    const availableQuests = quests.filter((quest) => !quest.done);
     return (
-        <Modal onClose={onClose} label="Weekly boss quest" className="boss-modal">
-            <div className="boss-modal-art"><Image src="/images/void-colossus.png" alt="The Void Colossus" fill sizes="620px" /><div /></div>
-            <div className="boss-modal-content"><div className="eyebrow">WEEKLY BOSS · S RANK</div><h2>The Void Colossus</h2><p>An ancient will stands between you and the next realm. Complete real-world trials to break its integrity before the week ends.</p>
-                <div className="boss-modal-progress"><div><span>COLOSSUS INTEGRITY</span><strong>{progress}%</strong></div><ProgressBar value={progress} tone="crimson" /></div>
-                <div className="boss-objectives"><h3>This week’s trial</h3><div className={progress < 100 ? 'done' : ''}><span>{progress < 100 ? <Check size={13} /> : 1}</span>Enter the arena</div><div className={progress <= 68 ? 'done' : ''}><span>{progress <= 68 ? <Check size={13} /> : 2}</span>Complete 10 daily quests</div><div className={progress <= 35 ? 'done' : ''}><span>{progress <= 35 ? <Check size={13} /> : 3}</span>Finish 3 Focus sessions</div><div className={progress === 0 ? 'done' : ''}><span>{progress === 0 ? <Check size={13} /> : 4}</span>Deliver the final blow</div></div>
-                <div className="boss-reward-line"><span>VICTORY REWARDS</span><strong>+1,200 XP</strong><strong><Coins size={14} /> 800</strong><strong><Diamond size={14} /> 1</strong></div>
-                <button className="button button-primary button-full" disabled={progress === 0} onClick={onTrial}><Swords size={16} /> {progress === 0 ? 'Colossus defeated' : 'Log a boss trial · −8% integrity'}</button>
+        <Modal onClose={onClose} label={itemName} className="store-quest-modal">
+            <div className="modal-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">{t(item.id === 'reward-rest-day' ? 'store.restEyebrow' : 'store.rerollEyebrow')}</div><h2>{itemName}</h2><p>{t(item.id === 'reward-rest-day' ? 'store.restDescription' : 'store.rerollDescription')}</p></div>
+            <div className="store-quest-choices">
+                {availableQuests.length ? availableQuests.map((quest) => (
+                    <button type="button" className="store-quest-choice" key={quest.id} onClick={() => onSelect(quest)}>
+                        <CategoryIcon category={quest.category} size={19} />
+                        <div><strong dir="auto" lang={language}>{quest.title}</strong><span>{t(`category.${quest.category}`)} · {quest.duration} {t('common.minutesShort')} · {item.id === 'reward-rest-day' ? `0 XP / 0 ${t('common.gold')}` : `+${quest.xp} XP / +${quest.gold} ${t('common.gold')}`}</span></div>
+                        <ChevronRight size={16} />
+                    </button>
+                )) : <div className="store-quest-empty"><Check size={22} /><strong>{t('store.noUnfinished')}</strong><p>{t('store.noQuestForItem')}</p></div>}
             </div>
         </Modal>
     );
@@ -373,7 +380,6 @@ export default function AuraApp() {
     const [xp, setXp] = useState(0);
     const xpRef = useRef(0);
     const [energy, setEnergy] = useState(100);
-    const [bossProgress, setBossProgress] = useState(100);
     const [deadline, setDeadline] = useState(0);
     const [focusDuration, setFocusDuration] = useState(25 * 60);
     const [focusSeconds, setFocusSeconds] = useState(25 * 60);
@@ -384,6 +390,13 @@ export default function AuraApp() {
     const [unlockedSkills, setUnlockedSkills] = useState(['discipline']);
     const [skillQuestProgress, setSkillQuestProgress] = useState({});
     const [inventory, setInventory] = useState([]);
+    const [customRewards, setCustomRewards] = useState([]);
+    const [purchaseHistory, setPurchaseHistory] = useState([]);
+    const [upgrades, setUpgrades] = useState({ questSlots: 0, goldCap: 0, secondChance: 0 });
+    const [effects, setEffects] = useState({});
+    const [dailyGoldEarned, setDailyGoldEarned] = useState(0);
+    const [dailyGoldDay, setDailyGoldDay] = useState(localDayKey());
+    const [secondChanceMonth, setSecondChanceMonth] = useState(null);
     const [activeSkin, setActiveSkin] = useState('kael');
     const [duel, setDuel] = useState(null);
     const [streak, setStreak] = useState(0);
@@ -443,11 +456,17 @@ export default function AuraApp() {
         setGold(game.gold ?? 100);
         setDiamonds(game.diamonds ?? 0);
         setEnergy(game.energy ?? 100);
-        setBossProgress(game.bossProgress ?? 100);
         setSkillPoints(game.skillPoints ?? 0);
         setUnlockedSkills(game.unlockedSkills || ['discipline']);
         setSkillQuestProgress(game.skillQuestProgress || {});
         setInventory(game.inventory || []);
+        setCustomRewards(game.customRewards || []);
+        setPurchaseHistory(game.purchaseHistory || []);
+        setUpgrades({ questSlots: 0, goldCap: 0, secondChance: 0, ...(game.upgrades || {}) });
+        setEffects(game.effects || {});
+        setDailyGoldEarned(game.dailyGoldDay === localDayKey() ? game.dailyGoldEarned || 0 : 0);
+        setDailyGoldDay(localDayKey());
+        setSecondChanceMonth(game.secondChanceMonth || null);
         setActiveSkin(restoredCharacter.id);
         setDuel(game.duel || null);
         setStreak(game.streak ?? 0);
@@ -513,11 +532,17 @@ export default function AuraApp() {
             gold,
             diamonds,
             energy,
-            bossProgress,
             skillPoints,
             unlockedSkills,
             skillQuestProgress,
             inventory,
+            customRewards,
+            purchaseHistory,
+            upgrades,
+            effects,
+            dailyGoldEarned,
+            dailyGoldDay,
+            secondChanceMonth,
             activeSkin,
             duel,
             streak,
@@ -530,7 +555,7 @@ export default function AuraApp() {
             notifications,
             settings,
         });
-    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, bossProgress, skillPoints, unlockedSkills, skillQuestProgress, inventory, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
+    }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, skillPoints, unlockedSkills, skillQuestProgress, inventory, customRewards, purchaseHistory, upgrades, effects, dailyGoldEarned, dailyGoldDay, secondChanceMonth, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
 
     useEffect(() => {
         const timer = setInterval(() => setDeadline((current) => Math.max(0, current - 1)), 1000);
@@ -545,17 +570,21 @@ export default function AuraApp() {
                 setDeadline(secondsUntilMidnight());
                 return;
             }
-            const penalty = getMissedQuestPenalty(quests, settings.penalty);
+            const penalty = resolveDailyProtection({ quests, severity: settings.penalty, inventory, upgrades, secondChanceMonth });
             const dailyQuest = createDailyQuest(player, lastQuestDate);
             const isNewWeek = lastQuestDate && localWeekKey(new Date(`${lastQuestDate}T12:00:00`)) !== localWeekKey();
             if (penalty.incomplete) {
                 setGold((current) => Math.max(0, current - penalty.gold));
-                setStreak(0);
+                if (penalty.streakReset) setStreak(0);
+                setInventory(penalty.inventory);
+                setSecondChanceMonth(penalty.secondChanceMonth);
                 setNotifications((current) => [{
                     id: `penalty-${today}`,
                     type: 'quest',
-                    title: 'Daily quest penalty',
-                    description: `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
+                    title: penalty.protection || 'Daily quest penalty',
+                    description: penalty.protection
+                        ? `${penalty.protection} protected your record. ${penalty.gold ? `${penalty.gold} Gold was deducted; your streak is safe.` : 'The Gold and streak penalty was canceled.'}`
+                        : `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
                     time: 'Daily reset',
                     read: false,
                 }, ...current]);
@@ -566,13 +595,17 @@ export default function AuraApp() {
             }
             setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
             setLastQuestDate(today);
+            setDailyGoldEarned(0);
+            setDailyGoldDay(today);
             setDeadline(secondsUntilMidnight());
             notify(penalty.incomplete
-                ? `Daily reset · −${penalty.gold} Gold and your streak was reset.`
-                : `A new day begins. ${dailyQuest.title} is your new daily quest.`, penalty.incomplete ? 'error' : 'success');
+                ? penalty.protection
+                    ? `Daily reset · ${penalty.protection} activated${penalty.gold ? ` · −${penalty.gold} Gold` : ''}.`
+                    : `Daily reset · −${penalty.gold} Gold and your streak was reset.`
+                : `A new day begins. ${dailyQuest.title} is your new daily quest.`, penalty.incomplete && !penalty.protection ? 'error' : 'success');
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [deadline, session, initialOnboarding, player, lastQuestDate, quests, settings.penalty, notify]);
+    }, [deadline, session, initialOnboarding, player, lastQuestDate, quests, settings.penalty, inventory, upgrades, secondChanceMonth, notify]);
 
     useEffect(() => {
         if (!focusRunning) return undefined;
@@ -629,9 +662,18 @@ export default function AuraApp() {
         window.scrollTo({ top: 0, behavior: settings.reducedMotion ? 'auto' : 'smooth' });
     };
 
+    const workdayBaseline = getWorkdayBaseline(quests);
+    const questSlotLimit = 3 + (upgrades.questSlots || 0);
+    const dailyGoldCap = getWorkdayPrice(workdayBaseline, 200 + (upgrades.goldCap || 0) * 100);
+
     const toggleQuest = (id) => {
         const quest = quests.find((item) => item.id === id);
         if (!quest) return;
+        if (quest.done && quest.skipped) {
+            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, skipped: false, awardedGold: undefined, awardedXp: undefined } : item));
+            notify('Rest-day skip reversed. No rewards were changed.', 'neutral');
+            return;
+        }
         const changeSkillProgress = (direction) => {
             if (!quest.skillIds?.length) return;
             setSkillQuestProgress((current) => {
@@ -640,13 +682,16 @@ export default function AuraApp() {
                 return next;
             });
         };
-        setQuests((current) => current.map((item) => item.id === id ? { ...item, done: !item.done } : item));
         if (quest.done) {
+            const awardedXp = quest.awardedXp ?? quest.xp;
+            const awardedGold = quest.awardedGold ?? quest.gold;
+            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, awardedGold: undefined, awardedXp: undefined } : item));
             changeSkillProgress(-1);
-            const next = Math.max(0, xpRef.current - quest.xp);
+            const next = Math.max(0, xpRef.current - awardedXp);
             xpRef.current = next;
             setXp(next);
-            setGold((current) => Math.max(0, current - quest.gold));
+            setGold((current) => Math.max(0, current - awardedGold));
+            if (dailyGoldDay === localDayKey()) setDailyGoldEarned((current) => Math.max(0, current - awardedGold));
             if (quest.diamonds) setDiamonds((current) => Math.max(0, current - quest.diamonds));
             if (duel?.completedQuestIds?.includes(id)) {
                 setDuel((current) => ({
@@ -657,8 +702,17 @@ export default function AuraApp() {
             }
             notify('Quest marked incomplete. Rewards and linked skill progress returned.', 'neutral');
         } else {
-            changeSkillProgress(1);
             const today = localDayKey();
+            const earnedToday = dailyGoldDay === today ? dailyGoldEarned : 0;
+            const xpMultiplier = (effects.xpBoostUntil || 0) > Date.now() ? 2 : 1;
+            const goldMultiplier = effects.goldBoostDay === today ? 2 : 1;
+            const awardedXp = quest.xp * xpMultiplier;
+            const requestedGold = quest.gold * goldMultiplier;
+            const awardedGold = Math.min(requestedGold, Math.max(0, dailyGoldCap - earnedToday));
+            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: true, skipped: false, awardedGold, awardedXp } : item));
+            setDailyGoldDay(today);
+            setDailyGoldEarned(earnedToday + awardedGold);
+            changeSkillProgress(1);
             if (lastCompletionDate !== today) {
                 const yesterday = localDayKey(new Date(Date.now() - 86400000));
                 const nextStreak = lastCompletionDate === yesterday ? streak + 1 : 1;
@@ -678,27 +732,99 @@ export default function AuraApp() {
                 });
             }
             const diamondReward = quest.diamonds ? ` · +${quest.diamonds} ${quest.diamonds === 1 ? 'Diamond' : 'Diamonds'}` : '';
-            awardRewards(quest.xp, quest.gold, `Quest complete · +${quest.xp} XP · +${quest.gold} Gold${diamondReward}`);
+            const capNote = awardedGold < requestedGold ? ' · daily Gold cap reached' : '';
+            awardRewards(awardedXp, awardedGold, `Quest complete · +${awardedXp} XP · +${awardedGold} Gold${diamondReward}${capNote}`);
         }
     };
 
     const addQuest = (quest) => {
+        if (quests.length >= questSlotLimit) {
+            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
+            return;
+        }
         setQuests((current) => [...current, { ...quest, id: Date.now(), done: false }]);
         closeModal();
         notify('New quest added to today’s path.');
     };
 
     const buyItem = (item) => {
-        const balance = item.currency === 'gold' ? gold : diamonds;
-        if (balance < item.price) {
-            notify(`Not enough ${item.currency === 'gold' ? 'Gold' : 'Diamonds'} for this item.`, 'error');
+        const today = localDayKey();
+        const price = getWorkdayPrice(workdayBaseline, item.percent);
+        const permanent = item.category === 'cosmetics' || item.once;
+        const boughtToday = purchaseHistory.filter((entry) => entry.day === today && entry.itemId === item.id).length;
+        const itemName = getStoreItemName(item, language);
+        if (permanent && inventory.includes(item.id)) return;
+        if (item.dailyLimit && boughtToday >= item.dailyLimit) {
+            notify(`${itemName}: daily purchase limit reached (${item.dailyLimit}).`, 'error');
             return;
         }
-        if (item.currency === 'gold') setGold((current) => current - item.price);
-        else setDiamonds((current) => current - item.price);
-        setInventory((current) => [...current, item.id]);
-        if (item.id === 'p1') setEnergy((current) => Math.min(100, current + 50));
-        notify(`${item.name} acquired${item.id === 'p1' ? ' · +50 Energy' : ''}.`);
+        if (gold < price) {
+            notify(`You need ${price - gold} more Gold for ${itemName}.`, 'error');
+            return;
+        }
+        setGold((current) => current - price);
+        setPurchaseHistory((current) => [...current, { id: `purchase-${Date.now()}`, itemId: item.id, day: today, price, percent: item.percent, at: Date.now() }].slice(-200));
+        if (['powerups', 'arena'].includes(item.category) || item.effect === 'select-quest' || permanent) {
+            setInventory((current) => [...current, item.id]);
+        }
+        if (item.id === 'upgrade-quest-slot') setUpgrades((current) => ({ ...current, questSlots: (current.questSlots || 0) + 1 }));
+        if (item.id === 'upgrade-gold-cap') setUpgrades((current) => ({ ...current, goldCap: (current.goldCap || 0) + 1 }));
+        if (item.id === 'upgrade-second-chance') setUpgrades((current) => ({ ...current, secondChance: 1 }));
+        notify(`${itemName} · −${price} Gold (${item.percent}% of a workday).`);
+    };
+
+    const useStoreItem = (item) => {
+        if (!inventory.includes(item.id)) return;
+        if (item.effect === 'select-quest') {
+            openModal('store-item-quest', item);
+            return;
+        }
+        const consume = () => setInventory((current) => {
+            const next = [...current];
+            const index = next.indexOf(item.id);
+            if (index >= 0) next.splice(index, 1);
+            return next;
+        });
+        if (item.effect === 'xp-boost') {
+            consume();
+            setEffects((current) => ({ ...current, xpBoostUntil: Date.now() + 3600000 }));
+            notify('×2 quest XP activated for one hour.');
+        } else if (item.effect === 'gold-boost') {
+            consume();
+            setEffects((current) => ({ ...current, goldBoostDay: localDayKey() }));
+            notify('×2 quest Gold activated for the rest of today. Your daily cap still applies.');
+        }
+    };
+
+    const applyStoreItemToQuest = (quest) => {
+        const item = modalData;
+        if (!item || !inventory.includes(item.id) || quest.done) return;
+        setInventory((current) => {
+            const next = [...current];
+            const index = next.indexOf(item.id);
+            if (index >= 0) next.splice(index, 1);
+            return next;
+        });
+        if (item.id === 'reward-rest-day') {
+            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...entry, done: true, skipped: true, awardedGold: 0, awardedXp: 0 } : entry));
+            notify(`Rest day used for “${quest.title}”. No penalty and no rewards.`);
+        } else if (item.id === 'power-reroll') {
+            const replacement = generateQuest(level, Math.random, language);
+            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, generated: entry.generated, generatedFor: entry.generatedFor, title: `${replacement.rank} · ${replacement.text}` } : entry));
+            notify(`Quest rerolled into ${replacement.rank} rank.`);
+        }
+        closeModal();
+        navigate('quests');
+    };
+
+    const addCustomReward = ({ name, percent }) => {
+        setCustomRewards((current) => [...current, { id: `custom-reward-${Date.now()}`, category: 'rewards', percent, icon: 'gift', effect: 'redeem', custom: true, name, description: '' }]);
+        notify(`Custom reward “${name}” saved at ${percent}% of a workday.`);
+    };
+
+    const deleteCustomReward = (id) => {
+        setCustomRewards((current) => current.filter((item) => item.id !== id));
+        notify('Custom reward removed.', 'neutral');
     };
 
     const unlockSkill = (skill) => {
@@ -710,6 +836,10 @@ export default function AuraApp() {
     };
 
     const spendForCard = (price) => {
+        if (quests.length >= questSlotLimit) {
+            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
+            return false;
+        }
         if (gold < price) {
             notify('Not enough Gold for this draw.', 'error');
             return false;
@@ -719,6 +849,11 @@ export default function AuraApp() {
     };
 
     const acceptTarot = (quest) => {
+        if (quests.length >= questSlotLimit) {
+            closeModal();
+            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
+            return;
+        }
         setQuests((current) => [...current, { ...quest, id: `fate-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.title}` }]);
         closeModal();
         navigate('quests');
@@ -729,6 +864,11 @@ export default function AuraApp() {
         const sourceId = quest.sourceId || quest.id;
         if (quests.some((item) => (item.sourceId || item.id) === sourceId)) {
             notify(t('chain.alreadyAdded'), 'neutral');
+            return;
+        }
+        if (quests.length >= questSlotLimit) {
+            closeModal();
+            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
             return;
         }
         setQuests((current) => [...current, { ...quest, sourceId, id: `chain-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.text}` }]);
@@ -752,18 +892,6 @@ export default function AuraApp() {
         setInventory((current) => current.filter((item) => item !== 'p4'));
         setDuel((current) => ({ ...current, debuff: 'Exhausted · −10% XP', debuffUntil: Date.now() + 3600000 }));
         notify(`Exhaustion cast on ${targetName}. Their XP is reduced for one hour.`);
-    };
-
-    const bossTrial = () => {
-        if (bossProgress <= 0) return;
-        const nextProgress = Math.max(0, bossProgress - 8);
-        setBossProgress(nextProgress);
-        if (nextProgress === 0) {
-            setDiamonds((current) => current + 1);
-            awardRewards(1200, 800, 'Colossus defeated · +1,200 XP · +800 Gold · +1 Diamond');
-        } else {
-            awardRewards(150, 75, 'Boss trial logged · The Colossus weakens.');
-        }
     };
 
     const secretCode = (code) => {
@@ -824,21 +952,22 @@ export default function AuraApp() {
         CHA: 1 + level,
     };
     const activeCharacter = getCharacter(player.characterId || activeSkin);
+    const equippedTitle = inventory.includes('cosmetic-title') ? getStoreItemName(workdayStoreItems.find((item) => item.id === 'cosmetic-title'), language) : '';
     const unread = notifications.filter((notification) => !notification.read).length;
 
     let content;
     switch (screen) {
         case 'codex': content = <QuestCodex onOpenModal={openModal} level={level} quests={quests} />; break;
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} skillQuestProgress={skillQuestProgress} onUnlock={unlockSkill} />; break;
-        case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
-        case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
+        case 'character': content = <CharacterScreen player={player} playerTitle={equippedTitle} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
+        case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} quests={quests} customRewards={customRewards} purchaseHistory={purchaseHistory} upgrades={upgrades} effects={effects} dailyGoldEarned={dailyGoldDay === localDayKey() ? dailyGoldEarned : 0} dailyGoldCap={dailyGoldCap} questSlotLimit={questSlotLimit} onBuy={buyItem} onUse={useStoreItem} onAddCustomReward={addCustomReward} onDeleteCustomReward={deleteCustomReward} onNavigate={navigate} />; break;
         case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onAdminAction={runAdminAction} onGift={(friend) => { if (gold < 25) { notify('You need 25 Gold to send a gift.', 'error'); return; } setGold((current) => current - 25); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
         case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} playerImage={activeCharacter.image} />; break;
         case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={bestStreak} focusRunning={focusRunning} onToggle={toggleFocus} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
         case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard player={player} attributes={attributes} streak={streak} penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} level={level} xp={xp} bossProgress={bossProgress} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} activeSkin={activeSkin} />;
+        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} questSlotLimit={questSlotLimit} />;
     }
 
     if (!profileReady) {
@@ -851,7 +980,7 @@ export default function AuraApp() {
 
     return (
         <I18nProvider language={language} onLanguageChange={onLanguageChange}>
-        <div className={`aura-app ${settings.particles ? '' : 'no-particles'} ${settings.reducedMotion ? 'reduce-motion' : ''} ${(initialOnboarding || modal === 'onboarding') ? 'onboarding-active' : ''}`}>
+        <div className={`aura-app ${settings.particles ? '' : 'no-particles'} ${settings.reducedMotion ? 'reduce-motion' : ''} ${inventory.includes('cosmetic-background') ? 'cosmetic-profile-background' : ''} ${inventory.includes('cosmetic-frame') ? 'cosmetic-avatar-frame' : ''} ${inventory.includes('cosmetic-theme') ? 'cosmetic-royal-theme' : ''} ${(initialOnboarding || modal === 'onboarding') ? 'onboarding-active' : ''}`}>
             <div className="ambient-grid" /><div className="ambient-glow" /><div className="ambient-particles"><i /><i /><i /><i /><i /><i /></div>
             {sidebarOpen && <button className="sidebar-dismiss" aria-label="Close navigation" onClick={() => setSidebarOpen(false)} />}
             <aside className={`sidebar ${sidebarOpen ? 'is-open' : ''}`}>
@@ -887,7 +1016,7 @@ export default function AuraApp() {
             {initialOnboarding && <OnboardingExperience player={player} onSave={savePlayer} />}
             {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
             {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
-            {modal === 'boss' && <BossModal progress={bossProgress} onClose={closeModal} onTrial={bossTrial} />}
+            {modal === 'store-item-quest' && modalData && <StoreItemQuestModal item={modalData} quests={quests} onClose={closeModal} onSelect={applyStoreItemToQuest} />}
             {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}
             {modal === 'onboarding' && <OnboardingExperience player={player} onClose={closeModal} onSave={savePlayer} />}
