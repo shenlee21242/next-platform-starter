@@ -13,6 +13,7 @@ import {
     Diamond,
     Flame,
     Focus,
+    Link2,
     Plus,
     ShieldAlert,
     Sparkles,
@@ -142,6 +143,7 @@ export default function Dashboard({
                                             <span>{t(`category.${quest.category}`)}</span>
                                             <i />
                                             <span><Clock3 size={12} /> {quest.duration} min</span>
+                                            {quest.chainId && <><i /><span className="quest-row-chain" title={t('chain.label')}><Link2 size={12} /> {t('chain.step', { step: quest.chainStep, total: quest.chainLength })}</span></>}
                                         </div>
                                     </div>
                                     <div className="quest-rewards">

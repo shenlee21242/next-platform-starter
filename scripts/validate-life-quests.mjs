@@ -2,8 +2,11 @@ import { generateQuest, getRankProbabilities } from '../components/aura/fate.js'
 import {
     getLifeQuestBank,
     getLifeQuestById,
+    getLifeQuestChain,
     lifeCategories,
+    lifeQuestChainCount,
     lifeQuestCount,
+    lifeQuestSequentialCount,
     LIFE_REFERENCES,
     rankDefinitions,
     SUPPORTED_LANGUAGES,
@@ -15,6 +18,9 @@ const referenceCodes = new Set(LIFE_REFERENCES.map(([code]) => code));
 const skillCoverage = new Map();
 
 assert(lifeQuestCount === 22500, `Expected 22,500 tasks, found ${lifeQuestCount}`);
+assert(lifeQuestChainCount === 1250, `Expected 1,250 chains, found ${lifeQuestChainCount}`);
+assert(lifeQuestSequentialCount === 11250, `Expected 11,250 sequential tasks, found ${lifeQuestSequentialCount}`);
+assert(lifeQuestSequentialCount * 2 === lifeQuestCount, 'Exactly half of all quests must belong to chains');
 assert(lifeCategories.length === 6, 'Expected six life paths');
 for (const category of lifeCategories) {
     assert(category.actions.length * category.contexts.length === category.perRank, `${category.id}: action/context matrix does not match per-rank count`);
@@ -44,13 +50,34 @@ for (const language of SUPPORTED_LANGUAGES) {
             assert(matches.every((quest) => quest.xp === rank.xp && quest.gold === rank.gold), `${language}/${category.id}/${rank.rank}: rewards mismatch`);
         }
     }
+    const chains = new Map();
     for (const quest of quests) {
         assert(quest.generatedArt && quest.image === `aura-art://${quest.id.toLowerCase()}`, `${quest.id}: generated artwork identity missing`);
         assert(quest.skillIds.length > 0 && quest.sourceCodes.length > 0, `${quest.id}: skill or source relationship missing`);
         assert(quest.text.includes(quest.baseAction) && quest.text.includes(quest.context), `${quest.id}: incomplete localized text`);
         assert(getLifeQuestById(quest.id, language)?.text === quest.text, `${quest.id}: deterministic ID lookup failed`);
+        if (quest.isSequential) {
+            assert(quest.chainId && quest.chainLength === 9 && quest.chainStep === quest.rankIndex + 1, `${quest.id}: invalid chain metadata`);
+            const idPrefix = quest.id.slice(0, quest.id.lastIndexOf('-') + 1);
+            assert(quest.previousQuestId === (quest.rankIndex > 0 ? `${idPrefix}${rankDefinitions[quest.rankIndex - 1].rank}` : null), `${quest.id}: invalid previous chain link`);
+            assert(quest.nextQuestId === (quest.rankIndex < 8 ? `${idPrefix}${rankDefinitions[quest.rankIndex + 1].rank}` : null), `${quest.id}: invalid next chain link`);
+            if (!chains.has(quest.chainId)) chains.set(quest.chainId, []);
+            chains.get(quest.chainId).push(quest);
+        } else {
+            assert(!quest.chainId && !quest.chainStep && !quest.chainLength && !quest.previousQuestId && !quest.nextQuestId, `${quest.id}: standalone quest has chain metadata`);
+        }
         for (const skill of quest.skillIds) skillCoverage.set(skill, (skillCoverage.get(skill) || 0) + 1);
     }
+    assert(chains.size === 1250, `${language}: expected 1,250 unique chains, found ${chains.size}`);
+    assert([...chains.values()].flat().length === 11250, `${language}: sequential task count mismatch`);
+    for (const [chainId, chain] of chains) {
+        assert(chain.length === 9, `${language}/${chainId}: expected nine steps`);
+        const generatedChain = getLifeQuestChain(chainId, language);
+        assert(generatedChain.map((quest) => quest.id).join('|') === chain.map((quest) => quest.id).join('|'), `${language}/${chainId}: chain lookup mismatch`);
+        assert(chain.every((quest) => quest.baseAction === chain[0].baseAction && quest.context === chain[0].context), `${language}/${chainId}: chain theme changed between ranks`);
+        assert(chain.every((quest, index) => index === 0 || (quest.duration > chain[index - 1].duration && quest.xp > chain[index - 1].xp)), `${language}/${chainId}: chain does not progress from easier to harder`);
+    }
+    assert(getLifeQuestChain('SC-CHAIN-0400', language).length === 0, `${language}: standalone base index incorrectly forms a chain`);
     const sample = quests.find((quest) => quest.category === 'Mental' && quest.unit === 'book');
     assert(sample && getLifeQuestById(`${sample.id.slice(0, -1)}SS`, language), `${language}: mental book track missing`);
     console.log(`PASS ${language}: 22,500 unique localized tasks, IDs, descriptions, artwork identities, sources, and rewards`);
@@ -82,6 +109,7 @@ assert(englishSocial.some((quest) => /mixed-gender/i.test(quest.baseAction)), 'M
 assert(skillCoverage.has('iron-body') && skillCoverage.has('inner-peace') && skillCoverage.has('mind-palace') && skillCoverage.has('discipline'), 'Core skill coverage missing');
 
 console.log('PASS 2,500 tasks per rank × 9 ranks = 22,500 tasks');
+console.log('PASS 1,250 themed chains × 9 ranks = 11,250 sequential tasks (exactly half the library)');
 console.log('PASS category allocation: 4,500 Religious + 3,600 each for the other five paths');
 console.log('PASS respectful cross-gender, marriage, family, consent, and ethical-influence coverage');
 console.log('PASS every existing skill has generated-task relationships');

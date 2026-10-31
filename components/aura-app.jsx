@@ -51,7 +51,8 @@ import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from 
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
 import { localizeLifeQuest } from './aura/life-quests';
-import QuestArtwork from './aura/quest-artwork';
+import QuestRankCard from './aura/quest-card';
+import QuestChainPanel from './aura/quest-chain';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
 import {
     createDailyQuest,
@@ -135,19 +136,21 @@ function AddQuestModal({ onClose, onSubmit }) {
     );
 }
 
-function QuestDetailModal({ quest, onClose, onToggle }) {
+function QuestDetailModal({ quest, onClose, onToggle, onAddNext, level, quests = [] }) {
     const { t, language } = useI18n();
     if (!quest) return null;
-    const rank = getFateRank(quest.rank);
+    const acceptedSourceIds = quests.map((item) => item.sourceId || item.id).filter(Boolean);
+    const completedSourceIds = quests.filter((item) => item.done).map((item) => item.sourceId || item.id).filter(Boolean);
     return (
         <Modal onClose={onClose} label={quest.title} className={`quest-detail-modal ${quest.rank ? `rank-reveal-${quest.rank.toLowerCase()}` : ''}`}>
-            {quest.generatedArt || quest.sourceId ? <div className="quest-detail-art rank-aura" style={{ '--rank-color': rank.color }}><QuestArtwork quest={{ ...quest, text: quest.text || quest.title }} /></div> : quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
+            {quest.generatedArt || quest.sourceId ? <QuestRankCard quest={{ ...quest, text: quest.text || quest.title }} flippable /> : quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
             <div className="eyebrow">{t(`category.${quest.category}`)} · {quest.rank ? t('quest.fate', { rank: quest.rank }) : t('quest.daily')}</div>
             <h2 dir="auto" lang={language}>{quest.title}</h2>
             <p dir="auto" lang={language}>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
+            <QuestChainPanel quest={quest} onAddNext={onAddNext} level={level} completedSourceIds={completedSourceIds} acceptedSourceIds={acceptedSourceIds} />
             {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
-            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>Diamond</span><strong>+{quest.diamonds}</strong></div>}</div>
-            <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
+            <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>
+            <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); if (!quest.chainId) onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
         </Modal>
     );
 }
@@ -226,11 +229,12 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
                 <h2>{t('fate.turning')}</h2><p>{t('fate.choosing')}</p>
             </div>}
             {stage === 'revealed' && <div className={`tarot-revealed fate-quest-revealed rank-reveal-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}>
-                <div className="fate-quest-art rank-aura"><QuestArtwork quest={drawnQuest} /></div>
+                <QuestRankCard quest={drawnQuest} flippable />
                 <div className="eyebrow">{t('fate.yourQuest', { rank: drawnQuest.rank })}</div>
                 <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{t(`category.${drawnQuest.category}`)}</span></div>
                 <h2 dir="auto" lang={language}>{drawnQuest.text}</h2>
                 <p className="fate-quest-description" dir="auto" lang={language}>{drawnQuest.description}</p>
+                <QuestChainPanel quest={drawnQuest} level={level} />
                 <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>
                 <p className="fate-draw-note">{t('fate.drawnFrom', { level, price: formatNumber(revealedRank.price) })}</p>
                 <div className="revealed-rewards"><strong>+{formatNumber(drawnQuest.xp)} XP</strong><strong><Coins size={15} /> +{formatNumber(drawnQuest.gold)}</strong>{revealedRank.diamonds > 0 && <strong><Diamond size={14} /> +{revealedRank.diamonds}</strong>}</div>
@@ -418,7 +422,7 @@ export default function AuraApp() {
         const restoredCharacter = getCharacter(game.player?.characterId || game.activeSkin);
         const sameFocusWeek = game.focusWeek === localWeekKey();
         setPlayer({ ...defaultPlayer, ...(game.player || {}), characterId: restoredCharacter.id, heroClass: game.player?.heroClass || restoredCharacter.heroClass });
-        setQuests(Array.isArray(game.quests) ? game.quests : []);
+        setQuests(Array.isArray(game.quests) ? game.quests.map((quest) => localizeLifeQuest(quest, game.settings?.language || languageRef.current)) : []);
         setLevel(game.level ?? 0);
         const savedXp = game.xp ?? 0;
         xpRef.current = savedXp;
@@ -708,6 +712,18 @@ export default function AuraApp() {
         notify('Fate accepted. The quest is now on your daily path.');
     };
 
+    const acceptChainQuest = (quest) => {
+        const sourceId = quest.sourceId || quest.id;
+        if (quests.some((item) => (item.sourceId || item.id) === sourceId)) {
+            notify(t('chain.alreadyAdded'), 'neutral');
+            return;
+        }
+        setQuests((current) => [...current, { ...quest, sourceId, id: `chain-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.text}` }]);
+        closeModal();
+        navigate('quests');
+        notify(t('chain.addedNotification', { rank: quest.rank }));
+    };
+
     const startDuel = (friend, stake) => {
         if (gold < stake) return;
         setGold((current) => current - stake);
@@ -799,7 +815,7 @@ export default function AuraApp() {
 
     let content;
     switch (screen) {
-        case 'codex': content = <QuestCodex onOpenModal={openModal} />; break;
+        case 'codex': content = <QuestCodex onOpenModal={openModal} level={level} quests={quests} />; break;
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} skillQuestProgress={skillQuestProgress} onUnlock={unlockSkill} />; break;
         case 'character': content = <CharacterScreen player={player} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
         case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} onBuy={buyItem} onOpenModal={openModal} />; break;
@@ -857,7 +873,7 @@ export default function AuraApp() {
 
             {initialOnboarding && <OnboardingExperience player={player} onSave={savePlayer} />}
             {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
-            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} />}
+            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
             {modal === 'boss' && <BossModal progress={bossProgress} onClose={closeModal} onTrial={bossTrial} />}
             {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}

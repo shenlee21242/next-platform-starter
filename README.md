@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.11 includes a four-language, 22,500-quest life codex and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.12 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, flippable rank-card templates, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.11 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.12 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,10 +31,13 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.11 highlights
+## AURA 1.12 highlights
 
 - **22,500 active real-world quests** across Religious, Psychological, Physical, Mental, Self-development, and Social paths
 - Exactly **2,500 quests per rank** across F, E, D, C, B, A, S, SS, and SSS
+- Exactly **11,250 sequential quests** in **1,250 themed chains**; every chain preserves its action/context while progressing through all nine ranks, leaving 11,250 standalone quests
+- Flip between the radiant rank-back and illustrated quest-front card templates, inspect all nine chain steps, and add the next step after completing an accepted quest once its rank is level-unlocked
+- Codex filtering for sequential chains or standalone quests, chain/ID search, persistent chain progress, and four-language chain navigation
 - Complete **English, العربية, Français, and Español** quest content generated from the same structured sources
 - Persistent language selection, translated accepted quests, and a structural right-to-left Arabic layout
 - Level-cumulative Deck of Fate: levels 0–9 use F; 10–19 use F/E; 20–29 use F/E/D; a new rank is added every ten levels until all nine unlock at level 80
@@ -60,7 +63,7 @@ Each rank contains:
 | Social | 400 | 3,600 |
 | **Total** | **2,500** | **22,500** |
 
-The Religious matrix contains 25 core actions × 20 execution contexts × nine ranks. Each other path contains 20 core actions × 20 contexts × nine ranks. Rank directives, doses, completion evidence, and multi-week plans make every generated objective unique. Higher ranks emphasize quality, consistency, review, and sustainable projects rather than unsafe volume.
+The Religious matrix contains 25 core actions × 20 execution contexts × nine ranks. Each other path contains 20 core actions × 20 contexts × nine ranks. Rank directives, doses, completion evidence, and multi-week plans make every generated objective unique. Higher ranks emphasize quality, consistency, review, and sustainable projects rather than unsafe volume. The first half of each category/rank matrix forms nine-step chains (250 Religious chains plus 200 chains in every other path), so sequential and standalone tasks each total exactly half the library.
 
 Runtime content and translations live in:
 
@@ -68,9 +71,11 @@ Runtime content and translations live in:
 - `components/aura/life-quests.js` — deterministic quest generation, rewards, references, localization, and ID lookup
 - `components/aura/fate.js` — cumulative level gates and weighted random selection
 - `components/aura/quest-artwork.jsx` — seeded, unique inline SVG card illustrations
+- `components/aura/quest-card.jsx` — flippable, rank-colored front/back skill-card templates
+- `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
 
-Every record exposes `id`, `rank`, `category`, `text`, `xp`, `gold`, `description`, `image`, `skillIds`, `baseAction`, `completion`, and `sourceCodes`. `image` is a unique `aura-art://` identity rendered by the local SVG engine. Accepted quests retain their source ID and are regenerated in the newly selected language.
+Every record exposes `id`, `rank`, `category`, `text`, `xp`, `gold`, `description`, `image`, `skillIds`, `baseAction`, `completion`, and `sourceCodes`. Sequential records also expose `chainId`, `chainStep`, `chainLength`, `previousQuestId`, and `nextQuestId`. `image` is a unique `aura-art://` identity rendered by the local SVG engine. Accepted quests retain their source ID and are regenerated in the newly selected language.
 
 ### Reference and safety policy
 
@@ -81,7 +86,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 ### Validate and export
 
 ```bash
-npm run validate:life-quests   # All 22,500 × 4 locales, counts, uniqueness, sources, skills, and level gates
+npm run validate:life-quests   # All 22,500 × 4 locales, 1,250 chain graphs, counts, sources, skills, and level gates
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command

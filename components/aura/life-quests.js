@@ -22,6 +22,10 @@ export const rankDefinitions = [
     { rank: 'SSS', label: 'Legendary', price: 20000, xp: 10000, gold: 5000, diamonds: 3, duration: 180, color: '#f0a8e0' },
 ];
 
+export const LIFE_CHAIN_LENGTH = rankDefinitions.length;
+export const lifeQuestChainCount = lifeCategories.reduce((total, category) => total + category.perRank / 2, 0);
+export const lifeQuestSequentialCount = lifeQuestChainCount * LIFE_CHAIN_LENGTH;
+
 const rankDirectives = [
     a('خطوة البداية', 'First step', 'Premier pas', 'Primer paso'),
     a('تحدي الاستكشاف', 'Explorer challenge', 'Défi de l’explorateur', 'Reto de exploración'),
@@ -141,6 +145,9 @@ export function createLifeQuest(categoryId, baseIndex, rankIndex, locale = 'en')
     const action = category.actions[actionIndex];
     const context = category.contexts[contextIndex];
     const id = `${category.prefix}-${String(baseIndex + 1).padStart(4, '0')}-${rank.rank}`;
+    const isSequential = baseIndex < category.perRank / 2;
+    const chainId = isSequential ? `${category.prefix}-CHAIN-${String(baseIndex + 1).padStart(4, '0')}` : null;
+    const questIdAtRank = (index) => `${category.prefix}-${String(baseIndex + 1).padStart(4, '0')}-${rankDefinitions[index].rank}`;
     const dose = formatDose(action.unit, rankIndex, language);
     const separator = language === 'ar' ? '؛ ' : '; ';
     const text = `${rankDirectives[rankIndex][language]}: ${action.action[language]} — ${dose}${separator}${context[language]}.`;
@@ -169,6 +176,12 @@ export function createLifeQuest(categoryId, baseIndex, rankIndex, locale = 'en')
         language: language,
         baseIndex,
         unit: action.unit,
+        isSequential,
+        chainId,
+        chainStep: isSequential ? rankIndex + 1 : null,
+        chainLength: isSequential ? LIFE_CHAIN_LENGTH : null,
+        previousQuestId: isSequential && rankIndex > 0 ? questIdAtRank(rankIndex - 1) : null,
+        nextQuestId: isSequential && rankIndex < LIFE_CHAIN_LENGTH - 1 ? questIdAtRank(rankIndex + 1) : null,
     };
 }
 
@@ -190,6 +203,15 @@ export function getLifeQuestById(id, locale = 'en') {
     const category = lifeCategories.find((item) => item.prefix === match[1]);
     const rankIndex = rankDefinitions.findIndex((item) => item.rank === match[3]);
     return category && rankIndex >= 0 ? createLifeQuest(category.id, Number(match[2]) - 1, rankIndex, locale) : null;
+}
+
+export function getLifeQuestChain(chainId, locale = 'en') {
+    const match = /^(DN|PS|BD|MN|SD|SC)-CHAIN-(\d{4})$/.exec(chainId || '');
+    if (!match) return [];
+    const category = lifeCategories.find((item) => item.prefix === match[1]);
+    const baseIndex = Number(match[2]) - 1;
+    if (!category || baseIndex < 0 || baseIndex >= category.perRank / 2) return [];
+    return rankDefinitions.map((_, rankIndex) => createLifeQuest(category.id, baseIndex, rankIndex, locale));
 }
 
 export function localizeLifeQuest(quest, locale = 'en') {
