@@ -5,13 +5,13 @@ import { getFateRank } from './fate';
 import { translate } from './i18n';
 
 const categoryColors = {
-    Religious: '#e5b86b',
-    Psychological: '#ef8da8',
-    Physical: '#4cd7f6',
-    Mental: '#c4a5ff',
-    SelfDevelopment: '#75d6ae',
-    Social: '#f2a66f',
-    Spiritual: '#e5b86b',
+    Religious: '#b99afb',
+    Psychological: '#d7dce5',
+    Physical: '#ef4444',
+    Mental: '#a58cf5',
+    SelfDevelopment: '#e5b86b',
+    Social: '#35c994',
+    Spiritual: '#b99afb',
 };
 
 const emblems = {

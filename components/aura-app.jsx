@@ -51,7 +51,7 @@ import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from 
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
 import { localizeLifeQuest } from './aura/life-quests';
-import QuestRankCard from './aura/quest-card';
+import QuestRankCard, { AuraCoverArtwork } from './aura/quest-card';
 import QuestChainPanel from './aura/quest-chain';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal, ProgressBar } from './aura/ui';
 import {
@@ -169,26 +169,35 @@ function BossModal({ progress, onClose, onTrial }) {
     );
 }
 
-function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
+function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = false }) {
     const { t, language } = useI18n();
     const [stage, setStage] = useState('choose');
     const [drawnQuest, setDrawnQuest] = useState(null);
-    const timer = useRef(null);
+    const [revealStep, setRevealStep] = useState(0);
+    const timers = useRef([]);
     const probabilities = getRankProbabilities(level);
     const availableRanks = probabilities.filter((item) => item.chance > 0).map((item) => getFateRank(item.rank));
     const prices = availableRanks.map((item) => item.price);
     const minimumPrice = Math.min(...prices);
     const maximumPrice = Math.max(...prices);
     const revealedRank = getFateRank(drawnQuest?.rank || 'F');
-    useEffect(() => () => clearTimeout(timer.current), []);
+    useEffect(() => () => timers.current.forEach((timer) => clearTimeout(timer)), []);
 
     const draw = () => {
         const quest = generateQuest(level, Math.random, language);
         const rank = getFateRank(quest.rank);
         if (!onSpend(rank.price)) return;
+        timers.current.forEach((timer) => clearTimeout(timer));
+        timers.current = [];
         setDrawnQuest(quest);
+        setRevealStep(0);
         setStage('drawing');
-        timer.current = setTimeout(() => setStage('revealed'), 1200);
+        const [characterAt, descriptionAt, completeAt] = reducedMotion ? [90, 180, 330] : [700, 1550, 2500];
+        timers.current = [
+            setTimeout(() => setRevealStep(1), characterAt),
+            setTimeout(() => setRevealStep(2), descriptionAt),
+            setTimeout(() => setStage('revealed'), completeAt),
+        ];
     };
 
     const accept = () => onAccept({
@@ -198,18 +207,19 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
     });
 
     return (
-        <Modal onClose={onClose} label={t('fate.eyebrow')} className={`tarot-modal fate-generator-modal stage-${stage}`}>
+        <Modal onClose={onClose} label={t('fate.eyebrow')} className={`tarot-modal fate-generator-modal stage-${stage} reveal-step-${revealStep}`}>
             {stage === 'choose' && <>
                 <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">{t('fate.eyebrow')}</div><h2>{t('fate.title')}</h2><p>{t('fate.description')}</p></div>
                 <div className="fate-level-status"><span>{t('fate.deck', { level })}</span><strong>{availableRanks.map((item) => item.rank).join(' · ')}</strong><small>{minimumPrice === maximumPrice ? `${formatNumber(minimumPrice)} ${t('fate.perDraw')}` : `${formatNumber(minimumPrice)}–${formatNumber(maximumPrice)} ${t('common.gold')}`}</small></div>
+                <p className="fate-reveal-hint">{t('fate.revealHint')}</p>
                 <div className="fate-rank-grid" role="group" aria-label={t('fate.deck', { level })}>
                     {fateRanks.map((item, rankIndex) => {
                         const chance = probabilities.find((entry) => entry.rank === item.rank)?.chance || 0;
                         const displayChance = Number(chance.toFixed(1));
                         return (
                             <button type="button" key={item.rank} onClick={draw} disabled={!chance || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? 'is-unlocked' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank}, ${chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}`}>
-                                <span className="fate-rank-letter">{item.rank}</span>
-                                <strong>{t(`rank.${item.rank}`)}</strong>
+                                <span className="fate-rank-cover"><AuraCoverArtwork /></span>
+                                <strong>{item.rank} · {t(`rank.${item.rank}`)}</strong>
                                 <small><Coins size={11} /> {formatNumber(item.price)}</small>
                                 <em>{chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}</em>
                             </button>
@@ -221,15 +231,18 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept }) {
                 </button>
                 <p className="tarot-odds">{t('fate.odds')}</p>
             </>}
-            {stage === 'drawing' && <div className="tarot-drawing">
-                <div className="fate-flip-scene"><div className="fate-flip-card">
-                    <div className={`fate-flip-face fate-flip-back fate-shape-${drawnQuest.rank.toLowerCase()}`}><AuraMark size={48} /><span>AURA</span><i /></div>
-                    <div className={`fate-flip-face fate-flip-front fate-shape-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}><span>{drawnQuest.rank}</span><strong>{t(`category.${drawnQuest.category}`)}</strong></div>
-                </div></div>
-                <h2>{t('fate.turning')}</h2><p>{t('fate.choosing')}</p>
+            {stage === 'drawing' && <div className={`tarot-drawing reveal-stage-${revealStep}`}>
+                <QuestRankCard
+                    quest={drawnQuest}
+                    face={['cover', 'character', 'front'][revealStep]}
+                    className="fate-reveal-sequence-card"
+                />
+                <h2>{revealStep === 0 ? t('fate.turning') : revealStep === 1 ? t('fate.revealCharacter') : t('fate.revealQuest')}</h2>
+                <p>{revealStep === 0 ? t('fate.choosing') : revealStep === 1 ? t('fate.revealCharacterDescription') : t('fate.revealQuestDescription')}</p>
+                <div className="fate-reveal-progress" aria-label={t('fate.revealHint')}><i className="active" /><i className={revealStep >= 1 ? 'active' : ''} /><i className={revealStep >= 2 ? 'active' : ''} /></div>
             </div>}
             {stage === 'revealed' && <div className={`tarot-revealed fate-quest-revealed rank-reveal-${drawnQuest.rank.toLowerCase()}`} style={{ '--rank-color': revealedRank.color }}>
-                <QuestRankCard quest={drawnQuest} flippable />
+                <QuestRankCard quest={drawnQuest} flippable className="fate-revealed-card" />
                 <div className="eyebrow">{t('fate.yourQuest', { rank: drawnQuest.rank })}</div>
                 <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{t(`category.${drawnQuest.category}`)}</span></div>
                 <h2 dir="auto" lang={language}>{drawnQuest.text}</h2>
@@ -875,7 +888,7 @@ export default function AuraApp() {
             {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
             {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
             {modal === 'boss' && <BossModal progress={bossProgress} onClose={closeModal} onTrial={bossTrial} />}
-            {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} />}
+            {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}
             {modal === 'onboarding' && <OnboardingExperience player={player} onClose={closeModal} onSave={savePlayer} />}
             {modal === 'level-up' && <LevelUpModal level={level} onClose={closeModal} />}

@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.12 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, flippable rank-card templates, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.13 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.12 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.13 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,12 +31,14 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.12 highlights
+## AURA 1.13 highlights
 
 - **22,500 active real-world quests** across Religious, Psychological, Physical, Mental, Self-development, and Social paths
 - Exactly **2,500 quests per rank** across F, E, D, C, B, A, S, SS, and SSS
 - Exactly **11,250 sequential quests** in **1,250 themed chains**; every chain preserves its action/context while progressing through all nine ranks, leaving 11,250 standalone quests
-- Flip between the radiant rank-back and illustrated quest-front card templates, inspect all nine chain steps, and add the next step after completing an accepted quest once its rank is level-unlocked
+- Every sealed deck card uses the same ornate AURA cover; drawing performs two successive rotations—AURA cover → category character back → quest-description front—with the cover also used by the dashboard deck widget
+- Category-themed card treatments: emerald Social, silver Psychological, gold Self-development, red Physical, violet Cognitive, and violet/gold Religious; each description front retains its quest's unique generated SVG artwork, skills, chain metadata, and rewards
+- Inspect all nine chain steps and add the next step after completing an accepted quest once its rank is level-unlocked
 - Codex filtering for sequential chains or standalone quests, chain/ID search, persistent chain progress, and four-language chain navigation
 - Complete **English, العربية, Français, and Español** quest content generated from the same structured sources
 - Persistent language selection, translated accepted quests, and a structural right-to-left Arabic layout
@@ -71,7 +73,9 @@ Runtime content and translations live in:
 - `components/aura/life-quests.js` — deterministic quest generation, rewards, references, localization, and ID lookup
 - `components/aura/fate.js` — cumulative level gates and weighted random selection
 - `components/aura/quest-artwork.jsx` — seeded, unique inline SVG card illustrations
-- `components/aura/quest-card.jsx` — flippable, rank-colored front/back skill-card templates
+- `components/aura/quest-card.jsx` — reusable AURA cover, character-art back, and illustrated quest-description front with manual three-state inspection
+- `components/aura/card-themes.js` — category colors, character artwork, and image treatments
+- `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
 

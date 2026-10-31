@@ -24,6 +24,7 @@ import { XP_TO_LEVEL, getRank } from './data';
 import { getCharacter } from './characters';
 import { useI18n } from './i18n';
 import QuestArtwork from './quest-artwork';
+import { AuraCoverArtwork } from './quest-card';
 import CharacterLoreModal from './character-lore';
 import {
     CategoryIcon,
@@ -241,7 +242,7 @@ export default function Dashboard({
                     </section>
 
                     <button className="tarot-widget" onClick={() => onOpenModal('tarot')}>
-                        <span className="tarot-mini-card"><Sparkles size={23} strokeWidth={1.2} /><i>FATE</i></span>
+                        <span className="tarot-mini-card aura-mini-cover"><AuraCoverArtwork /></span>
                         <span className="tarot-widget-copy">
                             <small>{t('dashboard.unknown')}</small>
                             <strong>{t('dashboard.drawMystery')}</strong>

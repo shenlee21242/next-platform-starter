@@ -18,6 +18,7 @@ function nativePublicAssets() {
             }
             cpSync(`${publicDir}/images/heroes`, `${outDir}/images/heroes`, { recursive: true });
             cpSync(`${publicDir}/images/quests`, `${outDir}/images/quests`, { recursive: true });
+            cpSync(`${publicDir}/images/card-themes`, `${outDir}/images/card-themes`, { recursive: true });
             copyFileSync(`${publicDir}/favicon.svg`, `${outDir}/favicon.svg`);
         },
     };

@@ -1380,7 +1380,7 @@ html[dir="rtl"] .language-switcher.is-compact select { padding: 0 7px; }
     .fate-quest-revealed h2 { font-size: 18px; }
 }
 
-/* AURA 1.12 — rank-matched skill cards and nine-step quest chains */
+/* AURA 1.13 — illustrated three-state cards and nine-step quest chains */
 .skill-quest-card { width: 100%; color: var(--rank-color); }
 .skill-card-surface { position: relative; width: 100%; aspect-ratio: 5 / 7; overflow: hidden; border: 1px solid color-mix(in srgb, var(--rank-color) 65%, #222735); border-radius: 6px; background: radial-gradient(ellipse at 50% 38%, color-mix(in srgb, var(--rank-color) 13%, transparent), transparent 48%), radial-gradient(ellipse at 50% 105%, color-mix(in srgb, var(--rank-color) 8%, transparent), transparent 52%), #070a15; box-shadow: 0 0 0 4px rgba(3,5,12,.8), 0 0 0 5px color-mix(in srgb, var(--rank-color) 15%, transparent), 0 16px 45px rgba(0,0,0,.36), 0 0 35px color-mix(in srgb, var(--rank-color) 10%, transparent); animation: skill-card-face-in .32s ease both; }
 .skill-card-surface::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .55; background-image: radial-gradient(circle at 12% 22%, var(--rank-color) 0 1px, transparent 1.5px), radial-gradient(circle at 86% 17%, var(--rank-color) 0 1px, transparent 1.5px), radial-gradient(circle at 20% 77%, var(--rank-color) 0 1px, transparent 1.5px), radial-gradient(circle at 79% 72%, var(--rank-color) 0 1px, transparent 1.5px), radial-gradient(circle at 65% 34%, var(--rank-color) 0 .7px, transparent 1.2px), linear-gradient(color-mix(in srgb, var(--rank-color) 3%, transparent) 1px, transparent 1px), linear-gradient(90deg,color-mix(in srgb, var(--rank-color) 3%, transparent) 1px, transparent 1px); background-size: auto,auto,auto,auto,auto,31px 31px,31px 31px; }
@@ -1493,4 +1493,103 @@ html[dir="rtl"] .quest-chain-next > .button svg,html[dir="rtl"] .quest-chain-nex
 }
 @media (prefers-reduced-motion: reduce) {
     .skill-card-surface { animation: none; }
+}
+
+/* AURA illustrated deck — common cover, character back, then quest front. */
+.skill-quest-card { perspective: 1400px; }
+.themed-surface { aspect-ratio: 2 / 3; border-color: color-mix(in srgb,var(--theme-color) 68%,#28232e); border-radius: 8px; background: #08090d; box-shadow: 0 0 0 4px rgba(3,4,8,.88),0 0 0 5px color-mix(in srgb,var(--theme-color) 20%,transparent),0 18px 48px rgba(0,0,0,.48),0 0 35px color-mix(in srgb,var(--theme-color) 12%,transparent); transform-style: preserve-3d; }
+.themed-surface::before { display: none; }
+.themed-surface::after { inset: 7px; z-index: 5; border-color: color-mix(in srgb,var(--theme-color) 34%,transparent); border-radius: 4px; }
+.themed-surface.is-cover { border-color: #b4965d; background: #090610; box-shadow: 0 0 0 4px rgba(3,3,8,.9),0 0 0 5px rgba(202,166,94,.2),0 18px 48px rgba(0,0,0,.48),0 0 35px rgba(157,111,209,.14); }
+.themed-surface.is-cover::after { border-color: rgba(229,184,107,.28); }
+.aura-card-cover-art { position: relative; width: 100%; aspect-ratio: 2 / 3; overflow: hidden; background: #090610; }
+.skill-card-surface > .aura-card-cover-art { position: absolute; inset: 0; }
+.aura-card-cover-art > img,.character-card-art > img,.themed-front-background { object-fit: cover; }
+.character-card-art { position: absolute; inset: 0; overflow: hidden; background: #08090d; }
+.character-art-shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg,transparent 58%,rgba(4,5,9,.2) 70%,rgba(4,5,9,.94) 100%); pointer-events: none; }
+.character-art-label { position: absolute; right: 20px; bottom: 18px; left: 20px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border: 1px solid color-mix(in srgb,var(--theme-color) 38%,transparent); border-radius: 4px; background: rgba(7,8,13,.76); box-shadow: inset 0 0 18px color-mix(in srgb,var(--theme-color) 6%,transparent); backdrop-filter: blur(8px); }
+.character-art-label > span { overflow: hidden; color: color-mix(in srgb,var(--theme-color) 75%,white); font-size: 7px; font-weight: 700; letter-spacing: .12em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.character-art-label > strong { flex: 0 0 auto; font-family: var(--font-display); font-size: 19px; line-height: 1; text-shadow: 0 0 12px currentColor; }
+.themed-quest-front { position: absolute; inset: 0; overflow: hidden; background: #090b10; }
+.themed-front-background { z-index: 0; opacity: .46; }
+.themed-front-overlay { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg,rgba(6,7,11,.55),rgba(7,9,13,.86) 44%,rgba(6,8,12,.94)),radial-gradient(circle at 50% 20%,color-mix(in srgb,var(--theme-color) 12%,transparent),transparent 52%); }
+.themed-ornate-frame { position: relative; z-index: 2; height: 100%; display: grid; grid-template-rows: auto auto minmax(0,1fr) auto auto auto; gap: 8px; padding: 23px 21px 15px; }
+.themed-ornate-frame::before { content: ''; position: absolute; inset: 12px; z-index: -1; border: 1px solid color-mix(in srgb,var(--theme-color) 28%,transparent); border-radius: 3px; box-shadow: inset 0 0 24px color-mix(in srgb,var(--theme-color) 4%,transparent); pointer-events: none; }
+.frame-corner { position: absolute; width: 24px; height: 24px; border-color: var(--theme-secondary); border-style: solid; opacity: .8; filter: drop-shadow(0 0 5px color-mix(in srgb,var(--theme-color) 35%,transparent)); pointer-events: none; }
+.corner-tl { top: 7px; left: 7px; border-width: 2px 0 0 2px; }
+.corner-tr { top: 7px; right: 7px; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: 7px; left: 7px; border-width: 0 0 2px 2px; }
+.corner-br { right: 7px; bottom: 7px; border-width: 0 2px 2px 0; }
+.themed-front-header { display: flex; align-items: center; justify-content: space-between; direction: ltr; }
+.themed-front-header > span { color: var(--theme-secondary); font-family: Arial,sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -.04em; text-shadow: 0 0 12px color-mix(in srgb,var(--theme-color) 45%,transparent); }
+.themed-front-header > strong { font-family: var(--font-display); font-size: 15px; letter-spacing: .08em; text-shadow: 0 0 12px currentColor; }
+.themed-quest-kind { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 7px; border-bottom: 1px solid color-mix(in srgb,var(--theme-color) 18%,transparent); }
+.themed-quest-kind > small { color: var(--theme-color); font-size: 6px; font-weight: 700; letter-spacing: .14em; }
+.themed-quest-kind > span { overflow: hidden; color: #9299a6; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+.themed-quest-window { position: relative; min-height: 0; overflow: hidden; border: 1px solid color-mix(in srgb,var(--theme-color) 22%,#292b32); border-radius: 4px; background: rgba(6,8,13,.7); box-shadow: inset 0 0 25px rgba(0,0,0,.32); }
+.themed-quest-window > .quest-generated-art { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .2; pointer-events: none; }
+.themed-quest-window > .quest-generated-art svg { width: 100%; height: 100%; object-fit: cover; }
+.themed-quest-window .quest-generated-art text { display: none; }
+.themed-window-copy { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 13px 12px; text-align: center; }
+.themed-window-copy h3 { display: -webkit-box; margin: 0 auto 9px; overflow: hidden; color: color-mix(in srgb,var(--theme-secondary) 68%,white); font-family: var(--font-display); font-size: 15px; font-weight: 600; line-height: 1.4; text-shadow: 0 2px 12px #000; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.themed-window-copy p { display: -webkit-box; margin: 0; overflow: hidden; color: #c0c4cc; font-size: 8px; line-height: 1.75; text-shadow: 0 1px 7px #000; -webkit-box-orient: vertical; -webkit-line-clamp: 7; }
+.themed-skill { min-width: 0; justify-content: flex-start; padding: 6px 2px; border-color: color-mix(in srgb,var(--theme-color) 13%,transparent); }
+.themed-skill > span { flex: 0 0 auto; color: var(--theme-color); font-size: 8px; }
+.themed-skill > div { min-width: 0; display: flex; gap: 4px 8px; overflow: hidden; }
+.themed-skill > div > span { overflow: hidden; color: #929ba9; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
+.themed-rewards { gap: 5px; }
+.themed-rewards.reward-count-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.themed-rewards .skill-reward-cell { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 7px 3px; border: 1px solid color-mix(in srgb,var(--theme-color) 18%,#242731); border-radius: 4px; background: rgba(8,10,16,.86); }
+.themed-rewards .skill-reward-cell > span { flex: 0 0 auto; font-size: 11px; line-height: 1; }
+.themed-rewards .skill-reward-cell > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.themed-rewards .skill-reward-cell strong { color: #e0e2e7; font-size: 8px; }
+.themed-rewards .skill-reward-cell small { color: #777f8e; font-size: 5px; }
+.themed-front-footer { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #5f6673; font-size: 5px; }
+.themed-front-footer > span { overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.themed-front-footer > code { flex: 0 0 auto; color: color-mix(in srgb,var(--theme-color) 38%,#555e6d); font-size: 5px; direction: ltr; }
+.is-flippable .themed-surface,.fate-reveal-sequence-card .themed-surface { animation: aura-card-turn .58s cubic-bezier(.2,.72,.25,1) both; }
+.skill-card-flip { border-color: color-mix(in srgb,var(--theme-color) 30%,transparent); background: color-mix(in srgb,var(--theme-color) 5%,#11141b); color: color-mix(in srgb,var(--theme-color) 65%,#d3d6dc); }
+.is-compact .themed-ornate-frame { gap: 6px; padding: 20px 17px 13px; }
+.is-compact .themed-window-copy { padding: 9px; }
+.is-compact .themed-window-copy h3 { margin-bottom: 6px; font-size: 12px; -webkit-line-clamp: 2; }
+.is-compact .themed-window-copy p { font-size: 7px; line-height: 1.55; -webkit-line-clamp: 5; }
+.is-compact .themed-front-footer > span { display: none; }
+.is-compact .themed-front-footer { justify-content: flex-end; }
+.codex-card:hover .themed-surface,.codex-card:focus-visible .themed-surface { border-color: var(--theme-color); box-shadow: 0 0 0 4px rgba(3,4,8,.88),0 0 0 5px color-mix(in srgb,var(--theme-color) 27%,transparent),0 18px 50px rgba(0,0,0,.48),0 0 42px color-mix(in srgb,var(--theme-color) 19%,transparent); }
+.tarot-mini-card.aura-mini-cover { width: 42px; height: 63px; padding: 0; overflow: hidden; border-color: #8c7248; background: #090610; box-shadow: 4px 4px 0 rgba(229,184,107,.05),0 0 12px rgba(175,127,207,.1); }
+.tarot-mini-card .aura-card-cover-art { height: 100%; }
+.fate-reveal-hint { margin: 9px 0 12px; color: #8e839d; font-size: 8px; letter-spacing: .04em; text-align: center; }
+.fate-rank-card { min-height: 166px; gap: 6px; padding-top: 12px; border-color: rgba(192,157,95,.2); background: linear-gradient(145deg,#191720,#111218 75%); }
+.fate-rank-card::before { display: none; }
+.fate-rank-card:not(:disabled):hover { border-color: rgba(229,184,107,.48); }
+.fate-rank-cover { width: 39px; flex: 0 0 auto; display: block; margin-bottom: 2px; }
+.fate-rank-cover .aura-card-cover-art { border: 1px solid #8c7248; border-radius: 2px; box-shadow: 0 3px 12px rgba(0,0,0,.5),0 0 9px rgba(175,127,207,.12); }
+.fate-rank-card > strong { color: #c9c3cf; }
+.tarot-drawing .fate-reveal-sequence-card { max-width: 290px; margin: 0 auto; }
+.reveal-stage-0 .fate-reveal-sequence-card .themed-surface,.fate-revealed-card.card-face-front .themed-surface { animation: none; }
+.tarot-drawing h2 { margin-top: 22px; }
+.tarot-drawing > p { max-width: 390px; line-height: 1.7; }
+.fate-reveal-progress { display: flex; gap: 7px; margin-top: 14px; direction: ltr; }
+.fate-reveal-progress > i { width: 20px; height: 2px; background: #2b2932; transition: background .25s,box-shadow .25s; }
+.fate-reveal-progress > i.active { background: #c0a2e4; box-shadow: 0 0 8px rgba(192,162,228,.35); }
+html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-spacing: 0; }
+.reduce-motion .themed-surface { animation: none !important; }
+@keyframes aura-card-turn { from { opacity: .2; transform: rotateY(88deg) scale(.96); } 55% { opacity: 1; } to { opacity: 1; transform: rotateY(0) scale(1); } }
+@media (max-width: 760px) {
+    .fate-rank-card { min-height: 154px; }
+    .tarot-drawing .fate-reveal-sequence-card { max-width: 270px; }
+}
+@media (max-width: 560px) {
+    .themed-ornate-frame { padding: 22px 19px 14px; }
+    .fate-rank-card { min-height: 148px; padding: 10px 6px; }
+    .fate-rank-cover { width: 34px; }
+    .fate-reveal-hint { font-size: 7px; }
+}
+@media (max-width: 350px) {
+    .themed-window-copy h3 { font-size: 13px; }
+    .themed-window-copy p { font-size: 7px; }
+    .themed-rewards .skill-reward-cell { gap: 2px; padding-inline: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .themed-surface { animation: none !important; }
 }
