@@ -1597,7 +1597,7 @@ html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-s
     .themed-surface { animation: none !important; }
 }
 
-/* AURA 1.14–1.16 — real-life workday store, focused daily quests, and fixed random slots */
+/* AURA 1.14–1.17 — workday store, focused daily quests, fixed random slots, and stable prices */
 .workday-baseline-card { display: flex; align-items: center; gap: 15px; margin-bottom: 14px; padding: 17px 19px; border-color: rgba(229,184,107,.22); background: radial-gradient(circle at 12% 50%,rgba(229,184,107,.08),transparent 30%),linear-gradient(135deg,#17171d,#11141a); }
 .workday-baseline-icon { width: 46px; height: 46px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(229,184,107,.3); border-radius: 50%; color: var(--gold); background: rgba(229,184,107,.05); }
 .workday-baseline-card > div:nth-child(2) { min-width: 0; }
@@ -1645,7 +1645,7 @@ html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-s
 .workday-item-meta > span { display: inline-flex; align-items: center; gap: 4px; }
 .workday-store-item .workday-item-bottom { gap: 10px; margin-top: auto; padding: 12px 0 0; }
 .workday-price { flex: 0 0 auto; display: flex; flex-direction: column; gap: 3px; direction: ltr; }
-.workday-price > strong { color: var(--gold); font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.workday-price > strong { display: inline-flex; align-items: center; gap: 4px; color: var(--gold); font-family: var(--font-display); font-size: 19px; font-weight: 600; white-space: nowrap; }
 .workday-price > small { display: inline-flex; align-items: center; gap: 4px; color: #a7afbc; font-size: 7px; white-space: nowrap; }
 .workday-item-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 .workday-item-actions .button { min-height: 32px; padding: 6px 10px; font-size: 7px; }

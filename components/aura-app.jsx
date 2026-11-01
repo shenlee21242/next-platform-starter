@@ -677,7 +677,7 @@ export default function AuraApp() {
         window.scrollTo({ top: 0, behavior: settings.reducedMotion ? 'auto' : 'smooth' });
     };
 
-    const workdayBaseline = getWorkdayBaseline(quests);
+    const workdayBaseline = getWorkdayBaseline();
     const randomQuestLimit = getRandomQuestSlotLimit(upgrades);
     const randomQuestCount = countActiveRandomQuests(quests);
     const dailyGoldCap = getWorkdayPrice(workdayBaseline, 200 + (upgrades.goldCap || 0) * 100);

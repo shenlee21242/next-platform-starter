@@ -26,7 +26,7 @@ const icons = {
 const copy = {
     en: {
         eyebrow: 'THE WORKDAY ECONOMY', title: 'Imperial Vault', description: 'Real rewards, useful tools, and permanent upgrades—workday-priced, with fixed-cost random slots.',
-        baseline: 'ONE FULL WORKDAY', baselineText: '100% = all Gold offered by today’s current quest list.', fallback: 'An empty quest list uses the 100 Gold reference baseline.', quests: 'today’s quests',
+        baseline: 'ONE FULL WORKDAY', baselineText: '100% = a fixed 10 Gold reference per workday. Built-in prices do not change when quests are added.', quests: 'today’s quests',
         rewards: 'Real-Life Rewards', powerups: 'Power-Ups', cosmetics: 'Cosmetics', upgrades: 'Permanent Upgrades', arena: 'PvP Arena',
         rewardsNote: 'Redeem intentionally. Add your own reward and choose its workday percentage.', powerupsNote: 'Consumable tools with strict purchase limits each day.', cosmeticsNote: 'Purchase once. Your customization is permanent.', upgradesNote: 'Long-term upgrades purchased with sustained real-world effort.', arenaNote: 'Consumable spells remain available for friendly PvP duels.',
         custom: 'Add a custom reward', customName: 'Reward name', customPlaceholder: 'e.g. A nature walk', percent: 'Workday percentage', create: 'Save reward', cancel: 'Cancel', customDescription: 'Your personalized real-life reward.', delete: 'Delete custom reward',
@@ -38,7 +38,7 @@ const copy = {
     },
     ar: {
         eyebrow: 'اقتصاد يوم العمل', title: 'الخزنة الإمبراطورية', description: 'مكافآت وأدوات وترقيات مرتبطة بيوم عملك، مع أسعار ثابتة مستقلة للفتحات العشوائية.',
-        baseline: 'يوم عمل كامل', baselineText: '100% = كل الذهب المعروض في قائمة مهام اليوم الحالية.', fallback: 'عندما لا توجد مهام يُستخدم مرجع 100 ذهبة.', quests: 'مهام اليوم',
+        baseline: 'يوم عمل كامل', baselineText: '100% = مرجع ثابت قدره 10 ذهب لكل يوم عمل. لا تتغير أسعار العناصر الأساسية عند إضافة المهام.', quests: 'مهام اليوم',
         rewards: 'مكافآت حقيقية', powerups: 'أدوات اللعبة', cosmetics: 'تخصيص الملف', upgrades: 'ترقيات دائمة', arena: 'ساحة PvP',
         rewardsNote: 'استبدل بوعي. أضف مكافأتك الخاصة وحدد نسبتها من يوم العمل.', powerupsNote: 'أدوات استهلاكية بحدود شراء صارمة كل يوم.', cosmeticsNote: 'اشترِ مرة واحدة فقط؛ التخصيص دائم.', upgradesNote: 'ترقيات طويلة الأمد تُشترى بجهد واقعي مستمر.', arenaNote: 'تبقى التعويذات الاستهلاكية متاحة لنزالات PvP الودية.',
         custom: 'أضف مكافأة مخصصة', customName: 'اسم المكافأة', customPlaceholder: 'مثال: نزهة في الطبيعة', percent: 'النسبة من يوم العمل', create: 'حفظ المكافأة', cancel: 'إلغاء', customDescription: 'مكافأتك الواقعية المخصصة.', delete: 'حذف المكافأة المخصصة',
@@ -50,7 +50,7 @@ const copy = {
     },
     fr: {
         eyebrow: 'L’ÉCONOMIE DE LA JOURNÉE', title: 'Chambre impériale', description: 'Récompenses, outils et améliorations liés à votre journée, avec des prix fixes pour les emplacements aléatoires.',
-        baseline: 'UNE JOURNÉE COMPLÈTE', baselineText: '100 % = tout l’or offert par les quêtes actuelles du jour.', fallback: 'Sans quête, la référence est de 100 pièces d’or.', quests: 'quêtes du jour',
+        baseline: 'UNE JOURNÉE COMPLÈTE', baselineText: '100 % = une référence fixe de 10 d’or par journée. Les prix intégrés ne changent pas quand des quêtes sont ajoutées.', quests: 'quêtes du jour',
         rewards: 'Récompenses réelles', powerups: 'Outils de jeu', cosmetics: 'Personnalisation', upgrades: 'Améliorations permanentes', arena: 'Arène JcJ',
         rewardsNote: 'Ajoutez vos propres récompenses et leur pourcentage.', powerupsNote: 'Outils consommables avec des limites d’achat quotidiennes.', cosmeticsNote: 'Un seul achat, une personnalisation permanente.', upgradesNote: 'Des améliorations durables obtenues par un effort constant.', arenaNote: 'Les sorts consommables restent disponibles pour les duels JcJ.',
         custom: 'Ajouter une récompense', customName: 'Nom de la récompense', customPlaceholder: 'ex. Une marche dans la nature', percent: 'Pourcentage de la journée', create: 'Enregistrer', cancel: 'Annuler', customDescription: 'Votre récompense réelle personnalisée.', delete: 'Supprimer la récompense',
@@ -62,7 +62,7 @@ const copy = {
     },
     es: {
         eyebrow: 'LA ECONOMÍA DE LA JORNADA', title: 'Cámara imperial', description: 'Recompensas, herramientas y mejoras ligadas a tu jornada, con precios fijos para los espacios aleatorios.',
-        baseline: 'UNA JORNADA COMPLETA', baselineText: '100 % = todo el oro ofrecido por las misiones actuales de hoy.', fallback: 'Sin misiones se usa la referencia de 100 de oro.', quests: 'misiones de hoy',
+        baseline: 'UNA JORNADA COMPLETA', baselineText: '100 % = una referencia fija de 10 de oro por jornada. Los precios integrados no cambian al añadir misiones.', quests: 'misiones de hoy',
         rewards: 'Recompensas reales', powerups: 'Herramientas', cosmetics: 'Personalización', upgrades: 'Mejoras permanentes', arena: 'Arena JcJ',
         rewardsNote: 'Añade tus propias recompensas y su porcentaje.', powerupsNote: 'Consumibles con límites de compra diarios.', cosmeticsNote: 'Compra única y personalización permanente.', upgradesNote: 'Mejoras duraderas obtenidas con esfuerzo constante.', arenaNote: 'Los hechizos consumibles siguen disponibles para duelos JcJ.',
         custom: 'Añadir recompensa', customName: 'Nombre de la recompensa', customPlaceholder: 'ej. Un paseo por la naturaleza', percent: 'Porcentaje de la jornada', create: 'Guardar', cancel: 'Cancelar', customDescription: 'Tu recompensa real personalizada.', delete: 'Eliminar recompensa',
@@ -86,7 +86,7 @@ export default function StoreScreen({
     const [customName, setCustomName] = useState('');
     const [customPercent, setCustomPercent] = useState(100);
     const today = localDayKey();
-    const baseline = getWorkdayBaseline(quests);
+    const baseline = getWorkdayBaseline();
     const allItems = [...workdayStoreItems, ...(customRewards || [])];
     const visibleItems = allItems.filter((item) => item.category === tab);
     const categories = ['rewards', 'powerups', 'cosmetics', 'upgrades', 'arena'];
@@ -109,7 +109,7 @@ export default function StoreScreen({
 
             <section className="panel workday-baseline-card">
                 <div className="workday-baseline-icon"><Coins size={25} /></div>
-                <div><span>{c.baseline}</span><h2><strong>100%</strong> = {formatNumber(baseline)} {t('common.gold')}</h2><p>{quests.length ? c.baselineText : c.fallback}</p></div>
+                <div><span>{c.baseline}</span><h2><strong>100%</strong> = {formatNumber(baseline)} {t('common.gold')}</h2><p>{c.baselineText}</p></div>
                 <small>{quests.length} {c.quests}</small>
             </section>
             {(xpMinutes > 0 || effects?.goldBoostDay === today) && <div className="store-active-effects">
@@ -160,7 +160,7 @@ export default function StoreScreen({
                                 {item.category === 'upgrades' && upgradeCount > 0 && <span>{c.owned} ×{upgradeCount}</span>}
                             </div>
                             <div className="store-item-bottom workday-item-bottom">
-                                <span className="workday-price"><strong>{slotPurchase ? (maxed ? c.maxed : `${c.nextSlot} ${nextSlot}`) : `${item.percent}%`}</strong><small>{maxed ? <>{randomQuestLimit}/{MAX_RANDOM_QUEST_SLOTS}</> : <><Coins size={14} /> {formatNumber(price)} {t('common.gold')}</>}</small></span>
+                                <span className="workday-price"><strong>{slotPurchase ? (maxed ? c.maxed : `${c.nextSlot} ${nextSlot}`) : <><Coins size={14} /> {formatNumber(price)} {t('common.gold')}</>}</strong><small>{slotPurchase ? (maxed ? <>{randomQuestLimit}/{MAX_RANDOM_QUEST_SLOTS}</> : <><Coins size={14} /> {formatNumber(price)} {t('common.gold')}</>) : `${item.percent}%`}</small></span>
                                 <div className="workday-item-actions">
                                     {canUse && <button className="button button-secondary button-small" onClick={() => onUse(item)}>{item.effect === 'select-quest' ? c.use : c.activate}</button>}
                                     {item.effect === 'automatic' && count > 0 && <span className="store-armed"><Check size={13} /> {c.armed}</span>}
