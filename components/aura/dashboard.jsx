@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from './i18n';
 import { getFateRank } from './fate';
-import { getPeriodKey, getQuestPeriod, secondsUntilPeriodEnd } from './game';
+import { getPeriodBounds, getPeriodKey, getQuestPeriod, secondsUntilPeriodEnd } from './game';
 import QuestArtwork from './quest-artwork';
 import { AuraCoverArtwork } from './quest-card';
 import {
@@ -47,10 +47,13 @@ export default function Dashboard({
     penaltyGold,
     randomQuestLimit = 3,
     randomQuestCount = 0,
+    activePeriod = 'day',
+    onPeriodChange = () => {},
 }) {
     const { t, language } = useI18n();
     const [filter, setFilter] = useState('All');
-    const [period, setPeriod] = useState('day');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const period = activePeriod;
     const [now, setNow] = useState(() => new Date());
     const periodOptions = [
         { id: 'day', icon: Calendar },
@@ -61,8 +64,10 @@ export default function Dashboard({
     const periodQuests = quests.filter((quest) => inCurrentPeriod(quest, period));
     const dailyQuests = quests.filter((quest) => inCurrentPeriod(quest, 'day'));
     const completed = periodQuests.filter((quest) => quest.done).length;
+    const activeCount = periodQuests.length - completed;
     const remaining = dailyQuests.filter((quest) => !quest.done).length;
-    const filteredQuests = filter === 'All' ? periodQuests : periodQuests.filter((quest) => quest.category === filter);
+    const categoryFilteredQuests = filter === 'All' ? periodQuests : periodQuests.filter((quest) => quest.category === filter);
+    const filteredQuests = categoryFilteredQuests.filter((quest) => statusFilter === 'all' || (statusFilter === 'completed' ? quest.done : !quest.done));
     const fateStartingPrice = getFateRank('F').price;
     const periodSeconds = secondsUntilPeriodEnd(period, now);
     const periodCountdown = period === 'day'
@@ -71,6 +76,17 @@ export default function Dashboard({
     const panelMeta = periodQuests.length
         ? `${completed}/${periodQuests.length} ${t('common.completed')} · ${t('dashboard.unlimitedCustom')}${period === 'day' ? ` · ${t('dashboard.randomSlots', { count: randomQuestCount, limit: randomQuestLimit })}` : ''}`
         : t('dashboard.noQuests');
+    const bounds = getPeriodBounds(period, now);
+    const periodRange = period === 'day'
+        ? new Intl.DateTimeFormat(language, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(bounds.start)
+        : period === 'week'
+            ? `${new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(bounds.start)} – ${new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric' }).format(bounds.end)}`
+            : new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(bounds.start);
+    const selectPeriod = (value) => {
+        setFilter('All');
+        setStatusFilter('all');
+        onPeriodChange(value);
+    };
 
     useEffect(() => {
         const timer = window.setInterval(() => setNow(new Date()), 1000);
@@ -114,7 +130,7 @@ export default function Dashboard({
                             {periodOptions.map(({ id, icon: Icon }) => {
                                 const count = quests.filter((quest) => inCurrentPeriod(quest, id)).length;
                                 return (
-                                    <button type="button" key={id} className={period === id ? 'active' : ''} onClick={() => setPeriod(id)} role="tab" aria-selected={period === id}>
+                                    <button type="button" key={id} className={period === id ? 'active' : ''} onClick={() => selectPeriod(id)} role="tab" aria-selected={period === id}>
                                         <Icon size={17} strokeWidth={1.6} />
                                         <span>{t(`goal.${id}`)}</span>
                                         <small>{count}</small>
@@ -126,6 +142,7 @@ export default function Dashboard({
                             <div>
                                 <span className="eyebrow">{t(`goal.${period}Reset`)}</span>
                                 <h2>{t(`goal.${period}Title`)}</h2>
+                                <span className="goal-period-range">{periodRange}</span>
                             </div>
                             <div className="goal-period-countdown">
                                 <span><Clock3 size={13} /> {t('dashboard.timeRemaining')}</span>
@@ -140,6 +157,13 @@ export default function Dashboard({
                                     <span>{Math.round((completed / periodQuests.length) * 100)}%</span>
                                 </div>
                             )}
+                        </div>
+                        <div className="goal-status-filter" role="group" aria-label={t('goal.statusFilter')}>
+                            {[['all', periodQuests.length], ['active', activeCount], ['completed', completed]].map(([value, count]) => (
+                                <button type="button" key={value} className={statusFilter === value ? 'active' : ''} aria-pressed={statusFilter === value} onClick={() => setStatusFilter(value)}>
+                                    {t(`goal.${value}Status`)} <span>{count}</span>
+                                </button>
+                            ))}
                         </div>
                         <div className="quest-filter" role="tablist" aria-label="Filter quests">
                             {['All', 'Religious', 'Psychological', 'Physical', 'Mental', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => (
@@ -191,8 +215,8 @@ export default function Dashboard({
                             )) : (
                                 <EmptyState
                                     icon={<Sparkles size={25} />}
-                                    title={periodQuests.length ? t('goal.emptyCategory', { category: filter === 'All' ? t('common.all') : t(`category.${filter}`) }) : t('goal.emptyTitle', { period: t(`goal.${period}`) })}
-                                    description={periodQuests.length ? t('goal.emptyCategoryDescription') : t('goal.emptyDescription')}
+                                    title={periodQuests.length ? t('goal.noMatching') : t('goal.emptyTitle', { period: t(`goal.${period}`) })}
+                                    description={periodQuests.length ? t('goal.noMatchingDescription') : t('goal.emptyDescription')}
                                     action={t('goal.createPeriod', { period: t(`goal.${period}`) })}
                                     onAction={() => onAddQuest(period)}
                                 />

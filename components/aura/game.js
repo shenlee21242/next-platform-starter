@@ -94,6 +94,18 @@ export function secondsUntilPeriodEnd(period = 'day', date = new Date()) {
     return Math.max(0, Math.floor((end.getTime() - date.getTime()) / 1000));
 }
 
+export function getPeriodBounds(period = 'day', date = new Date()) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    if (period === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    if (period === 'month') start.setDate(1);
+    const end = new Date(start);
+    if (period === 'week') end.setDate(end.getDate() + 6);
+    if (period === 'month') end.setMonth(end.getMonth() + 1, 0);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
 export function createNewGame(auth = {}) {
     const suggestedName = auth.name || defaultPlayer.name;
     return {

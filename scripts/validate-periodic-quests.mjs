@@ -5,6 +5,7 @@ import {
     createMonthlyQuest,
     createNewGame,
     createWeeklyQuest,
+    getPeriodBounds,
     getPeriodKey,
     isRandomQuest,
     localDayKey,
@@ -31,7 +32,15 @@ assert.equal(secondsUntilPeriodEnd('week', sunday), 43200);
 assert.equal(secondsUntilPeriodEnd('month', sunday), 2548800);
 assert.equal(secondsUntilPeriodEnd('week', at(2026, 11, 2)), 561600);
 assert.equal(secondsUntilPeriodEnd('month', at(2026, 11, 30)), 43200);
-console.log('PASS local day/week/month keys and exact period deadlines');
+assert.equal(localDayKey(getPeriodBounds('day', sunday).start), '2026-11-01');
+assert.equal(localDayKey(getPeriodBounds('day', sunday).end), '2026-11-01');
+assert.equal(localDayKey(getPeriodBounds('week', sunday).start), '2026-10-26');
+assert.equal(localDayKey(getPeriodBounds('week', sunday).end), '2026-11-01');
+assert.equal(localDayKey(getPeriodBounds('week', at(2026, 11, 2)).end), '2026-11-08');
+assert.equal(localDayKey(getPeriodBounds('month', sunday).start), '2026-11-01');
+assert.equal(localDayKey(getPeriodBounds('month', sunday).end), '2026-11-30');
+assert.equal(getPeriodBounds('month', sunday).end.getHours(), 23);
+console.log('PASS local day/week/month keys, inclusive date ranges, and exact period deadlines');
 
 const initial = withDailyQuest({ ...createNewGame(), profileComplete: true }, sunday);
 assert.deepEqual(goalIds(initial), ['daily-2026-11-01', 'monthly-2026-11', 'weekly-2026-10-26']);

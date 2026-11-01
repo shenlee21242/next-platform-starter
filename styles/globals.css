@@ -1750,3 +1750,28 @@ html[dir="rtl"] .goal-period-banner h2 { font-family: Arial,sans-serif; letter-s
     .goal-period-picker { gap: 5px; }
     .goal-period-picker button { padding: 7px 4px; font-size: 8px; }
 }
+
+/* AURA 1.19 — goal management, status filters, and exact date ranges */
+.goal-period-range { display: block; margin-top: 5px; color: #8b9099; font-size: 9px; line-height: 1.5; }
+.goal-status-filter { display: flex; gap: 5px; padding: 0 18px 10px; }
+.goal-status-filter button { min-height: 29px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 10px; border: 1px solid transparent; border-radius: 5px; background: rgba(255,255,255,.018); color: #7f8590; font-size: 8px; transition: color .2s, border-color .2s, background .2s; }
+.goal-status-filter button:hover { color: var(--text-soft); }
+.goal-status-filter button.active { border-color: rgba(255,193,116,.2); background: rgba(255,193,116,.07); color: var(--gold); }
+.goal-status-filter button > span { min-width: 16px; height: 16px; display: grid; place-items: center; border-radius: 4px; background: rgba(255,255,255,.05); color: #9a9fa8; font-size: 7px; font-variant-numeric: tabular-nums; }
+.goal-detail-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 10px; }
+.goal-detail-actions .button { min-width: 0; }
+.button-ghost-danger { border: 1px solid rgba(239,68,68,.18); background: rgba(239,68,68,.035); color: #d98787; }
+.button-ghost-danger:hover { border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.08); color: #f0a1a1; }
+.button-danger { border: 1px solid #b84d55; background: #9f3640; color: #fff2f2; }
+.button-danger:hover { border-color: #d5636c; background: #b6424c; }
+.goal-delete-confirm { margin-top: 12px; padding: 13px; border: 1px solid rgba(239,68,68,.22); border-radius: 7px; background: rgba(239,68,68,.045); text-align: start; }
+.goal-delete-confirm > strong { color: #e9c7c4; font-size: 11px; }
+.goal-delete-confirm > p { margin: 6px 0 11px; color: #a68d8f; font-size: 9px; line-height: 1.65; }
+.goal-delete-confirm > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+@media (max-width: 560px) {
+    .goal-period-range { font-size: 8px; }
+    .goal-status-filter { padding: 0 12px 9px; }
+    .goal-status-filter button { flex: 1; min-width: 0; padding-inline: 6px; font-size: 8px; }
+    .goal-detail-actions,.goal-delete-confirm > div { gap: 6px; }
+    .goal-detail-actions .button,.goal-delete-confirm .button { padding-inline: 8px; font-size: 9px; }
+}

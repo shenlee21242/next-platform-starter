@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.18 includes separate daily, weekly, and monthly goal periods with automatic rollover, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.19 includes separate daily, weekly, and monthly goal periods with automatic rollover and full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.18 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.19 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,8 +31,13 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.18 highlights
+## AURA 1.19 highlights
 
+- **Exact localized date ranges:** each period shows its inclusive local dates, including the Monday–Sunday week and the current calendar month, alongside its live reset countdown
+- **Active and completed views:** All, Active, and Completed filters include live counts and compose with the existing category filters; changing periods resets narrowed filters so goals are never hidden accidentally
+- **Custom-goal editing:** player-created goals can be renamed, retimed, moved between periods, and have their difficulty/rewards updated while preserving identity, completion state, and previously earned rewards
+- **Safe custom-goal deletion:** a two-step confirmation permanently deletes only player-created goals; automatic, Fate, and chain-selected quests do not expose these controls, and deletion never rolls back earned XP or Gold
+- **Immediate period handoff:** creating or moving a goal opens its destination tab automatically, and the selected period persists while navigating between screens in the SPA
 - **Three functional goal periods:** every account receives a localized daily goal for the local day, a weekly goal for the Monday-based week, and a monthly goal for the calendar month; each has its own navigation tab, progress, deadline, and period metadata
 - **Correct automatic rollover:** daily goals refresh at local midnight, weekly goals refresh on Monday, and monthly goals refresh on the first day of the next month; weekly and monthly goals survive ordinary daily resets, while expired custom goals are removed with their period
 - **Period-specific custom goals:** the New quest action inherits the open tab, and its period picker can create a daily, weekly, or monthly goal; all custom goals remain unlimited and independent of random-quest capacity
@@ -92,8 +97,8 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
-- `components/aura/game.js` — localized periodic-goal generation, legacy-save migration, local day/week/month keys, deadlines, rollover, penalties, and random-slot classification
-- `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, period progress, countdowns, category filters, and goal presentation
+- `components/aura/game.js` — localized periodic-goal generation, legacy-save migration, local day/week/month keys, inclusive date ranges, deadlines, rollover, penalties, and random-slot classification
+- `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, exact date ranges, period progress, countdowns, status/category filters, and goal presentation
 - `components/aura/store-catalog.js` — localized workday items, the stable 10-Gold reference, exact percentage mappings, fixed random-slot pricing helpers, and balance ranges
 - `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
 
@@ -110,7 +115,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 ```bash
 npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
 npm run validate:store         # All 17 exact prices at 10 Gold, the slot ladder, localization, and protection
-npm run validate:periods       # Period deadlines, generation, migration, rollover, unlimited goals, and penalties
+npm run validate:periods       # Date ranges, deadlines, generation, migration, rollover, unlimited goals, and penalties
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
@@ -151,7 +156,7 @@ npm run build:apk           # Build an installable debug APK (requires Android S
 npm run lint                # ESLint
 npm run validate:life-quests # Validate the active 22,500-quest engine and level gates
 npm run validate:store        # Validate exact 10-Gold-reference prices, slot limits, and protection rules
-npm run validate:periods      # Validate daily/weekly/monthly generation, persistence metadata, and rollover
+npm run validate:periods      # Validate date ranges, goal generation, persistence metadata, and rollover
 npm run generate:life-codex # Rebuild the Arabic Word codex
 npm run generate:quests     # Rebuild the legacy 2,700-quest archive
 npm run validate:quests     # Validate the legacy archive

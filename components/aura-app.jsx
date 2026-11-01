@@ -19,11 +19,13 @@ import {
     LockKeyhole,
     Menu,
     Network,
+    Pencil,
     Plus,
     Settings,
     Shield,
     Sparkles,
     Swords,
+    Trash2,
     Trophy,
     UserRound,
     Users,
@@ -123,13 +125,13 @@ function AuraMark({ size = 34 }) {
     );
 }
 
-function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day' }) {
+function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day', initialQuest = null }) {
     const { t } = useI18n();
-    const [title, setTitle] = useState('');
-    const [period, setPeriod] = useState(initialPeriod);
-    const [category, setCategory] = useState('Physical');
-    const [duration, setDuration] = useState(30);
-    const [difficulty, setDifficulty] = useState('Standard');
+    const [title, setTitle] = useState(initialQuest?.title || '');
+    const [period, setPeriod] = useState(initialQuest ? getQuestPeriod(initialQuest) : initialPeriod);
+    const [category, setCategory] = useState(initialQuest?.category || 'Physical');
+    const [duration, setDuration] = useState(initialQuest?.duration || 30);
+    const [difficulty, setDifficulty] = useState(initialQuest?.difficulty || 'Standard');
     const rewards = { Easy: [60, 40], Standard: [120, 80], Hard: [220, 150] };
     const submit = (event) => {
         event.preventDefault();
@@ -138,8 +140,8 @@ function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day' }) {
         onSubmit({ title: title.trim(), category, duration: Number(duration), difficulty, xp, gold, period });
     };
     return (
-        <Modal onClose={onClose} label="Create a new quest" className="quest-form-modal">
-            <div className="modal-heading"><span className="modal-heading-icon"><Plus size={22} /></span><div className="eyebrow">{t('goal.newEyebrow')}</div><h2>{t('goal.createTitle', { period: t(`goal.${period}`) })}</h2><p>{t('goal.createDescription')}</p></div>
+        <Modal onClose={onClose} label={initialQuest ? t('goal.editTitle') : 'Create a new quest'} className="quest-form-modal">
+            <div className="modal-heading"><span className="modal-heading-icon">{initialQuest ? <Pencil size={22} /> : <Plus size={22} />}</span><div className="eyebrow">{t(initialQuest ? 'goal.editEyebrow' : 'goal.newEyebrow')}</div><h2>{initialQuest ? t('goal.editTitle') : t('goal.createTitle', { period: t(`goal.${period}`) })}</h2><p>{t(initialQuest ? 'goal.editDescription' : 'goal.createDescription')}</p></div>
             <form onSubmit={submit} className="aura-form">
                 <label><span>Quest name</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Train for 30 minutes" required maxLength={60} /></label>
                 <fieldset><legend>{t('goal.choosePeriod')}</legend><div className="goal-period-picker">{['day', 'week', 'month'].map((item) => <button type="button" key={item} className={period === item ? 'active' : ''} onClick={() => setPeriod(item)}>{t(`goal.${item}`)}</button>)}</div></fieldset>
@@ -149,14 +151,15 @@ function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day' }) {
                     <label><span>Difficulty</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Easy</option><option>Standard</option><option>Hard</option></select></label>
                 </div>
                 <div className="quest-reward-preview"><span>COMPLETION REWARDS</span><div><strong>+{rewards[difficulty][0]} XP</strong><strong><Coins size={14} /> +{rewards[difficulty][1]} Gold</strong></div></div>
-                <button className="button button-primary button-full" type="submit"><Plus size={16} /> {t('goal.addToPeriod', { period: t(`goal.${period}`) })}</button>
+                <button className="button button-primary button-full" type="submit">{initialQuest ? <Check size={16} /> : <Plus size={16} />} {initialQuest ? t('goal.saveChanges') : t('goal.addToPeriod', { period: t(`goal.${period}`) })}</button>
             </form>
         </Modal>
     );
 }
 
-function QuestDetailModal({ quest, onClose, onToggle, onAddNext, level, quests = [] }) {
+function QuestDetailModal({ quest, onClose, onToggle, onAddNext, onEdit, onDelete, level, quests = [] }) {
     const { t, language } = useI18n();
+    const [confirmDelete, setConfirmDelete] = useState(false);
     if (!quest) return null;
     const acceptedSourceIds = quests.map((item) => item.sourceId || item.id).filter(Boolean);
     const completedSourceIds = quests.filter((item) => item.done).map((item) => item.sourceId || item.id).filter(Boolean);
@@ -170,6 +173,15 @@ function QuestDetailModal({ quest, onClose, onToggle, onAddNext, level, quests =
             {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
             {quest.skipped ? <div className="quest-detail-grid quest-rest-day-detail"><div><Check size={17} /><span>{t('dashboard.restDaySkip')}</span><strong>{t('quest.restDayNoPenalty')}</strong></div></div> : <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>}
             <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); if (!quest.chainId) onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
+            {quest.questKind === 'custom' && !confirmDelete && <div className="goal-detail-actions">
+                <button className="button button-secondary" onClick={() => onEdit(quest)}><Pencil size={15} /> {t('goal.edit')}</button>
+                <button className="button button-ghost-danger" onClick={() => setConfirmDelete(true)}><Trash2 size={15} /> {t('goal.delete')}</button>
+            </div>}
+            {quest.questKind === 'custom' && confirmDelete && <div className="goal-delete-confirm" role="alert">
+                <strong>{t('goal.deleteConfirm')}</strong>
+                <p>{t('goal.deleteWarning')}</p>
+                <div><button className="button button-secondary" onClick={() => setConfirmDelete(false)}>{t('common.cancel')}</button><button className="button button-danger" onClick={() => onDelete(quest)}><Trash2 size={15} /> {t('goal.deleteConfirmButton')}</button></div>
+            </div>}
         </Modal>
     );
 }
@@ -390,6 +402,7 @@ function LevelUpModal({ level, onClose }) {
 
 export default function AuraApp() {
     const [screen, setScreen] = useState('quests');
+    const [goalPeriod, setGoalPeriod] = useState('day');
     const [session, setSession] = useState(null);
     const [player, setPlayer] = useState(defaultPlayer);
     const [profileReady, setProfileReady] = useState(false);
@@ -515,6 +528,7 @@ export default function AuraApp() {
         setDeadline(secondsUntilMidnight());
         setDevMode(false);
         setScreen('quests');
+        setGoalPeriod('day');
         setModal(null);
         setModalData(null);
     }, []);
@@ -777,8 +791,26 @@ export default function AuraApp() {
     const addQuest = (quest) => {
         const period = getQuestPeriod(quest);
         setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, questKind: 'custom', period, periodKey: getPeriodKey(period) }]);
+        setGoalPeriod(period);
         closeModal();
         notify(t('goal.addedNotification', { period: t(`goal.${period}`) }));
+    };
+
+    const editQuest = (updates) => {
+        const original = modalData?.quest;
+        if (!original || original.questKind !== 'custom') return;
+        const period = getQuestPeriod(updates);
+        setQuests((current) => current.map((quest) => quest.id === original.id ? { ...quest, ...updates, id: quest.id, done: quest.done, questKind: 'custom', period, periodKey: getPeriodKey(period) } : quest));
+        setGoalPeriod(period);
+        closeModal();
+        notify(t('goal.updatedNotification'));
+    };
+
+    const deleteQuest = (quest) => {
+        if (quest.questKind !== 'custom') return;
+        setQuests((current) => current.filter((entry) => entry.id !== quest.id));
+        closeModal();
+        notify(t('goal.deletedNotification'), 'neutral');
     };
 
     const buyItem = (item) => {
@@ -1006,7 +1038,7 @@ export default function AuraApp() {
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
         case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={(period = 'day') => openModal('add-quest', { period })} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} />;
+        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} activePeriod={goalPeriod} onPeriodChange={setGoalPeriod} onToggleQuest={toggleQuest} onAddQuest={(period = 'day') => openModal('add-quest', { period })} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} />;
     }
 
     if (!profileReady) {
@@ -1053,8 +1085,8 @@ export default function AuraApp() {
             {notificationsOpen && <><button className="notification-dismiss" aria-label="Close notifications" onClick={() => setNotificationsOpen(false)} /><section className="notification-popover"><div className="notification-popover-header"><div><span>SYSTEM MESSAGES</span><h2>Notifications</h2></div><button className="text-button" onClick={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))}>Mark all read</button></div><div className="notification-popover-list">{notifications.slice(0, 3).map((notification) => <button key={notification.id} className={!notification.read ? 'unread' : ''} onClick={() => navigate('notifications')}><span className={`notification-dot type-${notification.type}`} /><div><strong>{notification.title}</strong><p>{notification.description}</p><small>{notification.time}</small></div></button>)}</div><button className="notification-view-all" onClick={() => navigate('notifications')}>View all notifications <ArrowRight size={14} /></button></section></>}
 
             {initialOnboarding && <OnboardingExperience player={player} onSave={savePlayer} />}
-            {modal === 'add-quest' && <AddQuestModal initialPeriod={modalData?.period || 'day'} onClose={closeModal} onSubmit={addQuest} />}
-            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
+            {modal === 'add-quest' && <AddQuestModal initialPeriod={modalData?.period || 'day'} initialQuest={modalData?.quest || null} onClose={closeModal} onSubmit={modalData?.quest ? editQuest : addQuest} />}
+            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} onEdit={(entry) => openModal('add-quest', { period: getQuestPeriod(entry), quest: entry })} onDelete={deleteQuest} level={level} quests={quests} />}
             {modal === 'store-item-quest' && modalData && <StoreItemQuestModal item={modalData} quests={quests} onClose={closeModal} onSelect={applyStoreItemToQuest} />}
             {modal === 'tarot' && <TarotModal gold={gold} level={level} randomQuestCount={randomQuestCount} randomQuestLimit={randomQuestLimit} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}
