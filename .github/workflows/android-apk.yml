@@ -1,0 +1,93 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Verify the preinstalled Android SDK
+        run: |
+          test -n "$ANDROID_HOME"
+          test -d "$ANDROID_HOME"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and sync the native web app
+        run: npm run cap:sync
+
+      - name: Build debug APK
+        working-directory: android
+        shell: bash
+        run: |
+          chmod +x gradlew
+          set +e
+          ./gradlew assembleDebug --no-daemon --console=plain > ../gradle-build.log 2>&1
+          status=$?
+          set -e
+          tail -n 100 ../gradle-build.log
+          if [ "$status" -ne 0 ]; then
+            python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import quote
+          lines = Path('../gradle-build.log').read_text(errors='replace').splitlines()
+          summary = '\n'.join(lines[-70:])
+          print(f'::error title=Gradle compilation failed::{quote(summary, safe="")}')
+          PY
+            exit "$status"
+          fi
+
+      - name: Prepare downloadable APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk AURA-debug.apk
+
+      - name: Create temporary APK transfer blob
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          from pathlib import Path
+          payload = {
+              'encoding': 'base64',
+              'content': base64.b64encode(Path('AURA-debug.apk').read_bytes()).decode('ascii'),
+          }
+          Path('apk-blob.json').write_text(json.dumps(payload))
+          PY
+          blob_sha=$(gh api --method POST "repos/${{ github.repository }}/git/blobs" --input apk-blob.json --jq '.sha')
+          rm apk-blob.json
+          echo "::notice title=AURA APK Git blob::${blob_sha}"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AURA-Android-APK
+          path: AURA-debug.apk
+          retention-days: 30
+          if-no-files-found: error

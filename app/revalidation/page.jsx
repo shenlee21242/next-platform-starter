@@ -56,9 +56,18 @@ export default async function Page() {
 }
 
 async function RandomWikiArticle() {
-    const randomWiki = await fetch(randomWikiUrl, {
-        next: { revalidate: revalidateTTL, tags: [tagName] }
-    });
+    let randomWiki;
+    try {
+        randomWiki = await fetch(randomWikiUrl, {
+            next: { revalidate: revalidateTTL, tags: [tagName] }
+        });
+    } catch {
+        return (
+            <Card className="max-w-2xl">
+                <p className="text-red-600">Wikipedia is unavailable in this environment. Please try again later.</p>
+            </Card>
+        );
+    }
 
     if (!randomWiki.ok) {
         return (

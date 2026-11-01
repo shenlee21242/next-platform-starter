@@ -7,12 +7,28 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "build:mobile": "vite build",
+    "cap:sync": "npm run build:mobile && cap sync android",
+    "build:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug",
+    "generate:quests": "node scripts/generate-quests.mjs",
+    "validate:quests": "node scripts/validate-quests.mjs",
+    "validate:life-quests": "node scripts/validate-life-quests.mjs",
+    "validate:store": "node scripts/validate-workday-store.mjs",
+    "validate:periods": "node scripts/validate-periodic-quests.mjs",
+    "export:life-codex": "node scripts/export-life-codex.mjs",
+    "build:life-docx": "python scripts/build-life-codex-docx.py",
+    "generate:life-codex": "npm run export:life-codex && npm run build:life-docx"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/plus-jakarta-sans": "^5.3.0",
     "@netlify/blobs": "^10.3.1",
     "blobshape": "^1.0.0",
     "bright": "^1.0.0",
+    "lucide-react": "^1.64.0",
     "markdown-to-jsx": "^7.7.16",
     "next": "^16.0.0",
     "react": "19.2.0",
@@ -20,10 +36,13 @@
     "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.10",
     "@tailwindcss/postcss": "^4.1.15",
+    "@vitejs/plugin-react": "^6.1.2",
     "eslint": "8.57.1",
     "eslint-config-next": "16.0.0-beta.0",
     "postcss": "^8.4.36",
-    "tailwindcss": "^4.1.15"
+    "tailwindcss": "^4.1.15",
+    "vite": "^8.3.5"
   }
 }

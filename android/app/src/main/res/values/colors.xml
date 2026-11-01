@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#ffc174</color>
+    <color name="colorPrimaryDark">#0c0e13</color>
+    <color name="colorAccent">#4cd7f6</color>
+    <color name="aura_background">#0c0e13</color>
+</resources>
