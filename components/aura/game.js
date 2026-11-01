@@ -51,6 +51,17 @@ export function localWeekKey(date = new Date()) {
     return localDayKey(monday);
 }
 
+export function isRandomQuest(quest = {}) {
+    if (quest.questKind === 'random') return true;
+    if (quest.questKind === 'custom' || quest.questKind === 'selected') return false;
+    const id = String(quest.id ?? '');
+    return quest.generated === true || /^(daily|fate|reroll)-/.test(id);
+}
+
+export function countActiveRandomQuests(quests = []) {
+    return quests.filter((quest) => !quest.done && isRandomQuest(quest)).length;
+}
+
 export function secondsUntilMidnight() {
     const now = new Date();
     const midnight = new Date(now);
@@ -120,6 +131,7 @@ export function createDailyQuest(player, previousQuestDate = null) {
         ...template,
         id: `daily-${today}`,
         done: false,
+        questKind: 'random',
         generated: true,
         generatedFor: today,
     };

@@ -1,5 +1,28 @@
 const l = (en, ar, fr, es) => ({ en, ar, fr, es });
 
+export const MIN_RANDOM_QUEST_SLOTS = 3;
+export const MAX_RANDOM_QUEST_SLOTS = 10;
+
+export function getRandomQuestSlotLimit(upgrades = {}) {
+    const purchased = Math.max(0, Math.floor(Number(upgrades.questSlots) || 0));
+    return Math.min(MAX_RANDOM_QUEST_SLOTS, MIN_RANDOM_QUEST_SLOTS + purchased);
+}
+
+export function getRandomQuestSlotPrice(slot) {
+    if (!Number.isInteger(slot) || slot < MIN_RANDOM_QUEST_SLOTS + 1 || slot > MAX_RANDOM_QUEST_SLOTS) return null;
+    return Math.round(30 * (1.4 ** (slot - 4)));
+}
+
+export function getNextRandomQuestSlot(upgrades = {}) {
+    const current = getRandomQuestSlotLimit(upgrades);
+    return current < MAX_RANDOM_QUEST_SLOTS ? current + 1 : null;
+}
+
+export function getNextRandomQuestSlotPrice(upgrades = {}) {
+    const nextSlot = getNextRandomQuestSlot(upgrades);
+    return nextSlot === null ? null : getRandomQuestSlotPrice(nextSlot);
+}
+
 export const workdayStoreItems = [
     { id: 'reward-break', category: 'rewards', percent: 40, icon: 'break', effect: 'redeem', name: l('Short break', 'استراحة قصيرة', 'Petite pause', 'Descanso corto'), description: l('30 minutes of guilt-free entertainment.', '30 دقيقة ترفيه دون شعور بالذنب.', '30 minutes de divertissement sans culpabilité.', '30 minutos de ocio sin culpa.') },
     { id: 'reward-hour', category: 'rewards', percent: 80, icon: 'hour', effect: 'redeem', name: l('Entertainment hour', 'ساعة ترفيه', 'Une heure de divertissement', 'Hora de ocio'), description: l('A film, YouTube, or games for one hour.', 'فيلم أو يوتيوب أو ألعاب لمدة ساعة.', 'Un film, YouTube ou des jeux pendant une heure.', 'Película, YouTube o juegos durante una hora.') },
@@ -19,7 +42,7 @@ export const workdayStoreItems = [
     { id: 'cosmetic-frame', category: 'cosmetics', percent: 350, icon: 'frame', effect: 'permanent', name: l('Avatar Frame', 'إطار صورة رمزية', 'Cadre d’avatar', 'Marco de avatar'), description: l('A permanent radiant frame around your avatars.', 'إطار مشرق دائم حول صورك الرمزية.', 'Un cadre lumineux permanent autour de vos avatars.', 'Un marco luminoso permanente para tus avatares.') },
     { id: 'cosmetic-theme', category: 'cosmetics', percent: 400, icon: 'theme', effect: 'permanent', name: l('Royal Violet Theme', 'ثيم البنفسج الملكي', 'Thème violet royal', 'Tema violeta real'), description: l('A permanent violet-and-gold color theme across AURA.', 'ثيم دائم بالبنفسج والذهبي في كل AURA.', 'Un thème violet et or permanent dans toute AURA.', 'Un tema permanente violeta y dorado en toda AURA.') },
 
-    { id: 'upgrade-quest-slot', category: 'upgrades', percent: 800, icon: 'slot', effect: 'upgrade', name: l('+1 Daily Quest Slot', '+1 فتحة مهمة يومية', '+1 emplacement de quête quotidienne', '+1 espacio de misión diaria'), description: l('Permanently add one daily quest slot. Repeatable.', 'أضف فتحة مهمة يومية واحدة دائمًا. قابلة للتكرار.', 'Ajoutez définitivement un emplacement quotidien. Répétable.', 'Añade permanentemente un espacio diario. Acumulable.') },
+    { id: 'upgrade-quest-slot', category: 'upgrades', pricing: 'random-slot', icon: 'slot', effect: 'upgrade', name: l('+1 Random Quest Slot', '+1 فتحة مهمة عشوائية', '+1 emplacement de quête aléatoire', '+1 espacio de misión aleatoria'), description: l('Add one simultaneous random quest slot, up to 10. The fixed Gold price rises 40% each time.', 'أضف فتحة مهمة عشوائية نشطة واحدة، بحد أقصى 10. يرتفع السعر الثابت بالذهب 40% كل مرة.', 'Ajoutez un emplacement de quête aléatoire actif, jusqu’à 10. Le prix fixe en or augmente de 40 % à chaque achat.', 'Añade un espacio de misión aleatoria activa, hasta 10. El precio fijo en oro aumenta un 40 % cada vez.') },
     { id: 'upgrade-gold-cap', category: 'upgrades', percent: 600, icon: 'cap', effect: 'upgrade', name: l('Daily Gold Cap', 'زيادة سقف الذهب اليومي', 'Plafond d’or quotidien', 'Límite de oro diario'), description: l('Permanently add 100% of a workday to your daily quest-Gold cap. Repeatable.', 'أضف دائمًا 100% من يوم عمل إلى سقف ذهب المهام اليومي. قابلة للتكرار.', 'Ajoutez 100 % d’une journée à votre plafond quotidien. Répétable.', 'Añade un 100 % de una jornada a tu límite diario. Acumulable.') },
     { id: 'upgrade-second-chance', category: 'upgrades', percent: 1000, icon: 'chance', effect: 'upgrade', once: true, name: l('Second Chance', 'فرصة ثانية', 'Seconde chance', 'Segunda oportunidad'), description: l('Permanently cancel one full daily penalty each month.', 'ألغِ دائمًا عقوبة يومية كاملة مرة كل شهر.', 'Annulez définitivement une pénalité quotidienne complète par mois.', 'Cancela permanentemente una penalización diaria completa al mes.') },
 

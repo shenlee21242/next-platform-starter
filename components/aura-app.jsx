@@ -47,7 +47,16 @@ import {
     SocialScreen,
 } from './aura/screens';
 import StoreScreen from './aura/store-screen';
-import { getWorkdayBaseline, getWorkdayPrice, getStoreItemName, workdayStoreItems } from './aura/store-catalog';
+import {
+    getNextRandomQuestSlot,
+    getNextRandomQuestSlotPrice,
+    getRandomQuestSlotLimit,
+    getWorkdayBaseline,
+    getWorkdayPrice,
+    getStoreItemName,
+    MAX_RANDOM_QUEST_SLOTS,
+    workdayStoreItems,
+} from './aura/store-catalog';
 import { initialQuests, skills as skillDefinitions, XP_TO_LEVEL, getRank } from './aura/data';
 import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './aura/fate';
 import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
@@ -56,11 +65,13 @@ import QuestRankCard, { AuraCoverArtwork } from './aura/quest-card';
 import QuestChainPanel from './aura/quest-chain';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal } from './aura/ui';
 import {
+    countActiveRandomQuests,
     createDailyQuest,
     createNewGame,
     DAILY_PENALTY_GOLD,
     defaultPlayer,
     defaultSettings,
+    isRandomQuest,
     localDayKey,
     localWeekKey,
     readSession,
@@ -176,7 +187,7 @@ function StoreItemQuestModal({ item, quests, onClose, onSelect }) {
     );
 }
 
-function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = false }) {
+function TarotModal({ gold, level, randomQuestCount = 0, randomQuestLimit = 3, onClose, onSpend, onAccept, reducedMotion = false }) {
     const { t, language } = useI18n();
     const [stage, setStage] = useState('choose');
     const [drawnQuest, setDrawnQuest] = useState(null);
@@ -188,9 +199,11 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = f
     const minimumPrice = Math.min(...prices);
     const maximumPrice = Math.max(...prices);
     const revealedRank = getFateRank(drawnQuest?.rank || 'F');
+    const slotsFull = randomQuestCount >= randomQuestLimit;
     useEffect(() => () => timers.current.forEach((timer) => clearTimeout(timer)), []);
 
     const draw = () => {
+        if (slotsFull) return;
         const quest = generateQuest(level, Math.random, language);
         const rank = getFateRank(quest.rank);
         if (!onSpend(rank.price)) return;
@@ -218,13 +231,14 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = f
             {stage === 'choose' && <>
                 <div className="modal-heading tarot-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">{t('fate.eyebrow')}</div><h2>{t('fate.title')}</h2><p>{t('fate.description')}</p></div>
                 <div className="fate-level-status"><span>{t('fate.deck', { level })}</span><strong>{availableRanks.map((item) => item.rank).join(' · ')}</strong><small>{minimumPrice === maximumPrice ? `${formatNumber(minimumPrice)} ${t('fate.perDraw')}` : `${formatNumber(minimumPrice)}–${formatNumber(maximumPrice)} ${t('common.gold')}`}</small></div>
+                <p className={`fate-slot-status ${slotsFull ? 'is-full' : ''}`}>{t('fate.randomSlots', { count: randomQuestCount, limit: randomQuestLimit })}</p>
                 <p className="fate-reveal-hint">{t('fate.revealHint')}</p>
                 <div className="fate-rank-grid" role="group" aria-label={t('fate.deck', { level })}>
                     {fateRanks.map((item, rankIndex) => {
                         const chance = probabilities.find((entry) => entry.rank === item.rank)?.chance || 0;
                         const displayChance = Number(chance.toFixed(1));
                         return (
-                            <button type="button" key={item.rank} onClick={draw} disabled={!chance || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? 'is-unlocked' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank}, ${chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}`}>
+                            <button type="button" key={item.rank} onClick={draw} disabled={!chance || slotsFull || gold < minimumPrice} className={`fate-rank-card fate-shape-${item.rank.toLowerCase()} ${chance ? 'is-unlocked' : 'is-unavailable'}`} style={{ '--rank-color': item.color }} aria-label={`${item.rank}, ${chance ? t('fate.chance', { chance: displayChance }) : t('fate.locked', { level: rankIndex * 10 })}`}>
                                 <span className="fate-rank-cover"><AuraCoverArtwork /></span>
                                 <strong>{item.rank} · {t(`rank.${item.rank}`)}</strong>
                                 <small><Coins size={11} /> {formatNumber(item.price)}</small>
@@ -233,8 +247,8 @@ function TarotModal({ gold, level, onClose, onSpend, onAccept, reducedMotion = f
                         );
                     })}
                 </div>
-                <button className="button button-primary button-full fate-draw-action" onClick={draw} disabled={gold < minimumPrice}>
-                    <Sparkles size={16} /> {gold < minimumPrice ? t('fate.needGold', { count: formatNumber(minimumPrice - gold) }) : `${t('fate.draw')} · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} ${t('common.gold')}`}
+                <button className="button button-primary button-full fate-draw-action" onClick={draw} disabled={slotsFull || gold < minimumPrice}>
+                    <Sparkles size={16} /> {slotsFull ? t('fate.slotsFull') : gold < minimumPrice ? t('fate.needGold', { count: formatNumber(minimumPrice - gold) }) : `${t('fate.draw')} · ${formatNumber(minimumPrice)}${maximumPrice > minimumPrice ? `–${formatNumber(maximumPrice)}` : ''} ${t('common.gold')}`}
                 </button>
                 <p className="tarot-odds">{t('fate.odds')}</p>
                 <p className="tarot-odds fate-value-note">{t('fate.valueNote')}</p>
@@ -664,7 +678,8 @@ export default function AuraApp() {
     };
 
     const workdayBaseline = getWorkdayBaseline(quests);
-    const questSlotLimit = 3 + (upgrades.questSlots || 0);
+    const randomQuestLimit = getRandomQuestSlotLimit(upgrades);
+    const randomQuestCount = countActiveRandomQuests(quests);
     const dailyGoldCap = getWorkdayPrice(workdayBaseline, 200 + (upgrades.goldCap || 0) * 100);
 
     const toggleQuest = (id) => {
@@ -739,21 +754,23 @@ export default function AuraApp() {
     };
 
     const addQuest = (quest) => {
-        if (quests.length >= questSlotLimit) {
-            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
-            return;
-        }
-        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false }]);
+        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, questKind: 'custom' }]);
         closeModal();
         notify('New quest added to today’s path.');
     };
 
     const buyItem = (item) => {
         const today = localDayKey();
-        const price = getWorkdayPrice(workdayBaseline, item.percent);
+        const slotPurchase = item.id === 'upgrade-quest-slot';
+        const nextSlot = slotPurchase ? getNextRandomQuestSlot(upgrades) : null;
+        const price = slotPurchase ? getNextRandomQuestSlotPrice(upgrades) : getWorkdayPrice(workdayBaseline, item.percent);
         const permanent = item.category === 'cosmetics' || item.once;
         const boughtToday = purchaseHistory.filter((entry) => entry.day === today && entry.itemId === item.id).length;
         const itemName = getStoreItemName(item, language);
+        if (slotPurchase && (nextSlot === null || price === null)) {
+            notify(`Random quest slots are already at the ${MAX_RANDOM_QUEST_SLOTS}-slot maximum.`, 'neutral');
+            return;
+        }
         if (permanent && inventory.includes(item.id)) return;
         if (item.dailyLimit && boughtToday >= item.dailyLimit) {
             notify(`${itemName}: daily purchase limit reached (${item.dailyLimit}).`, 'error');
@@ -764,14 +781,14 @@ export default function AuraApp() {
             return;
         }
         setGold((current) => current - price);
-        setPurchaseHistory((current) => [...current, { id: `purchase-${Date.now()}`, itemId: item.id, day: today, price, percent: item.percent, at: Date.now() }].slice(-200));
+        setPurchaseHistory((current) => [...current, { id: `purchase-${Date.now()}`, itemId: item.id, day: today, price, percent: item.percent ?? null, slot: nextSlot || undefined, at: Date.now() }].slice(-200));
         if (['powerups', 'arena'].includes(item.category) || item.effect === 'select-quest' || permanent) {
             setInventory((current) => [...current, item.id]);
         }
-        if (item.id === 'upgrade-quest-slot') setUpgrades((current) => ({ ...current, questSlots: (current.questSlots || 0) + 1 }));
+        if (slotPurchase) setUpgrades((current) => ({ ...current, questSlots: Math.min(MAX_RANDOM_QUEST_SLOTS - 3, Math.max(0, current.questSlots || 0) + 1) }));
         if (item.id === 'upgrade-gold-cap') setUpgrades((current) => ({ ...current, goldCap: (current.goldCap || 0) + 1 }));
         if (item.id === 'upgrade-second-chance') setUpgrades((current) => ({ ...current, secondChance: 1 }));
-        notify(`${itemName} · −${price} Gold (${item.percent}% of a workday).`);
+        notify(`${itemName} · −${price} Gold (${slotPurchase ? `random slot ${nextSlot}/${MAX_RANDOM_QUEST_SLOTS}` : `${item.percent}% of a workday`}).`);
     };
 
     const useStoreItem = (item) => {
@@ -800,6 +817,10 @@ export default function AuraApp() {
     const applyStoreItemToQuest = (quest) => {
         const item = modalData;
         if (!item || !inventory.includes(item.id) || quest.done) return;
+        if (item.id === 'power-reroll' && !isRandomQuest(quest) && randomQuestCount >= randomQuestLimit) {
+            notify(`All ${randomQuestLimit} random quest slots are full. Complete a random quest or upgrade your slots first.`, 'error');
+            return;
+        }
         setInventory((current) => {
             const next = [...current];
             const index = next.indexOf(item.id);
@@ -811,7 +832,7 @@ export default function AuraApp() {
             notify(`Rest day used for “${quest.title}”. No penalty and no rewards.`);
         } else if (item.id === 'power-reroll') {
             const replacement = generateQuest(level, Math.random, language);
-            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, generated: entry.generated, generatedFor: entry.generatedFor, title: `${replacement.rank} · ${replacement.text}` } : entry));
+            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, questKind: 'random', generated: entry.generated, generatedFor: entry.generatedFor, title: `${replacement.rank} · ${replacement.text}` } : entry));
             notify(`Quest rerolled into ${replacement.rank} rank.`);
         }
         closeModal();
@@ -837,8 +858,8 @@ export default function AuraApp() {
     };
 
     const spendForCard = (price) => {
-        if (quests.length >= questSlotLimit) {
-            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
+        if (randomQuestCount >= randomQuestLimit) {
+            notify(`All ${randomQuestLimit} random quest slots are full. Complete a random quest or upgrade your slots in the Vault.`, 'error');
             return false;
         }
         if (gold < price) {
@@ -850,12 +871,12 @@ export default function AuraApp() {
     };
 
     const acceptTarot = (quest) => {
-        if (quests.length >= questSlotLimit) {
+        if (randomQuestCount >= randomQuestLimit) {
             closeModal();
-            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
+            notify(`All ${randomQuestLimit} random quest slots are full. Complete a random quest or upgrade your slots in the Vault.`, 'error');
             return;
         }
-        setQuests((current) => [...current, { ...quest, id: `fate-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.title}` }]);
+        setQuests((current) => [...current, { ...quest, id: `fate-${Date.now()}`, done: false, questKind: 'random', title: `${quest.rank} · ${quest.title}` }]);
         closeModal();
         navigate('quests');
         notify('Fate accepted. The quest is now on your daily path.');
@@ -867,12 +888,7 @@ export default function AuraApp() {
             notify(t('chain.alreadyAdded'), 'neutral');
             return;
         }
-        if (quests.length >= questSlotLimit) {
-            closeModal();
-            notify(`All ${questSlotLimit} daily quest slots are full. Upgrade your slots in the Vault.`, 'error');
-            return;
-        }
-        setQuests((current) => [...current, { ...quest, sourceId, id: `chain-${Date.now()}`, done: false, title: `${quest.rank} · ${quest.text}` }]);
+        setQuests((current) => [...current, { ...quest, sourceId, id: `chain-${Date.now()}`, done: false, questKind: 'selected', title: `${quest.rank} · ${quest.text}` }]);
         closeModal();
         navigate('quests');
         notify(t('chain.addedNotification', { rank: quest.rank }));
@@ -961,14 +977,14 @@ export default function AuraApp() {
         case 'codex': content = <QuestCodex onOpenModal={openModal} level={level} quests={quests} />; break;
         case 'skills': content = <SkillTreeScreen unlockedSkills={unlockedSkills} skillPoints={skillPoints} skillQuestProgress={skillQuestProgress} onUnlock={unlockSkill} />; break;
         case 'character': content = <CharacterScreen player={player} playerTitle={equippedTitle} attributes={attributes} level={level} xp={xp} activeSkin={activeSkin} onSkinChange={selectCharacter} onOpenModal={openModal} />; break;
-        case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} quests={quests} customRewards={customRewards} purchaseHistory={purchaseHistory} upgrades={upgrades} effects={effects} dailyGoldEarned={dailyGoldDay === localDayKey() ? dailyGoldEarned : 0} dailyGoldCap={dailyGoldCap} questSlotLimit={questSlotLimit} onBuy={buyItem} onUse={useStoreItem} onAddCustomReward={addCustomReward} onDeleteCustomReward={deleteCustomReward} onNavigate={navigate} />; break;
+        case 'store': content = <StoreScreen gold={gold} diamonds={diamonds} inventory={inventory} quests={quests} customRewards={customRewards} purchaseHistory={purchaseHistory} upgrades={upgrades} effects={effects} dailyGoldEarned={dailyGoldDay === localDayKey() ? dailyGoldEarned : 0} dailyGoldCap={dailyGoldCap} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} onBuy={buyItem} onUse={useStoreItem} onAddCustomReward={addCustomReward} onDeleteCustomReward={deleteCustomReward} onNavigate={navigate} />; break;
         case 'social': content = <SocialScreen devMode={devMode} onSecretCode={secretCode} onAdminAction={runAdminAction} onGift={(friend) => { if (gold < 25) { notify('You need 25 Gold to send a gift.', 'error'); return; } setGold((current) => current - 25); notify(`A 25 Gold gift is on its way to ${friend.name}.`); }} onChallenge={(friend) => openModal('duel', friend)} />; break;
         case 'leaderboard': content = <LeaderboardScreen xp={xp} level={level} playerName={player.name} playerImage={activeCharacter.image} />; break;
         case 'focus': content = <FocusScreen focusSeconds={focusSeconds} focusDuration={focusDuration} focusSessions={focusSessions} focusMinutes={focusMinutes} streak={bestStreak} focusRunning={focusRunning} onToggle={toggleFocus} onReset={resetFocus} onDuration={changeFocusDuration} energy={energy} />; break;
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
         case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} questSlotLimit={questSlotLimit} />;
+        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} />;
     }
 
     if (!profileReady) {
@@ -1018,7 +1034,7 @@ export default function AuraApp() {
             {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
             {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
             {modal === 'store-item-quest' && modalData && <StoreItemQuestModal item={modalData} quests={quests} onClose={closeModal} onSelect={applyStoreItemToQuest} />}
-            {modal === 'tarot' && <TarotModal gold={gold} level={level} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
+            {modal === 'tarot' && <TarotModal gold={gold} level={level} randomQuestCount={randomQuestCount} randomQuestLimit={randomQuestLimit} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}
             {modal === 'onboarding' && <OnboardingExperience player={player} onClose={closeModal} onSave={savePlayer} />}
             {modal === 'level-up' && <LevelUpModal level={level} onClose={closeModal} />}

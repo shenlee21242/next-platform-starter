@@ -786,6 +786,8 @@ a { color: inherit; }
 .fate-level-status > span { color: var(--gold); font-size: 7px; font-weight: 700; letter-spacing: .13em; }
 .fate-level-status > strong { flex: 1; color: #c9c4ba; font-family: var(--font-display); font-size: 10px; font-weight: 500; letter-spacing: .08em; }
 .fate-level-status > small { color: var(--muted); font-size: 8px; white-space: nowrap; }
+.fate-slot-status { margin: -5px 0 12px; color: #8b96a5; font-size: 8px; text-align: center; }
+.fate-slot-status.is-full { color: #ef8d72; }
 .fate-rank-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-bottom: 18px; }
 .fate-rank-card { min-width: 0; min-height: 122px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 17px 13px 14px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--rank-color) 25%, transparent); background: linear-gradient(145deg, color-mix(in srgb, var(--rank-color) 8%, #1a1d24), #12151b 75%); text-align: center; transition: opacity .2s, filter .2s, transform .2s, border-color .2s; }
 .fate-rank-card:not(:disabled):hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--rank-color) 48%, transparent); }
@@ -1595,7 +1597,7 @@ html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-s
     .themed-surface { animation: none !important; }
 }
 
-/* AURA 1.14 — real-life workday store and focused daily quests */
+/* AURA 1.14–1.16 — real-life workday store, focused daily quests, and fixed random slots */
 .workday-baseline-card { display: flex; align-items: center; gap: 15px; margin-bottom: 14px; padding: 17px 19px; border-color: rgba(229,184,107,.22); background: radial-gradient(circle at 12% 50%,rgba(229,184,107,.08),transparent 30%),linear-gradient(135deg,#17171d,#11141a); }
 .workday-baseline-icon { width: 46px; height: 46px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(229,184,107,.3); border-radius: 50%; color: var(--gold); background: rgba(229,184,107,.05); }
 .workday-baseline-card > div:nth-child(2) { min-width: 0; }
@@ -1658,6 +1660,7 @@ html[dir="rtl"] .themed-window-copy h3 { font-family: Arial,sans-serif; letter-s
 .workday-balance-table { display: grid; grid-template-columns: minmax(190px,.7fr) minmax(0,1.5fr); gap: 22px; padding: 20px; }
 .workday-balance-table h2 { margin-top: 5px; font-family: var(--font-display); font-size: 20px; font-weight: 500; }
 .workday-balance-table p { margin-top: 7px; color: var(--muted); font-size: 8px; line-height: 1.7; }
+.workday-slot-balance-note { display: block; margin-top: 10px; color: var(--gold-dark); font-size: 7px; line-height: 1.7; }
 .balance-table { min-width: 0; }
 .balance-row { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; padding: 10px 8px; border-bottom: 1px solid rgba(134,146,165,.09); color: #959fac; font-size: 8px; }
 .balance-row:last-child { border-bottom: 0; }

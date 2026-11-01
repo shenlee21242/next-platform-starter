@@ -42,7 +42,8 @@ export default function Dashboard({
     focusRunning,
     onFocusToggle,
     penaltyGold,
-    questSlotLimit = 3,
+    randomQuestLimit = 3,
+    randomQuestCount = 0,
 }) {
     const { t, language } = useI18n();
     const [filter, setFilter] = useState('All');
@@ -87,7 +88,7 @@ export default function Dashboard({
                         <div className="quests-panel-heading">
                             <PanelTitle
                                 title={t('dashboard.dailyQuests')}
-                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')} · ${t('dashboard.slots', { count: quests.length, limit: questSlotLimit })}` : t('dashboard.noQuests')}
+                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')} · ${t('dashboard.unlimitedCustom')} · ${t('dashboard.randomSlots', { count: randomQuestCount, limit: randomQuestLimit })}` : t('dashboard.noQuests')}
                             />
                             {quests.length > 0 && (
                                 <div className="quest-progress-summary">

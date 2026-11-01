@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.15 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, a workday-balanced reward store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.16 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added quests, capped random-quest slots with fixed upgrade prices, a workday-balanced reward store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.15 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.16 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,12 +31,15 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.15 highlights
+## AURA 1.16 highlights
 
+- **Unlimited personal quest additions:** player-created daily quests and the next quests selected from progression chains never consume random-quest capacity and can be added whenever the player wants
+- **Three to ten simultaneous random quests:** every account starts with three active random-quest slots; completing a random quest releases its slot, and full slots prevent additional Fate draws or custom-to-random rerolls without consuming the reroll
+- **Exact fixed slot prices:** slots 4–10 cost **30, 42, 59, 82, 115, 161, and 226 Gold**, following `round(30 × 1.4^(slot − 4))`; the complete ladder costs **715 Gold**, approximately **71 days at 10 Gold/day**, and further purchases lock at ten
 - **Positive-net Fate draw economics:** every F–SSS draw fee is exactly 20% of that rank’s base Gold reward, so the base reward is five times the fee (F: 2 Gold to draw, 10 Gold on completion, +8 base net); the regular daily Gold cap still applies
 - **Focused real-life quest dashboard:** the Weekly Boss and character selector are removed from the quest area; the complete selectable roster and backstories remain on the Character screen
-- **Workday-balanced Imperial Vault:** every price is a percentage of the Gold offered by the current quest list, with 100% representing one full workday
-- Six real-life rewards (40–300%), custom rewards with player-selected percentages, five consumable power-ups (40–150%) with daily purchase limits, four one-time cosmetics (250–400%), and permanent quest-slot, Gold-cap, and monthly Second Chance upgrades (600–1000%)
+- **Workday-balanced Imperial Vault:** the 17 standard store items remain percentage-based against the Gold offered by the current quest list, with 100% representing one full workday; only the random-slot upgrade uses its separate fixed Gold ladder
+- Six real-life rewards (40–300%), custom rewards with player-selected percentages, five consumable power-ups (40–150%) with daily purchase limits, four one-time cosmetics (250–400%), and permanent Gold-cap and monthly Second Chance upgrades (600–1000%)
 - Rest-day quest selection skips one quest without rewards or penalties; rerolls replace rather than duplicate daily quests; XP/Gold boosts, daily caps, purchases, cosmetics, upgrades, and custom rewards persist locally
 - **22,500 active real-world quests** across Religious, Psychological, Physical, Mental, Self-development, and Social paths
 - Exactly **2,500 quests per rank** across F, E, D, C, B, A, S, SS, and SSS
@@ -83,7 +86,7 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
-- `components/aura/store-catalog.js` — localized workday items, percentages, pricing helpers, and balance ranges
+- `components/aura/store-catalog.js` — localized workday items, percentages, fixed random-slot pricing helpers, and balance ranges
 - `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
 
 Every record exposes `id`, `rank`, `category`, `text`, `xp`, `gold`, `description`, `image`, `skillIds`, `baseAction`, `completion`, and `sourceCodes`. Sequential records also expose `chainId`, `chainStep`, `chainLength`, `previousQuestId`, and `nextQuestId`. `image` is a unique `aura-art://` identity rendered by the local SVG engine. Accepted quests retain their source ID and are regenerated in the newly selected language.
@@ -98,7 +101,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 
 ```bash
 npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
-npm run validate:store         # All 18 workday prices, four-language copy, balance ranges, and daily protection
+npm run validate:store         # 17 workday prices, the fixed slot ladder, four-language copy, and protection
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
@@ -138,7 +141,7 @@ npm run cap:sync            # Build and copy the bundle into Android
 npm run build:apk           # Build an installable debug APK (requires Android SDK)
 npm run lint                # ESLint
 npm run validate:life-quests # Validate the active 22,500-quest engine and level gates
-npm run validate:store        # Validate workday prices, limits metadata, and protection rules
+npm run validate:store        # Validate workday prices, random-slot limits/prices, and protection rules
 npm run generate:life-codex # Rebuild the Arabic Word codex
 npm run generate:quests     # Rebuild the legacy 2,700-quest archive
 npm run validate:quests     # Validate the legacy archive

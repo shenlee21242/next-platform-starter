@@ -1,12 +1,21 @@
 import assert from 'node:assert/strict';
 import {
+    getNextRandomQuestSlot,
+    getNextRandomQuestSlotPrice,
+    getRandomQuestSlotLimit,
+    getRandomQuestSlotPrice,
     getWorkdayBaseline,
     getWorkdayPrice,
+    MAX_RANDOM_QUEST_SLOTS,
+    MIN_RANDOM_QUEST_SLOTS,
     storeBalanceRows,
     workdayStoreItems,
 } from '../components/aura/store-catalog.js';
 import {
+    countActiveRandomQuests,
+    createDailyQuest,
     createNewGame,
+    isRandomQuest,
     resolveDailyProtection,
 } from '../components/aura/game.js';
 
@@ -26,17 +35,17 @@ const expected = {
     'cosmetic-title': 300,
     'cosmetic-frame': 350,
     'cosmetic-theme': 400,
-    'upgrade-quest-slot': 800,
     'upgrade-gold-cap': 600,
     'upgrade-second-chance': 1000,
 };
 
 const items = workdayStoreItems.filter((item) => item.category !== 'arena');
-assert.equal(items.length, 18, 'The workday store must contain the 18 requested items');
-assert.deepEqual(Object.fromEntries(items.map((item) => [item.id, item.percent])), expected);
+assert.equal(items.length, 18, 'The store must contain 17 workday-priced items plus the fixed-price random slot upgrade');
+assert.deepEqual(Object.fromEntries(items.filter((item) => item.percent !== undefined).map((item) => [item.id, item.percent])), expected);
+assert.equal(items.find((item) => item.id === 'upgrade-quest-slot')?.pricing, 'random-slot');
 
 for (const item of items) {
-    assert.equal(getWorkdayPrice(100, item.percent), expected[item.id], `${item.id} price at a 100-Gold baseline`);
+    if (item.percent !== undefined) assert.equal(getWorkdayPrice(100, item.percent), expected[item.id], `${item.id} price at a 100-Gold baseline`);
     for (const language of ['en', 'ar', 'fr', 'es']) {
         assert.ok(item.name[language], `${item.id} has a ${language} name`);
         assert.ok(item.description[language], `${item.id} has a ${language} description`);
@@ -55,6 +64,36 @@ assert.equal(getWorkdayBaseline([]), 100, 'An empty quest list uses a stable 100
 assert.equal(getWorkdayPrice(70, 40), 28);
 assert.equal(getWorkdayPrice(70, 150), 105);
 assert.equal(getWorkdayPrice(101, 40), 41, 'Fractional prices round up');
+
+const expectedSlotPrices = { 4: 30, 5: 42, 6: 59, 7: 82, 8: 115, 9: 161, 10: 226 };
+assert.equal(MIN_RANDOM_QUEST_SLOTS, 3);
+assert.equal(MAX_RANDOM_QUEST_SLOTS, 10);
+for (const [slot, price] of Object.entries(expectedSlotPrices)) {
+    assert.equal(getRandomQuestSlotPrice(Number(slot)), price, `Random slot ${slot} price`);
+}
+assert.equal(Object.values(expectedSlotPrices).reduce((sum, price) => sum + price, 0), 715);
+assert.equal(getRandomQuestSlotPrice(3), null);
+assert.equal(getRandomQuestSlotPrice(11), null);
+assert.equal(getRandomQuestSlotLimit({ questSlots: 0 }), 3);
+for (let purchased = 0; purchased <= 7; purchased += 1) {
+    const upgrades = { questSlots: purchased };
+    const expectedLimit = Math.min(10, 3 + purchased);
+    assert.equal(getRandomQuestSlotLimit(upgrades), expectedLimit);
+    assert.equal(getNextRandomQuestSlot(upgrades), expectedLimit < 10 ? expectedLimit + 1 : null);
+    assert.equal(getNextRandomQuestSlotPrice(upgrades), expectedLimit < 10 ? expectedSlotPrices[expectedLimit + 1] : null);
+}
+assert.equal(getRandomQuestSlotLimit({ questSlots: 99 }), 10, 'Legacy purchases remain capped at ten slots');
+
+const custom = { id: 1, questKind: 'custom', done: false };
+const selected = { id: 'chain-1', questKind: 'selected', done: false };
+const daily = { id: 'daily-1', generated: true, done: false };
+const fate = { id: 'fate-1', done: false };
+const rerolled = { id: 'reroll-1', done: false };
+assert.equal(countActiveRandomQuests([custom, selected, daily, fate, rerolled]), 3);
+assert.equal(countActiveRandomQuests([custom, selected, daily, { ...fate, done: true }, rerolled]), 2, 'Completed random quests release their active slots');
+assert.equal(isRandomQuest(custom), false);
+assert.equal(isRandomQuest(selected), false);
+assert.equal(isRandomQuest(createDailyQuest({ heroClass: 'Shadow Ranger' })), true);
 
 const incomplete = [{ id: 'one', done: false }];
 const shield = resolveDailyProtection({ quests: incomplete, inventory: ['power-penalty-shield'] });
@@ -102,6 +141,7 @@ assert.deepEqual(game.purchaseHistory, []);
 assert.deepEqual(game.upgrades, { questSlots: 0, goldCap: 0, secondChance: 0 });
 assert.equal(game.dailyGoldEarned, 0);
 
-console.log('PASS all 18 workday-store items, four-language copy, dynamic prices, and balance ranges');
+console.log('PASS 17 workday-priced items, four-language copy, dynamic prices, and balance ranges');
+console.log('PASS random slots 3–10, fixed prices 30/42/59/82/115/161/226 (715 total), and active-quest classification');
 console.log('PASS Penalty Shield, Streak Freeze, monthly Second Chance, and rest-day protection');
 console.log('PASS new-game store, upgrade, effect, and daily-cap persistence defaults');
