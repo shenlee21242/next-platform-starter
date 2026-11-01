@@ -18,7 +18,7 @@ Open `http://localhost:3000`.
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
 
-To install on Android, download `AURA-debug.apk`, allow your browser or file manager to install unknown apps when prompted, then open the APK and tap **Install**.
+To install on Android, download `AURA-debug.apk`, allow your browser or file manager to install unknown apps when prompted, then open the APK and tap **Install**. If Android reports a conflicting signature from an older debug build, uninstall that build first; doing so also removes its device-local progress.
 
 ### Build locally
 
