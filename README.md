@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.17 includes a four-language, 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added quests, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.18 includes separate daily, weekly, and monthly goal periods with automatic rollover, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.17 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.18 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,9 +31,13 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.17 highlights
+## AURA 1.18 highlights
 
-- **Unlimited personal quest additions:** player-created daily quests and the next quests selected from progression chains never consume random-quest capacity and can be added whenever the player wants
+- **Three functional goal periods:** every account receives a localized daily goal for the local day, a weekly goal for the Monday-based week, and a monthly goal for the calendar month; each has its own navigation tab, progress, deadline, and period metadata
+- **Correct automatic rollover:** daily goals refresh at local midnight, weekly goals refresh on Monday, and monthly goals refresh on the first day of the next month; weekly and monthly goals survive ordinary daily resets, while expired custom goals are removed with their period
+- **Period-specific custom goals:** the New quest action inherits the open tab, and its period picker can create a daily, weekly, or monthly goal; all custom goals remain unlimited and independent of random-quest capacity
+- **Resilient wall-clock resets:** the live timer rereads local time every second and detects calendar changes directly, covering device sleep and countdown drift; login, onboarding, and the live midnight path share the same period engine
+- **Unlimited personal additions:** player-created goals in all three periods and the next quests selected from progression chains never consume random-quest capacity and can be added whenever the player wants
 - **Three to ten simultaneous random quests:** every account starts with three active random-quest slots; completing a random quest releases its slot, and full slots prevent additional Fate draws or custom-to-random rerolls without consuming the reroll
 - **Exact fixed slot prices:** slots 4–10 cost **30, 42, 59, 82, 115, 161, and 226 Gold**, following `round(30 × 1.4^(slot − 4))`; the complete ladder costs **715 Gold**, approximately **71 days at 10 Gold/day**, and further purchases lock at ten
 - **Positive-net Fate draw economics:** every F–SSS draw fee is exactly 20% of that rank’s base Gold reward, so the base reward is five times the fee (F: 2 Gold to draw, 10 Gold on completion, +8 base net); the regular daily Gold cap still applies
@@ -42,7 +46,7 @@ The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.a
 - **Exact real-life reward prices:** short break 4, entertainment hour 8, rest-day quest skip 12, favorite meal 15, late night 20, and a small gift 30 Gold
 - **Exact power-up prices:** quest reroll 5, one-hour XP multiplier 8, Streak Freeze 10, Penalty Shield 15, and daily Gold multiplier 25 Gold; daily purchase limits remain enforced, and the separate PvP spell retains its previous 100-Gold reference price
 - **Exact cosmetic and permanent-upgrade prices:** profile background 40, avatar frame 60, title 90, full color theme 150, daily Gold-cap upgrade 60, and monthly Second Chance 100 Gold; random slots retain their separate fixed ladder
-- Rest-day quest selection skips one quest without rewards or penalties; rerolls replace rather than duplicate daily quests; XP/Gold boosts, daily caps, purchases, cosmetics, upgrades, and custom rewards persist locally
+- Rest-day quest selection skips one quest without rewards or penalties; rerolls replace rather than duplicate quests while retaining their period; XP/Gold boosts, daily caps, purchases, cosmetics, upgrades, and custom rewards persist locally
 - **22,500 active real-world quests** across Religious, Psychological, Physical, Mental, Self-development, and Social paths
 - Exactly **2,500 quests per rank** across F, E, D, C, B, A, S, SS, and SSS
 - Exactly **11,250 sequential quests** in **1,250 themed chains**; every chain preserves its action/context while progressing through all nine ranks, leaving 11,250 standalone quests
@@ -88,6 +92,8 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
+- `components/aura/game.js` — localized periodic-goal generation, legacy-save migration, local day/week/month keys, deadlines, rollover, penalties, and random-slot classification
+- `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, period progress, countdowns, category filters, and goal presentation
 - `components/aura/store-catalog.js` — localized workday items, the stable 10-Gold reference, exact percentage mappings, fixed random-slot pricing helpers, and balance ranges
 - `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
 
@@ -104,6 +110,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 ```bash
 npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
 npm run validate:store         # All 17 exact prices at 10 Gold, the slot ladder, localization, and protection
+npm run validate:periods       # Period deadlines, generation, migration, rollover, unlimited goals, and penalties
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
@@ -144,6 +151,7 @@ npm run build:apk           # Build an installable debug APK (requires Android S
 npm run lint                # ESLint
 npm run validate:life-quests # Validate the active 22,500-quest engine and level gates
 npm run validate:store        # Validate exact 10-Gold-reference prices, slot limits, and protection rules
+npm run validate:periods      # Validate daily/weekly/monthly generation, persistence metadata, and rollover
 npm run generate:life-codex # Rebuild the Arabic Word codex
 npm run generate:quests     # Rebuild the legacy 2,700-quest archive
 npm run validate:quests     # Validate the legacy archive

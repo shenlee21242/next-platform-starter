@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import {
     ArrowRight,
+    Calendar,
+    CalendarDays,
+    CalendarRange,
     ChevronRight,
     Clock3,
     Coins,
@@ -17,12 +20,12 @@ import {
 } from 'lucide-react';
 import { useI18n } from './i18n';
 import { getFateRank } from './fate';
+import { getPeriodKey, getQuestPeriod, secondsUntilPeriodEnd } from './game';
 import QuestArtwork from './quest-artwork';
 import { AuraCoverArtwork } from './quest-card';
 import {
     CategoryIcon,
     CheckButton,
-    Currency,
     EmptyState,
     formatClock,
     formatShortClock,
@@ -47,10 +50,32 @@ export default function Dashboard({
 }) {
     const { t, language } = useI18n();
     const [filter, setFilter] = useState('All');
-    const completed = quests.filter((quest) => quest.done).length;
-    const remaining = quests.length - completed;
-    const filteredQuests = filter === 'All' ? quests : quests.filter((quest) => quest.category === filter);
+    const [period, setPeriod] = useState('day');
+    const [now, setNow] = useState(() => new Date());
+    const periodOptions = [
+        { id: 'day', icon: Calendar },
+        { id: 'week', icon: CalendarDays },
+        { id: 'month', icon: CalendarRange },
+    ];
+    const inCurrentPeriod = (quest, value) => getQuestPeriod(quest) === value && (!quest.periodKey || quest.periodKey === getPeriodKey(value, now));
+    const periodQuests = quests.filter((quest) => inCurrentPeriod(quest, period));
+    const dailyQuests = quests.filter((quest) => inCurrentPeriod(quest, 'day'));
+    const completed = periodQuests.filter((quest) => quest.done).length;
+    const remaining = dailyQuests.filter((quest) => !quest.done).length;
+    const filteredQuests = filter === 'All' ? periodQuests : periodQuests.filter((quest) => quest.category === filter);
     const fateStartingPrice = getFateRank('F').price;
+    const periodSeconds = secondsUntilPeriodEnd(period, now);
+    const periodCountdown = period === 'day'
+        ? formatClock(periodSeconds)
+        : t('goal.daysHours', { days: Math.floor(periodSeconds / 86400), hours: Math.floor((periodSeconds % 86400) / 3600) });
+    const panelMeta = periodQuests.length
+        ? `${completed}/${periodQuests.length} ${t('common.completed')} · ${t('dashboard.unlimitedCustom')}${period === 'day' ? ` · ${t('dashboard.randomSlots', { count: randomQuestCount, limit: randomQuestLimit })}` : ''}`
+        : t('dashboard.noQuests');
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(new Date()), 1000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     return (
         <div className="screen dashboard-screen">
@@ -59,7 +84,7 @@ export default function Dashboard({
                 title={t('dashboard.title')}
                 description={t('dashboard.description')}
             >
-                <button className="button button-primary" onClick={onAddQuest}>
+                <button className="button button-primary" onClick={() => onAddQuest(period)}>
                     <Plus size={17} /> {t('common.newQuest')}
                 </button>
             </ScreenHeader>
@@ -68,15 +93,15 @@ export default function Dashboard({
                 <section className="penalty-banner" aria-label="Daily quest reminder">
                     <div className="penalty-symbol"><ShieldAlert size={21} strokeWidth={1.6} /></div>
                     <div className="penalty-copy">
-                        <strong>Your streak is on the line.</strong>
-                        <span>Complete {remaining} remaining {remaining === 1 ? 'quest' : 'quests'} before the day ends.</span>
+                        <strong>{t('dashboard.streakWarning')}</strong>
+                        <span>{t('dashboard.remaining', { count: remaining })}</span>
                     </div>
                     <div className="penalty-deadline">
-                        <span><Clock3 size={13} /> TIME REMAINING</span>
+                        <span><Clock3 size={13} /> {t('dashboard.timeRemaining')}</span>
                         <strong>{formatClock(deadline)}</strong>
                     </div>
                     <div className="penalty-cost">
-                        <span>MISSED PENALTY</span>
+                        <span>{t('dashboard.missedPenalty')}</span>
                         <strong>−{penaltyGold} <Coins size={13} /></strong>
                     </div>
                 </section>
@@ -85,15 +110,34 @@ export default function Dashboard({
             <div className="dashboard-grid">
                 <div className="dashboard-main-column">
                     <section className="panel quests-panel">
+                        <div className="goal-period-tabs" role="tablist" aria-label={t('goal.navigation')}>
+                            {periodOptions.map(({ id, icon: Icon }) => {
+                                const count = quests.filter((quest) => inCurrentPeriod(quest, id)).length;
+                                return (
+                                    <button type="button" key={id} className={period === id ? 'active' : ''} onClick={() => setPeriod(id)} role="tab" aria-selected={period === id}>
+                                        <Icon size={17} strokeWidth={1.6} />
+                                        <span>{t(`goal.${id}`)}</span>
+                                        <small>{count}</small>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="goal-period-banner">
+                            <div>
+                                <span className="eyebrow">{t(`goal.${period}Reset`)}</span>
+                                <h2>{t(`goal.${period}Title`)}</h2>
+                            </div>
+                            <div className="goal-period-countdown">
+                                <span><Clock3 size={13} /> {t('dashboard.timeRemaining')}</span>
+                                <strong>{periodCountdown}</strong>
+                            </div>
+                        </div>
                         <div className="quests-panel-heading">
-                            <PanelTitle
-                                title={t('dashboard.dailyQuests')}
-                                meta={quests.length ? `${completed}/${quests.length} ${t('common.completed')} · ${t('dashboard.unlimitedCustom')} · ${t('dashboard.randomSlots', { count: randomQuestCount, limit: randomQuestLimit })}` : t('dashboard.noQuests')}
-                            />
-                            {quests.length > 0 && (
+                            <PanelTitle title={t(`goal.${period}`)} meta={panelMeta} />
+                            {periodQuests.length > 0 && (
                                 <div className="quest-progress-summary">
-                                    <ProgressBar value={completed} max={quests.length} />
-                                    <span>{Math.round((completed / quests.length) * 100)}%</span>
+                                    <ProgressBar value={completed} max={periodQuests.length} />
+                                    <span>{Math.round((completed / periodQuests.length) * 100)}%</span>
                                 </div>
                             )}
                         </div>
@@ -107,7 +151,7 @@ export default function Dashboard({
                                     aria-selected={filter === item}
                                 >
                                     {item === 'All' ? t('common.all') : t(`category.${item}`)}
-                                    {item === 'All' && <span>{quests.length}</span>}
+                                    {item === 'All' && <span>{periodQuests.length}</span>}
                                 </button>
                             ))}
                         </div>
@@ -147,15 +191,15 @@ export default function Dashboard({
                             )) : (
                                 <EmptyState
                                     icon={<Sparkles size={25} />}
-                                    title={quests.length ? `No ${filter.toLowerCase()} quests yet` : 'Your adventure starts here'}
-                                    description={quests.length ? 'Try another path or add a new quest to this category.' : 'Add your first quest and turn today into progress.'}
-                                    action="Create a quest"
-                                    onAction={onAddQuest}
+                                    title={periodQuests.length ? t('goal.emptyCategory', { category: filter === 'All' ? t('common.all') : t(`category.${filter}`) }) : t('goal.emptyTitle', { period: t(`goal.${period}`) })}
+                                    description={periodQuests.length ? t('goal.emptyCategoryDescription') : t('goal.emptyDescription')}
+                                    action={t('goal.createPeriod', { period: t(`goal.${period}`) })}
+                                    onAction={() => onAddQuest(period)}
                                 />
                             )}
                         </div>
-                        <button className="add-quest-row" onClick={onAddQuest}>
-                            <Plus size={16} /> {quests.length ? t('dashboard.addAnother') : t('dashboard.addFirst')}
+                        <button className="add-quest-row" onClick={() => onAddQuest(period)}>
+                            <Plus size={16} /> {periodQuests.length ? t('dashboard.addAnother') : t('dashboard.addFirst')}
                         </button>
                     </section>
 
@@ -185,7 +229,7 @@ export default function Dashboard({
                     </button>
                 </aside>
             </div>
-            <button className="quest-fab" onClick={onAddQuest} aria-label="Add a new daily quest">
+            <button className="quest-fab" onClick={() => onAddQuest(period)} aria-label={t('goal.addToPeriod', { period: t(`goal.${period}`) })}>
                 <Plus size={21} strokeWidth={1.8} />
                 <span>{t('common.newQuest')}</span>
             </button>

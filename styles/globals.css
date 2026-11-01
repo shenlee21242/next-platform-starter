@@ -1718,3 +1718,35 @@ html[dir="rtl"] .store-quest-choice > svg:last-child { transform: scaleX(-1); }
     .balance-row { gap: 5px; padding-inline: 4px; font-size: 7px; }
     .store-quest-choice strong { white-space: normal; }
 }
+
+/* AURA 1.18 — daily, weekly, and monthly goal periods */
+.goal-period-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding: 15px 16px 0; }
+.goal-period-tabs button { min-width: 0; min-height: 45px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px; background: rgba(255,255,255,.015); color: var(--muted); font-size: 10px; text-align: start; transition: border-color .2s, background .2s, color .2s; }
+.goal-period-tabs button:hover { border-color: rgba(255,193,116,.22); color: var(--text-soft); }
+.goal-period-tabs button.active { border-color: rgba(255,193,116,.34); background: linear-gradient(135deg,rgba(255,193,116,.09),rgba(255,193,116,.025)); color: var(--gold); }
+.goal-period-tabs button > span { min-width: 0; line-height: 1.35; }
+.goal-period-tabs button > small { min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 5px; background: rgba(255,255,255,.055); color: #8c929d; font-size: 8px; font-variant-numeric: tabular-nums; }
+.goal-period-tabs button.active > small { background: rgba(255,193,116,.1); color: var(--gold); }
+.goal-period-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin: 12px 16px 0; padding: 14px 15px; border: 1px solid rgba(255,193,116,.1); border-radius: 8px; background: radial-gradient(circle at 90% 0,rgba(255,193,116,.055),transparent 45%),rgba(7,9,13,.28); }
+.goal-period-banner .eyebrow { margin: 0 0 5px; color: #827666; font-size: 7px; line-height: 1.5; }
+.goal-period-banner h2 { color: #e8e1d6; font-family: var(--font-display); font-size: 17px; font-weight: 500; line-height: 1.35; }
+.goal-period-countdown { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; text-align: end; }
+.goal-period-countdown > span { display: flex; align-items: center; gap: 5px; color: #81776a; font-size: 7px; letter-spacing: .1em; }
+.goal-period-countdown > strong { color: var(--gold); font-family: var(--font-display); font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.goal-period-picker { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.goal-period-picker button { min-height: 43px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,.015); color: var(--muted); font-size: 9px; line-height: 1.4; transition: border-color .2s, background .2s, color .2s; }
+.goal-period-picker button:hover { color: var(--text-soft); border-color: rgba(255,193,116,.22); }
+.goal-period-picker button.active { color: var(--gold); border-color: rgba(255,193,116,.35); background: rgba(255,193,116,.06); }
+html[dir="rtl"] .goal-period-banner h2 { font-family: Arial,sans-serif; letter-spacing: 0; }
+@media (max-width: 560px) {
+    .goal-period-tabs { gap: 5px; padding: 12px 10px 0; }
+    .goal-period-tabs button { min-height: 48px; grid-template-columns: minmax(0,1fr) auto; gap: 5px; padding: 7px 8px; font-size: 8px; }
+    .goal-period-tabs button > svg { display: none; }
+    .goal-period-tabs button > small { min-width: 17px; height: 17px; font-size: 7px; }
+    .goal-period-banner { flex-direction: column; align-items: stretch; gap: 11px; margin: 10px 10px 0; padding: 12px; }
+    .goal-period-banner h2 { font-size: 15px; }
+    .goal-period-countdown { flex-direction: row; align-items: center; justify-content: space-between; padding-top: 9px; border-top: 1px solid rgba(255,193,116,.08); }
+    .goal-period-countdown > strong { font-size: 14px; }
+    .goal-period-picker { gap: 5px; }
+    .goal-period-picker button { padding: 7px 4px; font-size: 8px; }
+}

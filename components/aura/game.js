@@ -51,11 +51,25 @@ export function localWeekKey(date = new Date()) {
     return localDayKey(monday);
 }
 
+export function localMonthKey(date = new Date()) {
+    return localDayKey(date).slice(0, 7);
+}
+
+export function getPeriodKey(period = 'day', date = new Date()) {
+    if (period === 'week') return localWeekKey(date);
+    if (period === 'month') return localMonthKey(date);
+    return localDayKey(date);
+}
+
+export function getQuestPeriod(quest = {}) {
+    return ['day', 'week', 'month'].includes(quest.period) ? quest.period : 'day';
+}
+
 export function isRandomQuest(quest = {}) {
-    if (quest.questKind === 'random') return true;
-    if (quest.questKind === 'custom' || quest.questKind === 'selected') return false;
     const id = String(quest.id ?? '');
-    return quest.generated === true || /^(daily|fate|reroll)-/.test(id);
+    if (quest.questKind === 'goal' || quest.questKind === 'custom' || quest.questKind === 'selected' || id.startsWith('daily-')) return false;
+    if (quest.questKind === 'random') return true;
+    return quest.generated === true || /^(fate|reroll)-/.test(id);
 }
 
 export function countActiveRandomQuests(quests = []) {
@@ -63,10 +77,21 @@ export function countActiveRandomQuests(quests = []) {
 }
 
 export function secondsUntilMidnight() {
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
-    return Math.max(0, Math.floor((midnight.getTime() - now.getTime()) / 1000));
+    return secondsUntilPeriodEnd('day');
+}
+
+export function secondsUntilPeriodEnd(period = 'day', date = new Date()) {
+    const end = new Date(date);
+    end.setHours(0, 0, 0, 0);
+    if (period === 'week') {
+        const daysSinceMonday = (end.getDay() + 6) % 7;
+        end.setDate(end.getDate() + 7 - daysSinceMonday);
+    } else if (period === 'month') {
+        end.setMonth(end.getMonth() + 1, 1);
+    } else {
+        end.setDate(end.getDate() + 1);
+    }
+    return Math.max(0, Math.floor((end.getTime() - date.getTime()) / 1000));
 }
 
 export function createNewGame(auth = {}) {
@@ -106,34 +131,133 @@ export function createNewGame(auth = {}) {
     };
 }
 
+const goalText = (en, ar, fr, es) => ({ en, ar, fr, es });
+const localizeGoal = (value, language) => typeof value === 'string' ? value : value?.[language] || value?.en || '';
+const calendarDayNumber = (key) => {
+    const [year, month, day] = key.split('-').map(Number);
+    return Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+};
+
 const firstQuestByClass = {
-    'Shadow Ranger': { title: 'Complete a 20-minute focus session', category: 'Mental', duration: 20, xp: 100, gold: 60 },
-    'Iron Vanguard': { title: 'Complete a 15-minute bodyweight workout', category: 'Physical', duration: 15, xp: 100, gold: 60 },
-    'Dawn Keeper': { title: 'Take 10 minutes for prayer or reflection', category: 'Spiritual', duration: 10, xp: 100, gold: 60 },
-    'Arcane Weaver': { title: 'Read or study without distraction for 20 minutes', category: 'Mental', duration: 20, xp: 100, gold: 60 },
+    'Shadow Ranger': { title: goalText('Complete a 20-minute focus session', 'أكمل جلسة تركيز لمدة 20 دقيقة', 'Terminez une session de concentration de 20 minutes', 'Completa una sesión de concentración de 20 minutos'), category: 'Mental', duration: 20, xp: 100, gold: 60 },
+    'Iron Vanguard': { title: goalText('Complete a 15-minute bodyweight workout', 'أكمل تمرينًا بوزن الجسم لمدة 15 دقيقة', 'Effectuez un entraînement au poids du corps de 15 minutes', 'Completa 15 minutos de ejercicio con peso corporal'), category: 'Physical', duration: 15, xp: 100, gold: 60 },
+    'Dawn Keeper': { title: goalText('Take 10 minutes for prayer or reflection', 'خصص 10 دقائق للصلاة أو التأمل', 'Prenez 10 minutes pour la prière ou la réflexion', 'Dedica 10 minutos a la oración o la reflexión'), category: 'Spiritual', duration: 10, xp: 100, gold: 60 },
+    'Arcane Weaver': { title: goalText('Read or study without distraction for 20 minutes', 'اقرأ أو ذاكر بلا تشتت لمدة 20 دقيقة', 'Lisez ou étudiez sans distraction pendant 20 minutes', 'Lee o estudia sin distracciones durante 20 minutos'), category: 'Mental', duration: 20, xp: 100, gold: 60 },
 };
 
 const rotatingQuests = [
-    { title: 'Read 10 pages of a book', category: 'Mental', duration: 20, xp: 100, gold: 60 },
-    { title: 'Take a 20-minute walk', category: 'Physical', duration: 20, xp: 100, gold: 60 },
-    { title: 'Write three lines of reflection', category: 'Spiritual', duration: 10, xp: 100, gold: 60 },
-    { title: 'Complete one distraction-free work block', category: 'Mental', duration: 25, xp: 120, gold: 70 },
-    { title: 'Stretch and move for 15 minutes', category: 'Physical', duration: 15, xp: 100, gold: 60 },
+    { title: goalText('Read 10 pages of a book', 'اقرأ 10 صفحات من كتاب', 'Lisez 10 pages d’un livre', 'Lee 10 páginas de un libro'), category: 'Mental', duration: 20, xp: 100, gold: 60 },
+    { title: goalText('Take a 20-minute walk', 'امشِ لمدة 20 دقيقة', 'Faites une marche de 20 minutes', 'Da una caminata de 20 minutos'), category: 'Physical', duration: 20, xp: 100, gold: 60 },
+    { title: goalText('Write three lines of reflection', 'اكتب ثلاثة أسطر من التأمل', 'Écrivez trois lignes de réflexion', 'Escribe tres líneas de reflexión'), category: 'Spiritual', duration: 10, xp: 100, gold: 60 },
+    { title: goalText('Complete one distraction-free work block', 'أكمل كتلة عمل واحدة بلا تشتت', 'Terminez un bloc de travail sans distraction', 'Completa un bloque de trabajo sin distracciones'), category: 'Mental', duration: 25, xp: 120, gold: 70 },
+    { title: goalText('Stretch and move for 15 minutes', 'تمدّد وتحرّك لمدة 15 دقيقة', 'Étirez-vous et bougez pendant 15 minutes', 'Estírate y muévete durante 15 minutos'), category: 'Physical', duration: 15, xp: 100, gold: 60 },
 ];
 
-export function createDailyQuest(player, previousQuestDate = null) {
-    const today = localDayKey();
-    const dayNumber = Math.floor(Date.now() / 86400000);
+export function createDailyQuest(player, previousQuestDate = null, date = new Date(), language = 'en') {
+    const today = localDayKey(date);
+    const dayNumber = calendarDayNumber(today);
     const template = previousQuestDate
         ? rotatingQuests[dayNumber % rotatingQuests.length]
         : firstQuestByClass[player.heroClass] || firstQuestByClass['Shadow Ranger'];
     return {
         ...template,
+        title: localizeGoal(template.title, language),
         id: `daily-${today}`,
         done: false,
-        questKind: 'random',
+        questKind: 'goal',
         generated: true,
         generatedFor: today,
+        period: 'day',
+        periodKey: today,
+        diamonds: 0,
+    };
+}
+
+const weeklyGoalTemplates = [
+    { title: goalText('Complete three distraction-free work sessions this week', 'أكمل ثلاث جلسات عمل بلا تشتت هذا الأسبوع', 'Terminez trois sessions de travail sans distraction cette semaine', 'Completa tres sesiones de trabajo sin distracciones esta semana'), category: 'Mental', duration: 60, xp: 300, gold: 40 },
+    { title: goalText('Take three 20-minute walks this week', 'امشِ ثلاث مرات لمدة 20 دقيقة هذا الأسبوع', 'Faites trois marches de 20 minutes cette semaine', 'Da tres caminatas de 20 minutos esta semana'), category: 'Physical', duration: 60, xp: 300, gold: 40 },
+    { title: goalText('Read 50 pages and record one lesson this week', 'اقرأ 50 صفحة وسجّل درسًا واحدًا هذا الأسبوع', 'Lisez 50 pages et notez une leçon cette semaine', 'Lee 50 páginas y anota una lección esta semana'), category: 'SelfDevelopment', duration: 60, xp: 300, gold: 40 },
+];
+
+const monthlyGoalTemplates = [
+    { title: goalText('Finish one meaningful personal project this month', 'أنجز مشروعًا شخصيًا ذا معنى هذا الشهر', 'Terminez un projet personnel significatif ce mois-ci', 'Termina un proyecto personal significativo este mes'), category: 'SelfDevelopment', duration: 90, xp: 1000, gold: 100 },
+    { title: goalText('Build a sustainable exercise routine and review it this month', 'ابنِ روتين تمارين مستدامًا وراجعه هذا الشهر', 'Créez une routine d’exercice durable et évaluez-la ce mois-ci', 'Crea una rutina de ejercicio sostenible y revísala este mes'), category: 'Physical', duration: 90, xp: 1000, gold: 100 },
+    { title: goalText('Review your habits and write a monthly improvement plan', 'راجع عاداتك واكتب خطة تحسين شهرية', 'Passez en revue vos habitudes et rédigez un plan d’amélioration mensuel', 'Revisa tus hábitos y escribe un plan mensual de mejora'), category: 'Psychological', duration: 90, xp: 1000, gold: 100 },
+];
+
+export function createWeeklyQuest(date = new Date(), language = 'en') {
+    const week = localWeekKey(date);
+    const template = weeklyGoalTemplates[Math.floor(calendarDayNumber(week) / 7) % weeklyGoalTemplates.length];
+    return {
+        ...template,
+        title: localizeGoal(template.title, language),
+        id: `weekly-${week}`,
+        done: false,
+        questKind: 'goal',
+        generated: true,
+        generatedFor: week,
+        period: 'week',
+        periodKey: week,
+        diamonds: 0,
+    };
+}
+
+export function createMonthlyQuest(date = new Date(), language = 'en') {
+    const month = localMonthKey(date);
+    const template = monthlyGoalTemplates[(date.getFullYear() * 12 + date.getMonth()) % monthlyGoalTemplates.length];
+    return {
+        ...template,
+        title: localizeGoal(template.title, language),
+        id: `monthly-${month}`,
+        done: false,
+        questKind: 'goal',
+        generated: true,
+        generatedFor: month,
+        period: 'month',
+        periodKey: month,
+        diamonds: 0,
+    };
+}
+
+export function updatePeriodicQuests({ player, quests = [], lastQuestDate = null, language = 'en' }, date = new Date()) {
+    const today = localDayKey(date);
+    const isNewDay = lastQuestDate !== today;
+    const previousDate = lastQuestDate ? new Date(`${lastQuestDate}T12:00:00`) : null;
+    const isNewWeek = Boolean(previousDate && localWeekKey(previousDate) !== localWeekKey(date));
+    const isNewMonth = Boolean(previousDate && localMonthKey(previousDate) !== localMonthKey(date));
+    const normalized = (quests || []).map((quest) => {
+        const id = String(quest.id ?? '');
+        if (quest.generated && !quest.period && id.startsWith('daily-')) {
+            return { ...quest, questKind: 'goal', period: 'day', periodKey: quest.generatedFor || lastQuestDate || today };
+        }
+        if (['day', 'week', 'month'].includes(quest.period) && !quest.periodKey) {
+            return { ...quest, periodKey: getPeriodKey(quest.period, date) };
+        }
+        return quest;
+    });
+    const retained = normalized.filter((quest) => {
+        if (['day', 'week', 'month'].includes(quest.period)) return quest.periodKey === getPeriodKey(quest.period, date);
+        return !isNewDay || !quest.generated;
+    });
+    const next = [...retained];
+    const createdPeriods = [];
+    const ensureGoal = (period, quest) => {
+        const key = getPeriodKey(period, date);
+        if (!next.some((entry) => entry.generated && entry.period === period && entry.periodKey === key)) {
+            next.push(quest);
+            createdPeriods.push(period);
+        }
+    };
+    ensureGoal('day', createDailyQuest(player, lastQuestDate, date, language));
+    ensureGoal('week', createWeeklyQuest(date, language));
+    ensureGoal('month', createMonthlyQuest(date, language));
+    return {
+        quests: next,
+        dailyQuest: next.find((quest) => quest.generated && quest.period === 'day' && quest.periodKey === today) || null,
+        isNewDay,
+        isNewWeek,
+        isNewMonth,
+        createdPeriods,
     };
 }
 
@@ -170,22 +294,19 @@ export function resolveDailyProtection({ quests = [], severity = 'Standard', inv
     return { ...penalty, gold, streakReset, protection, inventory: nextInventory, secondChanceMonth: nextSecondChanceMonth };
 }
 
-export function withDailyQuest(game) {
+export function withDailyQuest(game, date = new Date()) {
     if (!game.profileComplete) return game;
-    const today = localDayKey();
-    if (game.lastQuestDate === today && game.quests?.some((quest) => quest.generatedFor === today)) return game;
+    const today = localDayKey(date);
+    const periodic = updatePeriodicQuests({ ...game, language: game.settings?.language || 'en' }, date);
+    if (!periodic.isNewDay) return { ...game, quests: periodic.quests };
 
-    const isNewDay = game.lastQuestDate !== today;
-    const dailyQuest = createDailyQuest(game.player, game.lastQuestDate);
     const penalty = resolveDailyProtection({
-        quests: game.lastQuestDate && isNewDay ? game.quests : [],
+        quests: game.lastQuestDate ? (game.quests || []).filter((quest) => !['week', 'month'].includes(quest.period)) : [],
         severity: game.settings?.penalty,
         inventory: game.inventory,
         upgrades: game.upgrades,
         secondChanceMonth: game.secondChanceMonth,
-    });
-    const previousWeek = game.lastQuestDate ? localWeekKey(new Date(`${game.lastQuestDate}T12:00:00`)) : null;
-    const isNewWeek = previousWeek && previousWeek !== localWeekKey();
+    }, date);
     const penaltyNotification = penalty.incomplete ? {
         id: `penalty-${today}`,
         type: 'quest',
@@ -199,7 +320,7 @@ export function withDailyQuest(game) {
 
     return {
         ...game,
-        quests: [...(game.quests || []).filter((quest) => !quest.generated), dailyQuest],
+        quests: periodic.quests,
         lastQuestDate: today,
         gold: Math.max(0, (game.gold ?? 100) - penalty.gold),
         streak: penalty.streakReset ? 0 : game.streak ?? 0,
@@ -208,9 +329,9 @@ export function withDailyQuest(game) {
         secondChanceMonth: penalty.secondChanceMonth,
         dailyGoldEarned: 0,
         dailyGoldDay: today,
-        focusSessions: isNewWeek ? 0 : game.focusSessions ?? 0,
-        focusMinutes: isNewWeek ? 0 : game.focusMinutes ?? 0,
-        focusWeek: localWeekKey(),
+        focusSessions: periodic.isNewWeek ? 0 : game.focusSessions ?? 0,
+        focusMinutes: periodic.isNewWeek ? 0 : game.focusMinutes ?? 0,
+        focusWeek: localWeekKey(date),
         notifications: penaltyNotification ? [penaltyNotification, ...(game.notifications || [])] : game.notifications || [],
     };
 }

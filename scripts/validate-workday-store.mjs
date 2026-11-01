@@ -114,11 +114,11 @@ const selected = { id: 'chain-1', questKind: 'selected', done: false };
 const daily = { id: 'daily-1', generated: true, done: false };
 const fate = { id: 'fate-1', done: false };
 const rerolled = { id: 'reroll-1', done: false };
-assert.equal(countActiveRandomQuests([custom, selected, daily, fate, rerolled]), 3);
-assert.equal(countActiveRandomQuests([custom, selected, daily, { ...fate, done: true }, rerolled]), 2, 'Completed random quests release their active slots');
+assert.equal(countActiveRandomQuests([custom, selected, daily, fate, rerolled]), 2, 'Periodic goals never consume random slots');
+assert.equal(countActiveRandomQuests([custom, selected, daily, { ...fate, done: true }, rerolled]), 1, 'Completed random quests release their active slots');
 assert.equal(isRandomQuest(custom), false);
 assert.equal(isRandomQuest(selected), false);
-assert.equal(isRandomQuest(createDailyQuest({ heroClass: 'Shadow Ranger' })), true);
+assert.equal(isRandomQuest(createDailyQuest({ heroClass: 'Shadow Ranger' })), false);
 
 const incomplete = [{ id: 'one', done: false }];
 const shield = resolveDailyProtection({ quests: incomplete, inventory: ['power-penalty-shield'] });

@@ -67,10 +67,14 @@ import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal } from
 import {
     countActiveRandomQuests,
     createDailyQuest,
+    createMonthlyQuest,
     createNewGame,
+    createWeeklyQuest,
     DAILY_PENALTY_GOLD,
     defaultPlayer,
     defaultSettings,
+    getPeriodKey,
+    getQuestPeriod,
     isRandomQuest,
     localDayKey,
     localWeekKey,
@@ -78,6 +82,7 @@ import {
     readStoredGame,
     resolveDailyProtection,
     secondsUntilMidnight,
+    updatePeriodicQuests,
     withDailyQuest,
     writeSession,
     writeStoredGame,
@@ -118,9 +123,10 @@ function AuraMark({ size = 34 }) {
     );
 }
 
-function AddQuestModal({ onClose, onSubmit }) {
+function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day' }) {
     const { t } = useI18n();
     const [title, setTitle] = useState('');
+    const [period, setPeriod] = useState(initialPeriod);
     const [category, setCategory] = useState('Physical');
     const [duration, setDuration] = useState(30);
     const [difficulty, setDifficulty] = useState('Standard');
@@ -129,20 +135,21 @@ function AddQuestModal({ onClose, onSubmit }) {
         event.preventDefault();
         if (!title.trim()) return;
         const [xp, gold] = rewards[difficulty];
-        onSubmit({ title: title.trim(), category, duration: Number(duration), difficulty, xp, gold });
+        onSubmit({ title: title.trim(), category, duration: Number(duration), difficulty, xp, gold, period });
     };
     return (
         <Modal onClose={onClose} label="Create a new quest" className="quest-form-modal">
-            <div className="modal-heading"><span className="modal-heading-icon"><Plus size={22} /></span><div className="eyebrow">A NEW STEP FORWARD</div><h2>Create a daily quest</h2><p>Make it clear, achievable, and worth showing up for.</p></div>
+            <div className="modal-heading"><span className="modal-heading-icon"><Plus size={22} /></span><div className="eyebrow">{t('goal.newEyebrow')}</div><h2>{t('goal.createTitle', { period: t(`goal.${period}`) })}</h2><p>{t('goal.createDescription')}</p></div>
             <form onSubmit={submit} className="aura-form">
                 <label><span>Quest name</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Train for 30 minutes" required maxLength={60} /></label>
+                <fieldset><legend>{t('goal.choosePeriod')}</legend><div className="goal-period-picker">{['day', 'week', 'month'].map((item) => <button type="button" key={item} className={period === item ? 'active' : ''} onClick={() => setPeriod(item)}>{t(`goal.${item}`)}</button>)}</div></fieldset>
                 <fieldset><legend>Choose a path</legend><div className="category-picker">{['Physical', 'Mental', 'Religious', 'Psychological', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}><CategoryIcon category={item} size={19} /><span>{t(`category.${item}`)}</span></button>)}</div></fieldset>
                 <div className="form-row">
                     <label><span>Duration</span><div className="input-with-suffix"><input type="number" min="5" max="240" step="5" value={duration} onChange={(event) => setDuration(event.target.value)} /><small>minutes</small></div></label>
                     <label><span>Difficulty</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Easy</option><option>Standard</option><option>Hard</option></select></label>
                 </div>
                 <div className="quest-reward-preview"><span>COMPLETION REWARDS</span><div><strong>+{rewards[difficulty][0]} XP</strong><strong><Coins size={14} /> +{rewards[difficulty][1]} Gold</strong></div></div>
-                <button className="button button-primary button-full" type="submit"><Plus size={16} /> Add to today’s quests</button>
+                <button className="button button-primary button-full" type="submit"><Plus size={16} /> {t('goal.addToPeriod', { period: t(`goal.${period}`) })}</button>
             </form>
         </Modal>
     );
@@ -156,9 +163,9 @@ function QuestDetailModal({ quest, onClose, onToggle, onAddNext, level, quests =
     return (
         <Modal onClose={onClose} label={quest.title} className={`quest-detail-modal ${quest.rank ? `rank-reveal-${quest.rank.toLowerCase()}` : ''}`}>
             {quest.generatedArt || quest.sourceId ? <QuestRankCard quest={{ ...quest, text: quest.text || quest.title }} flippable /> : quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
-            <div className="eyebrow">{t(`category.${quest.category}`)} · {quest.rank ? t('quest.fate', { rank: quest.rank }) : t('quest.daily')}</div>
+            <div className="eyebrow">{t(`category.${quest.category}`)} · {quest.rank ? t('quest.fate', { rank: quest.rank }) : t(`goal.${getQuestPeriod(quest)}`)}</div>
             <h2 dir="auto" lang={language}>{quest.title}</h2>
-            <p dir="auto" lang={language}>{quest.description || 'Show up for yourself. Complete this quest before the daily reset to earn your rewards and protect your streak.'}</p>
+            <p dir="auto" lang={language}>{quest.description || t('goal.detailDescription')}</p>
             <QuestChainPanel quest={quest} onAddNext={onAddNext} level={level} completedSourceIds={completedSourceIds} acceptedSourceIds={acceptedSourceIds} />
             {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
             {quest.skipped ? <div className="quest-detail-grid quest-rest-day-detail"><div><Check size={17} /><span>{t('dashboard.restDaySkip')}</span><strong>{t('quest.restDayNoPenalty')}</strong></div></div> : <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>}
@@ -418,6 +425,7 @@ export default function AuraApp() {
     const [bestStreak, setBestStreak] = useState(0);
     const [lastCompletionDate, setLastCompletionDate] = useState(null);
     const [lastQuestDate, setLastQuestDate] = useState(null);
+    const rolloverRef = useRef(null);
     const [devMode, setDevMode] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -432,9 +440,18 @@ export default function AuraApp() {
     const t = useCallback((key, variables) => translate(language, key, variables), [language]);
     const onLanguageChange = useCallback((nextLanguage) => {
         languageTouchedRef.current = true;
+        const dailyTitle = createDailyQuest(player, lastQuestDate, new Date(), nextLanguage).title;
+        const weeklyTitle = createWeeklyQuest(new Date(), nextLanguage).title;
+        const monthlyTitle = createMonthlyQuest(new Date(), nextLanguage).title;
         setSettings((current) => ({ ...current, language: nextLanguage }));
-        setQuests((current) => current.map((quest) => localizeLifeQuest(quest, nextLanguage)));
-    }, []);
+        setQuests((current) => current.map((quest) => {
+            const localized = localizeLifeQuest(quest, nextLanguage);
+            if (quest.generated && quest.questKind === 'goal' && quest.period === 'day') return { ...localized, title: dailyTitle };
+            if (quest.generated && quest.questKind === 'goal' && quest.period === 'week') return { ...localized, title: weeklyTitle };
+            if (quest.generated && quest.questKind === 'goal' && quest.period === 'month') return { ...localized, title: monthlyTitle };
+            return localized;
+        }));
+    }, [player, lastQuestDate]);
 
     const notify = useCallback((message, type = 'success') => setToast({ message, type, id: Date.now() }), []);
     const closeModal = useCallback(() => { setModal(null); setModalData(null); }, []);
@@ -573,21 +590,25 @@ export default function AuraApp() {
     }, [session, profileReady, initialOnboarding, player, quests, level, xp, gold, diamonds, energy, skillPoints, unlockedSkills, skillQuestProgress, inventory, customRewards, purchaseHistory, upgrades, effects, dailyGoldEarned, dailyGoldDay, secondChanceMonth, activeSkin, duel, streak, bestStreak, lastCompletionDate, lastQuestDate, focusSessions, focusMinutes, notifications, settings]);
 
     useEffect(() => {
-        const timer = setInterval(() => setDeadline((current) => Math.max(0, current - 1)), 1000);
+        const timer = setInterval(() => setDeadline(secondsUntilMidnight()), 1000);
         return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
-        if (deadline !== 0 || !session || initialOnboarding) return undefined;
+        const isCalendarRollover = Boolean(lastQuestDate && lastQuestDate !== localDayKey());
+        if ((deadline !== 0 && !isCalendarRollover) || !session || initialOnboarding) return undefined;
         const timer = window.setTimeout(() => {
             const today = localDayKey();
             if (lastQuestDate === today) {
                 setDeadline(secondsUntilMidnight());
                 return;
             }
-            const penalty = resolveDailyProtection({ quests, severity: settings.penalty, inventory, upgrades, secondChanceMonth });
-            const dailyQuest = createDailyQuest(player, lastQuestDate);
-            const isNewWeek = lastQuestDate && localWeekKey(new Date(`${lastQuestDate}T12:00:00`)) !== localWeekKey();
+            if (rolloverRef.current === today) return;
+            rolloverRef.current = today;
+            const periodic = updatePeriodicQuests({ player, quests, lastQuestDate, language });
+            const dailyQuest = periodic.dailyQuest;
+            const penalty = resolveDailyProtection({ quests: quests.filter((quest) => !['week', 'month'].includes(quest.period)), severity: settings.penalty, inventory, upgrades, secondChanceMonth });
+            const isNewWeek = periodic.isNewWeek;
             if (penalty.incomplete) {
                 setGold((current) => Math.max(0, current - penalty.gold));
                 if (penalty.streakReset) setStreak(0);
@@ -608,7 +629,7 @@ export default function AuraApp() {
                 setFocusSessions(0);
                 setFocusMinutes(0);
             }
-            setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
+            setQuests(periodic.quests);
             setLastQuestDate(today);
             setDailyGoldEarned(0);
             setDailyGoldDay(today);
@@ -620,7 +641,7 @@ export default function AuraApp() {
                 : `A new day begins. ${dailyQuest.title} is your new daily quest.`, penalty.incomplete && !penalty.protection ? 'error' : 'success');
         }, 0);
         return () => window.clearTimeout(timer);
-    }, [deadline, session, initialOnboarding, player, lastQuestDate, quests, settings.penalty, inventory, upgrades, secondChanceMonth, notify]);
+    }, [deadline, session, initialOnboarding, player, lastQuestDate, quests, language, settings.penalty, inventory, upgrades, secondChanceMonth, notify]);
 
     useEffect(() => {
         if (!focusRunning) return undefined;
@@ -652,13 +673,13 @@ export default function AuraApp() {
         setPlayer(nextProfile);
         setActiveSkin(selectedCharacter.id);
         if (isFirstLaunch) {
-            const dailyQuest = createDailyQuest(nextProfile, lastQuestDate);
-            setQuests((current) => [...current.filter((quest) => !quest.generated), dailyQuest]);
+            const periodic = updatePeriodicQuests({ player: nextProfile, quests: [], lastQuestDate: null, language });
+            setQuests(periodic.quests);
             setLastQuestDate(localDayKey());
         }
         setInitialOnboarding(false);
         closeModal();
-        notify(isFirstLaunch ? `Welcome to AURA, ${profile.name}. Your first daily quest is ready.` : 'Your character record has been updated.');
+        notify(isFirstLaunch ? t('goal.welcome', { name: profile.name }) : 'Your character record has been updated.');
     };
 
     const logout = () => {
@@ -754,9 +775,10 @@ export default function AuraApp() {
     };
 
     const addQuest = (quest) => {
-        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, questKind: 'custom' }]);
+        const period = getQuestPeriod(quest);
+        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, questKind: 'custom', period, periodKey: getPeriodKey(period) }]);
         closeModal();
-        notify('New quest added to today’s path.');
+        notify(t('goal.addedNotification', { period: t(`goal.${period}`) }));
     };
 
     const buyItem = (item) => {
@@ -832,7 +854,7 @@ export default function AuraApp() {
             notify(`Rest day used for “${quest.title}”. No penalty and no rewards.`);
         } else if (item.id === 'power-reroll') {
             const replacement = generateQuest(level, Math.random, language);
-            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, questKind: 'random', generated: entry.generated, generatedFor: entry.generatedFor, title: `${replacement.rank} · ${replacement.text}` } : entry));
+            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, questKind: 'random', generated: entry.generated, generatedFor: entry.generatedFor, period: entry.period, periodKey: entry.periodKey, title: `${replacement.rank} · ${replacement.text}` } : entry));
             notify(`Quest rerolled into ${replacement.rank} rank.`);
         }
         closeModal();
@@ -984,7 +1006,7 @@ export default function AuraApp() {
         case 'duel': content = <PvpScreen duel={duel} player={player} level={level} hasAttackSpell={inventory.includes('p4')} onCastSpell={castAttackSpell} onNavigate={navigate} onClaim={() => { setGold((current) => current + duel.stake * 2); setDuel(null); notify(`Duel won · ${formatNumber(duel.stake * 2)} Gold added to your vault.`); navigate('social'); }} />; break;
         case 'notifications': content = <NotificationsScreen notifications={notifications} onMarkAllRead={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))} />; break;
         case 'settings': content = <SettingsScreen player={player} session={session} onLogout={logout} settings={settings} onSettingChange={(key, value) => setSettings((current) => ({ ...current, [key]: value }))} onOpenModal={openModal} />; break;
-        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={() => openModal('add-quest')} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} />;
+        default: content = <Dashboard penaltyGold={DAILY_PENALTY_GOLD[settings.penalty] || DAILY_PENALTY_GOLD.Standard} quests={quests} onToggleQuest={toggleQuest} onAddQuest={(period = 'day') => openModal('add-quest', { period })} onNavigate={navigate} onOpenModal={openModal} deadline={deadline} focusSeconds={focusSeconds} focusRunning={focusRunning} onFocusToggle={toggleFocus} randomQuestLimit={randomQuestLimit} randomQuestCount={randomQuestCount} />;
     }
 
     if (!profileReady) {
@@ -1031,7 +1053,7 @@ export default function AuraApp() {
             {notificationsOpen && <><button className="notification-dismiss" aria-label="Close notifications" onClick={() => setNotificationsOpen(false)} /><section className="notification-popover"><div className="notification-popover-header"><div><span>SYSTEM MESSAGES</span><h2>Notifications</h2></div><button className="text-button" onClick={() => setNotifications((current) => current.map((item) => ({ ...item, read: true })))}>Mark all read</button></div><div className="notification-popover-list">{notifications.slice(0, 3).map((notification) => <button key={notification.id} className={!notification.read ? 'unread' : ''} onClick={() => navigate('notifications')}><span className={`notification-dot type-${notification.type}`} /><div><strong>{notification.title}</strong><p>{notification.description}</p><small>{notification.time}</small></div></button>)}</div><button className="notification-view-all" onClick={() => navigate('notifications')}>View all notifications <ArrowRight size={14} /></button></section></>}
 
             {initialOnboarding && <OnboardingExperience player={player} onSave={savePlayer} />}
-            {modal === 'add-quest' && <AddQuestModal onClose={closeModal} onSubmit={addQuest} />}
+            {modal === 'add-quest' && <AddQuestModal initialPeriod={modalData?.period || 'day'} onClose={closeModal} onSubmit={addQuest} />}
             {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} level={level} quests={quests} />}
             {modal === 'store-item-quest' && modalData && <StoreItemQuestModal item={modalData} quests={quests} onClose={closeModal} onSelect={applyStoreItemToQuest} />}
             {modal === 'tarot' && <TarotModal gold={gold} level={level} randomQuestCount={randomQuestCount} randomQuestLimit={randomQuestLimit} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}

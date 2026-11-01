@@ -15,6 +15,7 @@
     "validate:quests": "node scripts/validate-quests.mjs",
     "validate:life-quests": "node scripts/validate-life-quests.mjs",
     "validate:store": "node scripts/validate-workday-store.mjs",
+    "validate:periods": "node scripts/validate-periodic-quests.mjs",
     "export:life-codex": "node scripts/export-life-codex.mjs",
     "build:life-docx": "python scripts/build-life-codex-docx.py",
     "generate:life-codex": "npm run export:life-codex && npm run build:life-docx"
