@@ -1775,3 +1775,59 @@ html[dir="rtl"] .goal-period-banner h2 { font-family: Arial,sans-serif; letter-s
     .goal-detail-actions,.goal-delete-confirm > div { gap: 6px; }
     .goal-detail-actions .button,.goal-delete-confirm .button { padding-inline: 8px; font-size: 9px; }
 }
+
+/* AURA 1.20 — multi-session weekly and monthly goals */
+.goal-period-plan-hint { display: block; margin-top: 5px; color: #756f66; font-size: 8px; line-height: 1.55; }
+.quest-row.is-progressive { min-height: 92px; }
+.quest-row.is-session-logged:not(.is-complete) { background: rgba(76,215,246,.018); }
+.quest-session-action { width: 20px; height: 20px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,193,116,.38); border-radius: 50%; background: rgba(255,193,116,.035); color: var(--gold); transition: border-color .2s, background .2s, box-shadow .2s; }
+.quest-session-action:hover:not(:disabled) { border-color: var(--gold); background: rgba(255,193,116,.1); box-shadow: 0 0 0 3px rgba(255,193,116,.055); }
+.quest-session-action.is-logged { border-color: rgba(76,215,246,.35); background: rgba(76,215,246,.07); color: var(--cyan); }
+.quest-session-action.is-checked { border-color: var(--gold); background: var(--gold); color: #1d160d; }
+.quest-session-action:disabled { cursor: default; opacity: .85; }
+.quest-goal-progress { max-width: 390px; margin-top: 8px; }
+.quest-goal-progress > div { display: flex; align-items: center; gap: 8px; }
+.quest-goal-progress .progress-track { height: 3px; }
+.quest-goal-progress strong { min-width: 27px; color: var(--gold); font-size: 8px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: end; }
+.quest-goal-progress small { display: block; margin-top: 5px; color: #7b818b; font-size: 7px; line-height: 1.5; }
+.goal-period-picker button:disabled, .goal-weekday-picker button:disabled, .aura-form input:disabled { cursor: not-allowed; opacity: .45; }
+.goal-session-planner { padding: 12px !important; border: 1px solid rgba(255,193,116,.09) !important; border-radius: 7px; background: rgba(255,193,116,.015); }
+.goal-session-planner > label { margin-bottom: 12px; }
+.goal-weekdays-label { display: block; margin: 0 0 7px; color: #a1a4a7; font-size: 8px; font-weight: 500; }
+.goal-weekday-picker { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; }
+.goal-weekday-picker button { min-width: 0; min-height: 33px; padding: 5px 2px; border: 1px solid var(--border); border-radius: 5px; background: rgba(8,10,14,.3); color: #737984; font-size: 7px; line-height: 1.3; transition: color .2s, border-color .2s, background .2s; }
+.goal-weekday-picker button:hover:not(:disabled) { color: var(--text-soft); border-color: rgba(255,193,116,.24); }
+.goal-weekday-picker button.active { border-color: rgba(255,193,116,.32); background: rgba(255,193,116,.075); color: var(--gold); }
+.goal-session-planner > p { margin: 9px 0 0; color: #747a84; font-size: 8px; line-height: 1.65; }
+.quest-reward-preview { flex-wrap: wrap; }
+.quest-reward-preview > small { flex-basis: 100%; padding-top: 8px; border-top: 1px solid rgba(255,193,116,.07); color: #827767; font-size: 7px; line-height: 1.6; }
+.goal-session-overview { margin: 18px 0 4px; padding: 13px; border: 1px solid rgba(255,193,116,.11); border-radius: 7px; background: rgba(255,193,116,.022); text-align: start; }
+.goal-session-overview-heading, .goal-session-overview-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.goal-session-overview-heading { margin-bottom: 9px; }
+.goal-session-overview-heading > span { color: #9a8d7b; font-size: 8px; letter-spacing: .08em; }
+.goal-session-overview-heading > strong { color: var(--gold); font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+.goal-session-overview .progress-track { height: 4px; }
+.goal-session-overview-meta { margin-top: 8px; color: #8a9099; font-size: 8px; }
+.goal-session-overview > p { display: flex; justify-content: space-between; gap: 12px; margin: 11px 0 0; padding-top: 10px; border-top: 1px solid rgba(255,193,116,.07); font-size: 8px; line-height: 1.6; }
+.goal-session-overview > p > span { flex-shrink: 0; color: #777e88; }
+.goal-session-overview > p > strong { color: #b3b5b4; font-weight: 500; text-align: end; }
+.goal-next-reward { margin-top: 8px; color: #8b8173; font-size: 8px; line-height: 1.6; text-align: center; }
+.goal-undo-session { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 10px auto 0; }
+@media (max-width: 560px) {
+    .goal-period-plan-hint { font-size: 7px; }
+    .quest-row.is-progressive { min-height: 105px; }
+    .quest-session-action { align-self: center; grid-row: 1/3; }
+    .quest-row.is-progressive .quest-info { align-self: center; }
+    .quest-goal-progress { margin-top: 7px; }
+    .quest-goal-progress small { font-size: 7px; }
+    .goal-session-planner { padding: 10px !important; }
+    .goal-weekday-picker { gap: 3px; }
+    .goal-weekday-picker button { min-height: 35px; font-size: 6px; }
+    .goal-session-overview-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
+    .goal-session-overview > p { flex-direction: column; gap: 4px; }
+    .goal-session-overview > p > strong { text-align: start; }
+}
+html[dir="rtl"] .goal-session-overview-heading > span,
+html[dir="rtl"] .quest-reward-preview > span { letter-spacing: 0; }
+html[dir="rtl"] .input-with-suffix input { padding-right: 11px; padding-left: 68px; }
+html[dir="rtl"] .input-with-suffix small { right: auto; left: 10px; }

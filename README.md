@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.19 includes separate daily, weekly, and monthly goal periods with automatic rollover and full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.20 includes one-tap daily goals, multi-session weekly and monthly goals with saved progress and gradual rewards, full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.19 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.20 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,8 +31,14 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.19 highlights
+## AURA 1.20 highlights
 
+- **Daily once, long goals progressively:** daily goals retain one-tap completion, while every weekly and monthly goal advances through multiple sessions and reaches completion only at 100%
+- **Flexible session planner:** custom weekly goals support 2–7 sessions and monthly goals 2–31 sessions, with 5–240 minutes per session and selectable preferred weekdays; one session per goal can be logged each day, and a missed preferred day can be made up on another day
+- **Visible saved progress:** every long goal shows completed/target sessions, an automatic percentage, per-session and total time, preferred days, and session history; progress survives reloads and ordinary daily rollover
+- **Larger effort-matched rewards:** long goals have larger total XP, Gold, and time commitments, awarded in exact gradual slices after each session with existing boosts and daily Gold caps; generated weekly goals default to 3 × 20 minutes for 600 XP / 240 Gold, and monthly goals to 8 × 30 minutes for 1,600 XP / 640 Gold
+- **Safe session correction:** undoing the latest session removes only that session’s progress and actual awarded rewards; deleting a custom goal still never rolls back previously earned XP or Gold
+- **Progress-preserving editing and migration:** started custom goals retain their ID, completion history, and percentage when edited or moved between compatible periods; completed plans are protected, and legacy weekly/monthly goals receive sensible session plans without rewriting earned rewards
 - **Exact localized date ranges:** each period shows its inclusive local dates, including the Monday–Sunday week and the current calendar month, alongside its live reset countdown
 - **Active and completed views:** All, Active, and Completed filters include live counts and compose with the existing category filters; changing periods resets narrowed filters so goals are never hidden accidentally
 - **Custom-goal editing:** player-created goals can be renamed, retimed, moved between periods, and have their difficulty/rewards updated while preserving identity, completion state, and previously earned rewards
@@ -97,8 +103,8 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
-- `components/aura/game.js` — localized periodic-goal generation, legacy-save migration, local day/week/month keys, inclusive date ranges, deadlines, rollover, penalties, and random-slot classification
-- `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, exact date ranges, period progress, countdowns, status/category filters, and goal presentation
+- `components/aura/game.js` — localized periodic-goal generation, multi-session plans, progress percentages, gradual reward slices, legacy-save migration, local day/week/month keys, inclusive date ranges, deadlines, rollover, penalties, and random-slot classification
+- `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, exact date ranges, session progress bars, period progress, countdowns, status/category filters, and goal presentation
 - `components/aura/store-catalog.js` — localized workday items, the stable 10-Gold reference, exact percentage mappings, fixed random-slot pricing helpers, and balance ranges
 - `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
 
@@ -115,7 +121,7 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 ```bash
 npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
 npm run validate:store         # All 17 exact prices at 10 Gold, the slot ladder, localization, and protection
-npm run validate:periods       # Date ranges, deadlines, generation, migration, rollover, unlimited goals, and penalties
+npm run validate:periods       # Session plans, progress/rewards, date ranges, migration, rollover, unlimited goals, and penalties
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
@@ -156,7 +162,7 @@ npm run build:apk           # Build an installable debug APK (requires Android S
 npm run lint                # ESLint
 npm run validate:life-quests # Validate the active 22,500-quest engine and level gates
 npm run validate:store        # Validate exact 10-Gold-reference prices, slot limits, and protection rules
-npm run validate:periods      # Validate date ranges, goal generation, persistence metadata, and rollover
+npm run validate:periods      # Validate session progress/rewards, date ranges, persistence metadata, and rollover
 npm run generate:life-codex # Rebuild the Arabic Word codex
 npm run generate:quests     # Rebuild the legacy 2,700-quest archive
 npm run validate:quests     # Validate the legacy archive

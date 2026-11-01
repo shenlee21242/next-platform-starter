@@ -7,6 +7,7 @@ import {
     Calendar,
     CalendarDays,
     CalendarRange,
+    Check,
     ChevronRight,
     Clock3,
     Coins,
@@ -20,7 +21,17 @@ import {
 } from 'lucide-react';
 import { useI18n } from './i18n';
 import { getFateRank } from './fate';
-import { getPeriodBounds, getPeriodKey, getQuestPeriod, secondsUntilPeriodEnd } from './game';
+import {
+    getPeriodBounds,
+    getPeriodKey,
+    getQuestCompletedSessions,
+    getQuestProgressPercent,
+    getQuestPeriod,
+    getQuestSessionTarget,
+    hasQuestSessionToday,
+    isProgressiveQuest,
+    secondsUntilPeriodEnd,
+} from './game';
 import QuestArtwork from './quest-artwork';
 import { AuraCoverArtwork } from './quest-card';
 import {
@@ -143,6 +154,7 @@ export default function Dashboard({
                                 <span className="eyebrow">{t(`goal.${period}Reset`)}</span>
                                 <h2>{t(`goal.${period}Title`)}</h2>
                                 <span className="goal-period-range">{periodRange}</span>
+                                {period !== 'day' && <span className="goal-period-plan-hint">{t('goal.periodPlanHint')}</span>}
                             </div>
                             <div className="goal-period-countdown">
                                 <span><Clock3 size={13} /> {t('dashboard.timeRemaining')}</span>
@@ -181,13 +193,27 @@ export default function Dashboard({
                         </div>
 
                         <div className="quest-list">
-                            {filteredQuests.length ? filteredQuests.map((quest) => (
-                                <article className={`quest-row ${quest.image || quest.generatedArt ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''} ${quest.skipped ? 'is-skipped' : ''}`} key={quest.id}>
-                                    <CheckButton
+                            {filteredQuests.length ? filteredQuests.map((quest) => {
+                                const progressive = isProgressiveQuest(quest);
+                                const targetSessions = getQuestSessionTarget(quest);
+                                const completedSessions = getQuestCompletedSessions(quest);
+                                const progressPercent = getQuestProgressPercent(quest);
+                                const sessionLoggedToday = progressive && hasQuestSessionToday(quest, now);
+                                return (
+                                <article className={`quest-row ${progressive ? 'is-progressive' : ''} ${sessionLoggedToday ? 'is-session-logged' : ''} ${quest.image || quest.generatedArt ? 'has-image' : ''} ${quest.done ? 'is-complete' : ''} ${quest.skipped ? 'is-skipped' : ''}`} key={quest.id}>
+                                    {progressive ? <button
+                                        type="button"
+                                        className={`quest-session-action ${quest.done ? 'is-checked' : ''} ${sessionLoggedToday ? 'is-logged' : ''}`}
+                                        onClick={() => onToggleQuest(quest.id)}
+                                        disabled={quest.done || sessionLoggedToday}
+                                        aria-label={quest.done ? t('goal.goalCompletedLabel', { title: quest.title }) : sessionLoggedToday ? t('goal.sessionLoggedLabel', { title: quest.title }) : t('goal.logSessionLabel', { title: quest.title })}
+                                    >
+                                        {quest.done || sessionLoggedToday ? <Check size={14} strokeWidth={2.2} /> : <Plus size={14} strokeWidth={1.9} />}
+                                    </button> : <CheckButton
                                         checked={quest.done}
                                         onClick={() => onToggleQuest(quest.id)}
                                         label={`${quest.done ? 'Mark incomplete' : 'Complete'} ${quest.title}`}
-                                    />
+                                    />}
                                     {quest.generatedArt || quest.sourceId ? <div className="quest-thumbnail"><QuestArtwork quest={{ ...quest, text: quest.text || quest.title }} decorative /></div> : quest.image ? <div className="quest-thumbnail"><Image src={quest.image} alt="" width={640} height={400} unoptimized /></div> : <div className={`quest-category-icon category-${quest.category.toLowerCase()}`}>
                                         <CategoryIcon category={quest.category} size={19} />
                                     </div>}
@@ -197,9 +223,13 @@ export default function Dashboard({
                                         <div className="quest-meta">
                                             <span>{t(`category.${quest.category}`)}</span>
                                             <i />
-                                            <span><Clock3 size={12} /> {quest.duration} min</span>
+                                            <span><Clock3 size={12} /> {quest.duration} {t('common.minutesShort')}</span>
                                             {quest.chainId && <><i /><span className="quest-row-chain" title={t('chain.label')}><Link2 size={12} /> {t('chain.step', { step: quest.chainStep, total: quest.chainLength })}</span></>}
                                         </div>
+                                        {progressive && <div className="quest-goal-progress">
+                                            <div><ProgressBar value={completedSessions} max={targetSessions} /><strong>{progressPercent}%</strong></div>
+                                            <small>{t('goal.sessionsProgress', { completed: completedSessions, target: targetSessions })} · {t('goal.minutesPerSession', { minutes: quest.sessionDuration })}</small>
+                                        </div>}
                                     </div>
                                     <div className="quest-rewards">
                                         {quest.skipped ? <span className="quest-skipped-label">{t('dashboard.restDaySkip')}</span> : <>
@@ -212,7 +242,8 @@ export default function Dashboard({
                                         <ChevronRight size={17} />
                                     </button>
                                 </article>
-                            )) : (
+                                );
+                            }) : (
                                 <EmptyState
                                     icon={<Sparkles size={25} />}
                                     title={periodQuests.length ? t('goal.noMatching') : t('goal.emptyTitle', { period: t(`goal.${period}`) })}

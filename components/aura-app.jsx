@@ -21,6 +21,7 @@ import {
     Network,
     Pencil,
     Plus,
+    RotateCcw,
     Settings,
     Shield,
     Sparkles,
@@ -65,7 +66,7 @@ import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n'
 import { localizeLifeQuest } from './aura/life-quests';
 import QuestRankCard, { AuraCoverArtwork } from './aura/quest-card';
 import QuestChainPanel from './aura/quest-chain';
-import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, Modal } from './aura/ui';
+import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, formatSessionDays, getWeekdayNames, Modal, ProgressBar } from './aura/ui';
 import {
     countActiveRandomQuests,
     createDailyQuest,
@@ -75,11 +76,19 @@ import {
     DAILY_PENALTY_GOLD,
     defaultPlayer,
     defaultSettings,
+    getNextSessionReward,
     getPeriodKey,
+    getQuestCompletedSessions,
+    getQuestProgressPercent,
     getQuestPeriod,
+    getQuestSessionTarget,
+    GOAL_SESSION_PLANS,
+    hasQuestSessionToday,
+    isProgressiveQuest,
     isRandomQuest,
     localDayKey,
     localWeekKey,
+    normalizeQuestProgress,
     readSession,
     readStoredGame,
     resolveDailyProtection,
@@ -126,41 +135,88 @@ function AuraMark({ size = 34 }) {
 }
 
 function AddQuestModal({ onClose, onSubmit, initialPeriod = 'day', initialQuest = null }) {
-    const { t } = useI18n();
+    const { t, language } = useI18n();
+    const initialProgressive = Boolean(initialQuest && isProgressiveQuest(initialQuest));
+    const initialCompleted = initialProgressive ? getQuestCompletedSessions(initialQuest) : 0;
+    const planLocked = Boolean(initialProgressive && initialQuest.done);
     const [title, setTitle] = useState(initialQuest?.title || '');
     const [period, setPeriod] = useState(initialQuest ? getQuestPeriod(initialQuest) : initialPeriod);
     const [category, setCategory] = useState(initialQuest?.category || 'Physical');
-    const [duration, setDuration] = useState(initialQuest?.duration || 30);
+    const [duration, setDuration] = useState(initialProgressive ? initialQuest.sessionDuration || 30 : initialQuest?.duration || 30);
     const [difficulty, setDifficulty] = useState(initialQuest?.difficulty || 'Standard');
+    const [targetSessions, setTargetSessions] = useState(initialProgressive ? getQuestSessionTarget(initialQuest) : GOAL_SESSION_PLANS[initialPeriod === 'month' ? 'month' : 'week'].targetSessions);
+    const [sessionDays, setSessionDays] = useState(initialProgressive && initialQuest.sessionDays?.length ? initialQuest.sessionDays : [...GOAL_SESSION_PLANS[initialPeriod === 'month' ? 'month' : 'week'].sessionDays]);
     const rewards = { Easy: [60, 40], Standard: [120, 80], Hard: [220, 150] };
+    const progressive = period !== 'day';
+    const maximumSessions = period === 'week' ? 7 : 31;
+    const minimumSessions = initialProgressive && !initialQuest.done ? Math.max(2, initialCompleted + 1) : 2;
+    const safeTarget = Math.min(maximumSessions, Math.max(minimumSessions, Number(targetSessions) || minimumSessions));
+    const [baseXp, baseGold] = rewards[difficulty];
+    const totalDuration = progressive ? safeTarget * (Number(duration) || 0) : Number(duration) || 0;
+    const weekdays = getWeekdayNames(language);
+    const dayMoveDisabled = initialProgressive && (initialCompleted > 0 || initialQuest.done);
+    const weekMoveDisabled = initialProgressive && (planLocked ? getQuestSessionTarget(initialQuest) > 7 : initialCompleted >= 7);
+    const choosePeriod = (nextPeriod) => {
+        if ((nextPeriod === 'day' && dayMoveDisabled) || (nextPeriod === 'week' && weekMoveDisabled)) return;
+        const previousPeriod = period;
+        setPeriod(nextPeriod);
+        if (nextPeriod !== 'day') {
+            const nextMaximum = nextPeriod === 'week' ? 7 : 31;
+            setTargetSessions((current) => {
+                const value = previousPeriod === 'day' ? GOAL_SESSION_PLANS[nextPeriod].targetSessions : Number(current) || GOAL_SESSION_PLANS[nextPeriod].targetSessions;
+                return Math.min(nextMaximum, Math.max(minimumSessions, value));
+            });
+            if (!sessionDays.length) setSessionDays([...GOAL_SESSION_PLANS[nextPeriod].sessionDays]);
+        }
+    };
+    const toggleSessionDay = (day) => {
+        if (planLocked) return;
+        setSessionDays((current) => {
+            if (current.includes(day)) return current.length === 1 ? current : current.filter((item) => item !== day);
+            return [...current, day].sort((a, b) => a - b);
+        });
+    };
     const submit = (event) => {
         event.preventDefault();
         if (!title.trim()) return;
-        const [xp, gold] = rewards[difficulty];
-        onSubmit({ title: title.trim(), category, duration: Number(duration), difficulty, xp, gold, period });
+        if (!progressive) {
+            onSubmit({ title: title.trim(), category, duration: Number(duration), difficulty, xp: baseXp, gold: baseGold, period, targetSessions: undefined, completedSessions: undefined, sessionDuration: undefined, sessionDays: undefined, sessionHistory: undefined });
+            return;
+        }
+        const sessionDuration = Math.min(240, Math.max(5, Number(duration) || 5));
+        const target = Math.min(maximumSessions, Math.max(minimumSessions, Number(targetSessions) || minimumSessions));
+        onSubmit({ title: title.trim(), category, duration: sessionDuration * target, sessionDuration, difficulty, xp: baseXp * target, gold: baseGold * target, period, targetSessions: target, sessionDays });
     };
     return (
-        <Modal onClose={onClose} label={initialQuest ? t('goal.editTitle') : 'Create a new quest'} className="quest-form-modal">
-            <div className="modal-heading"><span className="modal-heading-icon">{initialQuest ? <Pencil size={22} /> : <Plus size={22} />}</span><div className="eyebrow">{t(initialQuest ? 'goal.editEyebrow' : 'goal.newEyebrow')}</div><h2>{initialQuest ? t('goal.editTitle') : t('goal.createTitle', { period: t(`goal.${period}`) })}</h2><p>{t(initialQuest ? 'goal.editDescription' : 'goal.createDescription')}</p></div>
+        <Modal onClose={onClose} label={initialQuest ? t('goal.editTitle') : t('goal.createTitle', { period: t(`goal.${period}`) })} className="quest-form-modal">
+            <div className="modal-heading"><span className="modal-heading-icon">{initialQuest ? <Pencil size={22} /> : <Plus size={22} />}</span><div className="eyebrow">{t(initialQuest ? 'goal.editEyebrow' : 'goal.newEyebrow')}</div><h2>{initialQuest ? t('goal.editTitle') : t('goal.createTitle', { period: t(`goal.${period}`) })}</h2><p>{t(initialQuest ? 'goal.editDescription' : progressive ? 'goal.createProgressiveDescription' : 'goal.createDescription')}</p></div>
             <form onSubmit={submit} className="aura-form">
-                <label><span>Quest name</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Train for 30 minutes" required maxLength={60} /></label>
-                <fieldset><legend>{t('goal.choosePeriod')}</legend><div className="goal-period-picker">{['day', 'week', 'month'].map((item) => <button type="button" key={item} className={period === item ? 'active' : ''} onClick={() => setPeriod(item)}>{t(`goal.${item}`)}</button>)}</div></fieldset>
-                <fieldset><legend>Choose a path</legend><div className="category-picker">{['Physical', 'Mental', 'Religious', 'Psychological', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}><CategoryIcon category={item} size={19} /><span>{t(`category.${item}`)}</span></button>)}</div></fieldset>
+                <label><span>{t('goal.name')}</span><input autoFocus value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t('goal.namePlaceholder')} required maxLength={60} /></label>
+                <fieldset><legend>{t('goal.choosePeriod')}</legend><div className="goal-period-picker">{['day', 'week', 'month'].map((item) => <button type="button" key={item} className={period === item ? 'active' : ''} disabled={(item === 'day' && dayMoveDisabled) || (item === 'week' && weekMoveDisabled)} onClick={() => choosePeriod(item)}>{t(`goal.${item}`)}</button>)}</div></fieldset>
+                <fieldset><legend>{t('goal.choosePath')}</legend><div className="category-picker">{['Physical', 'Mental', 'Religious', 'Psychological', 'SelfDevelopment', 'Social', 'Spiritual'].map((item) => <button type="button" key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}><CategoryIcon category={item} size={19} /><span>{t(`category.${item}`)}</span></button>)}</div></fieldset>
                 <div className="form-row">
-                    <label><span>Duration</span><div className="input-with-suffix"><input type="number" min="5" max="240" step="5" value={duration} onChange={(event) => setDuration(event.target.value)} /><small>minutes</small></div></label>
-                    <label><span>Difficulty</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}><option>Easy</option><option>Standard</option><option>Hard</option></select></label>
+                    {progressive ? <label><span>{t('goal.sessionCount')}</span><div className="input-with-suffix"><input type="number" min={minimumSessions} max={maximumSessions} step="1" value={targetSessions} disabled={planLocked} onChange={(event) => setTargetSessions(event.target.value)} required /><small>{t('goal.sessions')}</small></div></label> : <label><span>{t('goal.duration')}</span><div className="input-with-suffix"><input type="number" min="5" max="240" step="5" value={duration} onChange={(event) => setDuration(event.target.value)} required /><small>{t('common.minutesShort')}</small></div></label>}
+                    <label><span>{t('goal.difficulty')}</span><select value={difficulty} onChange={(event) => setDifficulty(event.target.value)}>{['Easy', 'Standard', 'Hard'].map((item) => <option key={item} value={item}>{t(`difficulty.${item}`)}</option>)}</select></label>
                 </div>
-                <div className="quest-reward-preview"><span>COMPLETION REWARDS</span><div><strong>+{rewards[difficulty][0]} XP</strong><strong><Coins size={14} /> +{rewards[difficulty][1]} Gold</strong></div></div>
+                {progressive && <fieldset className="goal-session-planner"><legend>{t('goal.sessionPlan')}</legend><label><span>{t('goal.sessionDuration')}</span><div className="input-with-suffix"><input type="number" min="5" max="240" step="5" value={duration} disabled={planLocked} onChange={(event) => setDuration(event.target.value)} required /><small>{t('common.minutesShort')}</small></div></label><span className="goal-weekdays-label">{t('goal.preferredDays')}</span><div className="goal-weekday-picker">{weekdays.map((dayName, day) => <button type="button" key={dayName} className={sessionDays.includes(day) ? 'active' : ''} aria-pressed={sessionDays.includes(day)} disabled={planLocked} onClick={() => toggleSessionDay(day)}>{dayName}</button>)}</div><p>{t(planLocked ? 'goal.completedPlanLocked' : 'goal.sessionPlanHint')}</p></fieldset>}
+                <div className="quest-reward-preview"><span>{t(progressive ? 'goal.totalRewards' : 'goal.completionRewards')}</span><div><strong>+{formatNumber(baseXp * (progressive ? safeTarget : 1))} XP</strong><strong><Coins size={14} /> +{formatNumber(baseGold * (progressive ? safeTarget : 1))} {t('common.gold')}</strong></div>{progressive && <small>{t('goal.perSessionReward', { xp: baseXp, gold: baseGold })} · {t('goal.totalTime', { minutes: totalDuration })}</small>}</div>
                 <button className="button button-primary button-full" type="submit">{initialQuest ? <Check size={16} /> : <Plus size={16} />} {initialQuest ? t('goal.saveChanges') : t('goal.addToPeriod', { period: t(`goal.${period}`) })}</button>
             </form>
         </Modal>
     );
 }
 
-function QuestDetailModal({ quest, onClose, onToggle, onAddNext, onEdit, onDelete, level, quests = [] }) {
+function QuestDetailModal({ quest, onClose, onToggle, onUndoSession, onAddNext, onEdit, onDelete, level, quests = [] }) {
     const { t, language } = useI18n();
     const [confirmDelete, setConfirmDelete] = useState(false);
     if (!quest) return null;
+    const progressive = isProgressiveQuest(quest);
+    const targetSessions = getQuestSessionTarget(quest);
+    const completedSessions = getQuestCompletedSessions(quest);
+    const progressPercent = getQuestProgressPercent(quest);
+    const sessionLoggedToday = progressive && hasQuestSessionToday(quest);
+    const sessionHistory = Array.isArray(quest.sessionHistory) ? quest.sessionHistory : [];
+    const nextReward = getNextSessionReward(quest);
     const acceptedSourceIds = quests.map((item) => item.sourceId || item.id).filter(Boolean);
     const completedSourceIds = quests.filter((item) => item.done).map((item) => item.sourceId || item.id).filter(Boolean);
     return (
@@ -168,11 +224,24 @@ function QuestDetailModal({ quest, onClose, onToggle, onAddNext, onEdit, onDelet
             {quest.generatedArt || quest.sourceId ? <QuestRankCard quest={{ ...quest, text: quest.text || quest.title }} flippable /> : quest.image ? <div className="quest-detail-art"><Image src={quest.image} alt={`${quest.category} quest illustration`} width={640} height={400} unoptimized /></div> : <div className={`quest-detail-symbol category-${quest.category.toLowerCase()}`}><CategoryIcon category={quest.category} size={30} /></div>}
             <div className="eyebrow">{t(`category.${quest.category}`)} · {quest.rank ? t('quest.fate', { rank: quest.rank }) : t(`goal.${getQuestPeriod(quest)}`)}</div>
             <h2 dir="auto" lang={language}>{quest.title}</h2>
-            <p dir="auto" lang={language}>{quest.description || t('goal.detailDescription')}</p>
+            <p dir="auto" lang={language}>{quest.description || t(progressive ? 'goal.progressiveDetailDescription' : 'goal.detailDescription')}</p>
+            {progressive && <div className="goal-session-overview">
+                <div className="goal-session-overview-heading"><span>{t('goal.progress')}</span><strong>{progressPercent}%</strong></div>
+                <ProgressBar value={completedSessions} max={targetSessions} />
+                <div className="goal-session-overview-meta"><span>{t('goal.sessionsProgress', { completed: completedSessions, target: targetSessions })}</span><span>{t('goal.minutesPerSession', { minutes: quest.sessionDuration })}</span></div>
+                <p><span>{t('goal.preferredDays')}</span><strong>{formatSessionDays(quest.sessionDays || [], language)}</strong></p>
+            </div>}
             <QuestChainPanel quest={quest} onAddNext={onAddNext} level={level} completedSourceIds={completedSourceIds} acceptedSourceIds={acceptedSourceIds} />
             {quest.skillIds?.length > 0 && <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{quest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>}
             {quest.skipped ? <div className="quest-detail-grid quest-rest-day-detail"><div><Check size={17} /><span>{t('dashboard.restDaySkip')}</span><strong>{t('quest.restDayNoPenalty')}</strong></div></div> : <div className="quest-detail-grid"><div><Clock3 size={17} /><span>{t('quest.estimatedTime')}</span><strong>{quest.duration} {t('common.minutesShort')}</strong></div><div><Sparkles size={17} /><span>{t('codex.experience')}</span><strong>+{formatNumber(quest.xp)} XP</strong></div><div><Coins size={17} /><span>{t('codex.goldReward')}</span><strong>+{formatNumber(quest.gold)} {t('common.gold')}</strong></div>{quest.diamonds > 0 && <div><Diamond size={17} /><span>{t('common.diamonds')}</span><strong>+{quest.diamonds}</strong></div>}</div>}
-            <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); if (!quest.chainId) onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>
+            {progressive && !quest.skipped ? <>
+                <button className={`button button-full ${quest.done || sessionLoggedToday ? 'button-secondary' : 'button-primary'}`} disabled={!quest.done && sessionLoggedToday} onClick={() => quest.done ? onUndoSession(quest.id) : onToggle(quest.id)}>
+                    {quest.done ? <><RotateCcw size={16} /> {sessionHistory.length ? t('goal.undoSession') : t('quest.markIncomplete')}</> : sessionLoggedToday ? <><Check size={16} /> {t('goal.sessionLoggedToday')}</> : <><Plus size={16} /> {t('goal.logSession', { session: completedSessions + 1, target: targetSessions })}</>}
+                </button>
+                {!quest.done && !sessionLoggedToday && <div className="goal-next-reward">{t('goal.nextSessionReward', { xp: nextReward.xp, gold: nextReward.gold })}</div>}
+                {sessionLoggedToday && !quest.done && <div className="goal-next-reward">{t('goal.sessionTomorrow')}</div>}
+                {!quest.done && sessionHistory.length > 0 && <button className="text-button goal-undo-session" onClick={() => onUndoSession(quest.id)}><RotateCcw size={13} /> {t('goal.undoSession')}</button>}
+            </> : <button className={`button button-full ${quest.done ? 'button-secondary' : 'button-primary'}`} onClick={() => { onToggle(quest.id); if (!quest.chainId) onClose(); }}>{quest.done ? <><X size={16} /> {t('quest.markIncomplete')}</> : <><Check size={16} /> {t('quest.markComplete')}</>}</button>}
             {quest.questKind === 'custom' && !confirmDelete && <div className="goal-detail-actions">
                 <button className="button button-secondary" onClick={() => onEdit(quest)}><Pencil size={15} /> {t('goal.edit')}</button>
                 <button className="button button-ghost-danger" onClick={() => setConfirmDelete(true)}><Trash2 size={15} /> {t('goal.delete')}</button>
@@ -189,7 +258,7 @@ function QuestDetailModal({ quest, onClose, onToggle, onAddNext, onEdit, onDelet
 function StoreItemQuestModal({ item, quests, onClose, onSelect }) {
     const { t, language } = useI18n();
     const itemName = getStoreItemName(item, language);
-    const availableQuests = quests.filter((quest) => !quest.done);
+    const availableQuests = quests.filter((quest) => !quest.done && (item.id !== 'reward-rest-day' || !isProgressiveQuest(quest)));
     return (
         <Modal onClose={onClose} label={itemName} className="store-quest-modal">
             <div className="modal-heading"><span className="modal-heading-icon"><Sparkles size={22} /></span><div className="eyebrow">{t(item.id === 'reward-rest-day' ? 'store.restEyebrow' : 'store.rerollEyebrow')}</div><h2>{itemName}</h2><p>{t(item.id === 'reward-rest-day' ? 'store.restDescription' : 'store.rerollDescription')}</p></div>
@@ -717,27 +786,151 @@ export default function AuraApp() {
     const randomQuestCount = countActiveRandomQuests(quests);
     const dailyGoldCap = getWorkdayPrice(workdayBaseline, 200 + (upgrades.goldCap || 0) * 100);
 
+    const changeSkillProgress = (quest, direction) => {
+        if (!quest.skillIds?.length) return;
+        setSkillQuestProgress((current) => {
+            const next = { ...current };
+            for (const skillId of quest.skillIds) next[skillId] = Math.max(0, (next[skillId] || 0) + direction);
+            return next;
+        });
+    };
+
+    const recordCompletionStreak = () => {
+        const today = localDayKey();
+        if (lastCompletionDate !== today) {
+            const yesterday = localDayKey(new Date(Date.now() - 86400000));
+            const nextStreak = lastCompletionDate === yesterday ? streak + 1 : 1;
+            setStreak(nextStreak);
+            setBestStreak((current) => Math.max(current, nextStreak));
+            setLastCompletionDate(today);
+        }
+    };
+
+    const updateDuelProgress = (id, direction) => {
+        if (!duel) return;
+        setDuel((current) => {
+            const completedIds = current.completedQuestIds || [];
+            if (direction > 0 && completedIds.includes(id)) return current;
+            if (direction < 0 && !completedIds.includes(id)) return current;
+            return {
+                ...current,
+                playerProgress: Math.min(3, Math.max(0, (current.playerProgress || 0) + direction)),
+                completedQuestIds: direction > 0 ? [...completedIds, id] : completedIds.filter((questId) => questId !== id),
+            };
+        });
+    };
+
+    const recordQuestSession = (id) => {
+        const quest = quests.find((item) => item.id === id);
+        if (!quest || !isProgressiveQuest(quest) || quest.done) return;
+        const today = localDayKey();
+        if (hasQuestSessionToday(quest)) {
+            notify(t('goal.sessionAlreadyRecorded'), 'neutral');
+            return;
+        }
+        const target = getQuestSessionTarget(quest);
+        const completed = getQuestCompletedSessions(quest);
+        const baseReward = getNextSessionReward(quest);
+        const earnedToday = dailyGoldDay === today ? dailyGoldEarned : 0;
+        const xpMultiplier = (effects.xpBoostUntil || 0) > Date.now() ? 2 : 1;
+        const goldMultiplier = effects.goldBoostDay === today ? 2 : 1;
+        const awardedXp = baseReward.xp * xpMultiplier;
+        const requestedGold = baseReward.gold * goldMultiplier;
+        const awardedGold = Math.min(requestedGold, Math.max(0, dailyGoldCap - earnedToday));
+        const nextCompleted = Math.min(target, completed + 1);
+        const finished = nextCompleted >= target;
+        const sessionAward = { day: today, at: Date.now(), awardedXp, awardedGold, diamonds: finished ? quest.diamonds || 0 : 0 };
+        setQuests((current) => current.map((item) => item.id === id ? normalizeQuestProgress({
+            ...item,
+            done: finished,
+            completedSessions: nextCompleted,
+            skipped: false,
+            sessionHistory: [...(item.sessionHistory || []), sessionAward],
+            awardedXp: (item.awardedXp ?? 0) + awardedXp,
+            awardedGold: (item.awardedGold ?? 0) + awardedGold,
+        }) : item));
+        setDailyGoldDay(today);
+        setDailyGoldEarned(earnedToday + awardedGold);
+        recordCompletionStreak();
+        if (finished) {
+            changeSkillProgress(quest, 1);
+            if (quest.diamonds) setDiamonds((current) => current + quest.diamonds);
+            updateDuelProgress(id, 1);
+        }
+        const capNote = awardedGold < requestedGold ? ` · ${t('goal.dailyCapReached')}` : '';
+        const percent = Math.round((nextCompleted / target) * 100);
+        awardRewards(awardedXp, awardedGold, finished
+            ? `${t('goal.goalCompleteNotification', { xp: awardedXp, gold: awardedGold })}${capNote}`
+            : `${t('goal.sessionNotification', { completed: nextCompleted, target, percent, xp: awardedXp, gold: awardedGold })}${capNote}`);
+    };
+
+    const undoQuestSession = (id) => {
+        const quest = quests.find((item) => item.id === id);
+        if (!quest || !isProgressiveQuest(quest)) return;
+        const history = Array.isArray(quest.sessionHistory) ? quest.sessionHistory : [];
+        if (!history.length) {
+            if (!quest.done) return;
+            const awardedXp = quest.awardedXp ?? quest.xp;
+            const awardedGold = quest.awardedGold ?? quest.gold;
+            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, completedSessions: 0, awardedGold: undefined, awardedXp: undefined } : item));
+            changeSkillProgress(quest, -1);
+            const nextXp = Math.max(0, xpRef.current - awardedXp);
+            xpRef.current = nextXp;
+            setXp(nextXp);
+            setGold((current) => Math.max(0, current - awardedGold));
+            if (dailyGoldDay === localDayKey()) setDailyGoldEarned((current) => Math.max(0, current - awardedGold));
+            if (quest.diamonds) setDiamonds((current) => Math.max(0, current - quest.diamonds));
+            updateDuelProgress(id, -1);
+            notify(t('goal.goalReopened'), 'neutral');
+            return;
+        }
+        const lastSession = history[history.length - 1];
+        const wasDone = quest.done;
+        const awardedXp = lastSession.awardedXp || 0;
+        const awardedGold = lastSession.awardedGold || 0;
+        setQuests((current) => current.map((item) => {
+            if (item.id !== id) return item;
+            const completed = getQuestCompletedSessions(item);
+            return normalizeQuestProgress({
+                ...item,
+                done: false,
+                completedSessions: Math.max(0, completed - 1),
+                sessionHistory: (item.sessionHistory || []).slice(0, -1),
+                awardedXp: Math.max(0, (item.awardedXp ?? 0) - awardedXp),
+                awardedGold: Math.max(0, (item.awardedGold ?? 0) - awardedGold),
+            });
+        }));
+        const nextXp = Math.max(0, xpRef.current - awardedXp);
+        xpRef.current = nextXp;
+        setXp(nextXp);
+        setGold((current) => Math.max(0, current - awardedGold));
+        if (lastSession.day === localDayKey() && dailyGoldDay === lastSession.day) setDailyGoldEarned((current) => Math.max(0, current - awardedGold));
+        if (wasDone) {
+            changeSkillProgress(quest, -1);
+            if (lastSession.diamonds) setDiamonds((current) => Math.max(0, current - lastSession.diamonds));
+            updateDuelProgress(id, -1);
+        }
+        notify(t('goal.sessionUndone'), 'neutral');
+    };
+
     const toggleQuest = (id) => {
         const quest = quests.find((item) => item.id === id);
         if (!quest) return;
         if (quest.done && quest.skipped) {
-            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, skipped: false, awardedGold: undefined, awardedXp: undefined } : item));
+            setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, skipped: false, completedSessions: isProgressiveQuest(item) ? 0 : item.completedSessions, sessionHistory: isProgressiveQuest(item) ? [] : item.sessionHistory, awardedGold: undefined, awardedXp: undefined } : item));
             notify('Rest-day skip reversed. No rewards were changed.', 'neutral');
             return;
         }
-        const changeSkillProgress = (direction) => {
-            if (!quest.skillIds?.length) return;
-            setSkillQuestProgress((current) => {
-                const next = { ...current };
-                for (const skillId of quest.skillIds) next[skillId] = Math.max(0, (next[skillId] || 0) + direction);
-                return next;
-            });
-        };
+        if (isProgressiveQuest(quest)) {
+            if (quest.done) undoQuestSession(id);
+            else recordQuestSession(id);
+            return;
+        }
         if (quest.done) {
             const awardedXp = quest.awardedXp ?? quest.xp;
             const awardedGold = quest.awardedGold ?? quest.gold;
             setQuests((current) => current.map((item) => item.id === id ? { ...item, done: false, awardedGold: undefined, awardedXp: undefined } : item));
-            changeSkillProgress(-1);
+            changeSkillProgress(quest, -1);
             const next = Math.max(0, xpRef.current - awardedXp);
             xpRef.current = next;
             setXp(next);
@@ -763,7 +956,7 @@ export default function AuraApp() {
             setQuests((current) => current.map((item) => item.id === id ? { ...item, done: true, skipped: false, awardedGold, awardedXp } : item));
             setDailyGoldDay(today);
             setDailyGoldEarned(earnedToday + awardedGold);
-            changeSkillProgress(1);
+            changeSkillProgress(quest, 1);
             if (lastCompletionDate !== today) {
                 const yesterday = localDayKey(new Date(Date.now() - 86400000));
                 const nextStreak = lastCompletionDate === yesterday ? streak + 1 : 1;
@@ -790,7 +983,8 @@ export default function AuraApp() {
 
     const addQuest = (quest) => {
         const period = getQuestPeriod(quest);
-        setQuests((current) => [...current, { ...quest, id: Date.now(), done: false, questKind: 'custom', period, periodKey: getPeriodKey(period) }]);
+        const created = normalizeQuestProgress({ ...quest, id: Date.now(), done: false, questKind: 'custom', period, periodKey: getPeriodKey(period) });
+        setQuests((current) => [...current, created]);
         setGoalPeriod(period);
         closeModal();
         notify(t('goal.addedNotification', { period: t(`goal.${period}`) }));
@@ -800,7 +994,7 @@ export default function AuraApp() {
         const original = modalData?.quest;
         if (!original || original.questKind !== 'custom') return;
         const period = getQuestPeriod(updates);
-        setQuests((current) => current.map((quest) => quest.id === original.id ? { ...quest, ...updates, id: quest.id, done: quest.done, questKind: 'custom', period, periodKey: getPeriodKey(period) } : quest));
+        setQuests((current) => current.map((quest) => quest.id === original.id ? normalizeQuestProgress({ ...quest, ...updates, id: quest.id, done: quest.done, questKind: 'custom', period, periodKey: getPeriodKey(period) }) : quest));
         setGoalPeriod(period);
         closeModal();
         notify(t('goal.updatedNotification'));
@@ -886,7 +1080,7 @@ export default function AuraApp() {
             notify(`Rest day used for “${quest.title}”. No penalty and no rewards.`);
         } else if (item.id === 'power-reroll') {
             const replacement = generateQuest(level, Math.random, language);
-            setQuests((current) => current.map((entry) => entry.id === quest.id ? { ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, questKind: 'random', generated: entry.generated, generatedFor: entry.generatedFor, period: entry.period, periodKey: entry.periodKey, title: `${replacement.rank} · ${replacement.text}` } : entry));
+            setQuests((current) => current.map((entry) => entry.id === quest.id ? normalizeQuestProgress({ ...replacement, sourceId: replacement.id, id: `reroll-${Date.now()}`, done: false, questKind: 'random', generated: entry.generated, generatedFor: entry.generatedFor, period: entry.period, periodKey: entry.periodKey, duration: isProgressiveQuest(entry) ? entry.duration : replacement.duration, sessionDuration: entry.sessionDuration, targetSessions: entry.targetSessions, completedSessions: entry.completedSessions, sessionDays: entry.sessionDays, sessionHistory: entry.sessionHistory, awardedXp: entry.awardedXp, awardedGold: entry.awardedGold, title: `${replacement.rank} · ${replacement.text}` }) : entry));
             notify(`Quest rerolled into ${replacement.rank} rank.`);
         }
         closeModal();
@@ -1086,7 +1280,7 @@ export default function AuraApp() {
 
             {initialOnboarding && <OnboardingExperience player={player} onSave={savePlayer} />}
             {modal === 'add-quest' && <AddQuestModal initialPeriod={modalData?.period || 'day'} initialQuest={modalData?.quest || null} onClose={closeModal} onSubmit={modalData?.quest ? editQuest : addQuest} />}
-            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onAddNext={acceptChainQuest} onEdit={(entry) => openModal('add-quest', { period: getQuestPeriod(entry), quest: entry })} onDelete={deleteQuest} level={level} quests={quests} />}
+            {modal === 'quest-detail' && <QuestDetailModal quest={quests.find((quest) => quest.id === modalData?.id) || modalData} onClose={closeModal} onToggle={toggleQuest} onUndoSession={undoQuestSession} onAddNext={acceptChainQuest} onEdit={(entry) => openModal('add-quest', { period: getQuestPeriod(entry), quest: entry })} onDelete={deleteQuest} level={level} quests={quests} />}
             {modal === 'store-item-quest' && modalData && <StoreItemQuestModal item={modalData} quests={quests} onClose={closeModal} onSelect={applyStoreItemToQuest} />}
             {modal === 'tarot' && <TarotModal gold={gold} level={level} randomQuestCount={randomQuestCount} randomQuestLimit={randomQuestLimit} onClose={closeModal} onSpend={spendForCard} onAccept={acceptTarot} reducedMotion={settings.reducedMotion} />}
             {modal === 'duel' && <DuelModal player={player} friend={modalData} gold={gold} onClose={closeModal} onStart={startDuel} />}

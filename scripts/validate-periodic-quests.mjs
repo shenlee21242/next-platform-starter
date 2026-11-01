@@ -5,12 +5,19 @@ import {
     createMonthlyQuest,
     createNewGame,
     createWeeklyQuest,
+    getNextSessionReward,
     getPeriodBounds,
     getPeriodKey,
+    getQuestCompletedSessions,
+    getQuestProgressPercent,
+    getQuestSessionTarget,
+    hasQuestSessionToday,
+    isProgressiveQuest,
     isRandomQuest,
     localDayKey,
     localMonthKey,
     localWeekKey,
+    normalizeQuestProgress,
     secondsUntilPeriodEnd,
     updatePeriodicQuests,
     withDailyQuest,
@@ -58,6 +65,44 @@ assert.ok(initial.quests.every((quest) => quest.periodKey === getPeriodKey(quest
 assert.ok(initial.quests.every((quest) => quest.diamonds === 0));
 console.log('PASS localized daily/weekly/monthly generation and random-slot independence');
 
+const dailyGoal = createDailyQuest({ heroClass: 'Shadow Ranger' }, null, sunday);
+const weeklyGoal = createWeeklyQuest(sunday);
+const monthlyGoal = createMonthlyQuest(sunday);
+assert.equal(isProgressiveQuest(dailyGoal), false, 'Daily goals stay single-completion tasks');
+assert.equal(isProgressiveQuest(weeklyGoal), true);
+assert.equal(isProgressiveQuest(monthlyGoal), true);
+assert.equal(getQuestSessionTarget(dailyGoal), 1);
+assert.equal(getQuestSessionTarget(weeklyGoal), 3);
+assert.equal(getQuestSessionTarget(monthlyGoal), 8);
+assert.equal(getQuestSessionTarget({ ...weeklyGoal, targetSessions: 99 }), 7);
+assert.equal(getQuestSessionTarget({ ...monthlyGoal, targetSessions: 99 }), 31);
+assert.equal(getQuestSessionTarget({ ...weeklyGoal, targetSessions: 1 }), 2);
+assert.equal(weeklyGoal.sessionDuration, 20);
+assert.equal(monthlyGoal.sessionDuration, 30);
+assert.equal(weeklyGoal.duration, 60);
+assert.equal(monthlyGoal.duration, 240);
+assert.ok(weeklyGoal.xp > dailyGoal.xp && weeklyGoal.gold > dailyGoal.gold);
+assert.ok(monthlyGoal.xp > weeklyGoal.xp && monthlyGoal.gold > weeklyGoal.gold);
+assert.equal(getQuestProgressPercent({ ...weeklyGoal, completedSessions: 1 }), 33);
+assert.equal(getQuestProgressPercent({ ...weeklyGoal, completedSessions: 2 }), 67);
+assert.equal(getQuestProgressPercent({ ...weeklyGoal, completedSessions: 3, done: true }), 100);
+assert.deepEqual(getNextSessionReward({ ...weeklyGoal, completedSessions: 1 }), { xp: 200, gold: 80 });
+assert.deepEqual(getNextSessionReward(dailyGoal), { xp: 0, gold: 0 });
+const loggedWeek = { ...weeklyGoal, completedSessions: 1, sessionHistory: [{ day: '2026-11-01', awardedXp: 200, awardedGold: 80 }] };
+assert.equal(hasQuestSessionToday(loggedWeek, sunday), true);
+assert.equal(hasQuestSessionToday(loggedWeek, at(2026, 11, 2)), false);
+for (const goal of [weeklyGoal, monthlyGoal, { ...weeklyGoal, xp: 100, gold: 10 }]) {
+    const distributed = { xp: 0, gold: 0 };
+    const target = getQuestSessionTarget(goal);
+    for (let completed = 0; completed < target; completed += 1) {
+        const reward = getNextSessionReward({ ...goal, completedSessions: completed, done: false });
+        distributed.xp += reward.xp;
+        distributed.gold += reward.gold;
+    }
+    assert.deepEqual(distributed, { xp: goal.xp, gold: goal.gold }, 'Session slices sum to the exact total rewards');
+}
+console.log('PASS progressive session targets, percentages, larger rewards, and exact gradual distribution');
+
 const duplicateCheck = updatePeriodicQuests({ ...initial, language: 'en' }, at(2026, 11, 1, 18));
 assert.equal(duplicateCheck.quests.length, 3, 'Same-period updates never duplicate goals');
 assert.deepEqual(duplicateCheck.createdPeriods, []);
@@ -65,11 +110,33 @@ assert.equal(duplicateCheck.isNewDay, false);
 const preserved = withDailyQuest({ ...initial, dailyGoldEarned: 17 }, at(2026, 11, 1, 18));
 assert.equal(preserved.dailyGoldEarned, 17, 'Same-day migration does not reset the Gold cap');
 assert.equal(preserved.quests.length, 3);
-console.log('PASS idempotent same-day persistence');
+const inProgressWeek = { ...weeklyGoal, completedSessions: 2, sessionHistory: [{ day: '2026-10-30', awardedXp: 200, awardedGold: 80 }, { day: '2026-11-01', awardedXp: 200, awardedGold: 80 }] };
+const preservedProgress = updatePeriodicQuests({ ...initial, quests: initial.quests.map((quest) => quest.id === weeklyGoal.id ? inProgressWeek : quest) }, at(2026, 11, 1, 18));
+assert.equal(byId(preservedProgress, weeklyGoal.id).completedSessions, 2);
+assert.equal(byId(preservedProgress, weeklyGoal.id).sessionHistory.length, 2);
+assert.equal(getQuestProgressPercent(byId(preservedProgress, weeklyGoal.id)), 67);
+console.log('PASS idempotent same-day persistence, including session history');
 
 const custom = (id, period, periodKey) => ({ id, title: id, category: 'Mental', duration: 10, xp: 10, gold: 1, done: false, questKind: 'custom', period, periodKey });
 const legacyCustom = { id: 'legacy-custom', title: 'Persistent custom quest', category: 'Mental', duration: 10, xp: 10, gold: 1, done: false, questKind: 'custom' };
 const fate = { id: 'fate-test', title: 'Fate quest', category: 'Mental', duration: 10, xp: 10, gold: 1, done: false, questKind: 'random' };
+const migratedCustomWeek = normalizeQuestProgress(custom('legacy-progress-week', 'week', '2026-10-26'));
+assert.equal(getQuestSessionTarget(migratedCustomWeek), 3);
+assert.equal(migratedCustomWeek.sessionDuration, 10);
+assert.equal(migratedCustomWeek.duration, 30);
+assert.equal(migratedCustomWeek.xp, 30);
+assert.equal(migratedCustomWeek.gold, 3);
+assert.equal(migratedCustomWeek.completedSessions, 0);
+assert.deepEqual(migratedCustomWeek.sessionDays, [0, 2, 4]);
+const migratedDoneWeek = normalizeQuestProgress({ ...custom('legacy-done-week', 'week', '2026-10-26'), done: true });
+assert.equal(migratedDoneWeek.completedSessions, 3);
+assert.equal(getQuestProgressPercent(migratedDoneWeek), 100);
+assert.equal(migratedDoneWeek.xp, 10, 'Completed legacy rewards are not rewritten');
+const migratedGeneratedWeek = normalizeQuestProgress({ ...weeklyGoal, targetSessions: undefined, sessionDuration: undefined, sessionDays: undefined, xp: 300, gold: 40 });
+assert.equal(migratedGeneratedWeek.xp, 600);
+assert.equal(migratedGeneratedWeek.gold, 240);
+assert.equal(migratedGeneratedWeek.targetSessions, 3);
+console.log('PASS legacy weekly/monthly migration with completion and earned-reward preservation');
 let game = {
     ...initial,
     quests: [
@@ -102,6 +169,11 @@ assert.ok(byId(tuesday, 'monthly-2026-11'), 'Monthly goal survives another daily
 assert.ok(byId(tuesday, 'custom-month'));
 assert.ok(byId(tuesday, 'legacy-custom'));
 assert.equal(countActiveRandomQuests(tuesday.quests), 1, 'Only the Fate quest uses a random slot');
+const monthlyInProgress = { ...byId(tuesday, 'custom-month'), completedSessions: 2, sessionHistory: [{ day: '2026-11-02', awardedXp: 10, awardedGold: 1 }, { day: '2026-11-03', awardedXp: 10, awardedGold: 1 }] };
+const wednesday = withDailyQuest({ ...tuesday, quests: tuesday.quests.map((quest) => quest.id === 'custom-month' ? monthlyInProgress : quest) }, at(2026, 11, 4));
+assert.equal(byId(wednesday, 'custom-month').completedSessions, 2, 'Ordinary daily resets preserve long-goal progress');
+assert.equal(byId(wednesday, 'custom-month').sessionHistory.length, 2);
+assert.ok(byId(wednesday, 'weekly-2026-11-02'));
 
 const december = withDailyQuest(tuesday, at(2026, 12, 1));
 assert.ok(byId(december, 'daily-2026-12-01'));

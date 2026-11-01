@@ -38,6 +38,16 @@ export function formatShortClock(totalSeconds) {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+export function getWeekdayNames(language = 'en', width = 'short') {
+    const formatter = new Intl.DateTimeFormat(language, { weekday: width });
+    return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(2026, 10, 2 + index, 12)));
+}
+
+export function formatSessionDays(days = [], language = 'en') {
+    const names = getWeekdayNames(language);
+    return days.map((day) => names[day]).filter(Boolean).join(' · ');
+}
+
 export function CategoryIcon({ category, size = 18, ...props }) {
     if (category === 'Physical') return <Dumbbell size={size} strokeWidth={1.7} {...props} />;
     if (category === 'Mental') return <Brain size={size} strokeWidth={1.7} {...props} />;

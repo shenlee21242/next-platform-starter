@@ -65,6 +65,101 @@ export function getQuestPeriod(quest = {}) {
     return ['day', 'week', 'month'].includes(quest.period) ? quest.period : 'day';
 }
 
+export const GOAL_SESSION_PLANS = {
+    week: { targetSessions: 3, sessionDuration: 20, sessionDays: [0, 2, 4], xp: 600, gold: 240 },
+    month: { targetSessions: 8, sessionDuration: 30, sessionDays: [1, 4], xp: 1600, gold: 640 },
+};
+
+const boundedInteger = (value, fallback, minimum, maximum) => {
+    const number = Math.round(Number(value));
+    return Math.min(maximum, Math.max(minimum, Number.isFinite(number) && number > 0 ? number : fallback));
+};
+
+export function isProgressiveQuest(quest = {}) {
+    return ['week', 'month'].includes(getQuestPeriod(quest));
+}
+
+export function getQuestSessionTarget(quest = {}) {
+    if (!isProgressiveQuest(quest)) return 1;
+    const period = getQuestPeriod(quest);
+    return boundedInteger(quest.targetSessions, GOAL_SESSION_PLANS[period].targetSessions, 2, period === 'week' ? 7 : 31);
+}
+
+export function getQuestCompletedSessions(quest = {}) {
+    if (!isProgressiveQuest(quest)) return quest.done ? 1 : 0;
+    const target = getQuestSessionTarget(quest);
+    if (quest.done) return target;
+    const completed = Math.floor(Number(quest.completedSessions));
+    return Math.min(target, Math.max(0, Number.isFinite(completed) ? completed : 0));
+}
+
+export function getQuestProgressPercent(quest = {}) {
+    if (!isProgressiveQuest(quest)) return quest.done ? 100 : 0;
+    return Math.round((getQuestCompletedSessions(quest) / getQuestSessionTarget(quest)) * 100);
+}
+
+export function hasQuestSessionToday(quest = {}, date = new Date()) {
+    const today = localDayKey(date);
+    return Array.isArray(quest.sessionHistory) && quest.sessionHistory.some((entry) => entry?.day === today);
+}
+
+export function getNextSessionReward(quest = {}) {
+    const target = getQuestSessionTarget(quest);
+    const completed = getQuestCompletedSessions(quest);
+    if (!isProgressiveQuest(quest) || quest.done || completed >= target) return { xp: 0, gold: 0 };
+    const totalXp = Math.max(0, Number(quest.xp) || 0);
+    const totalGold = Math.max(0, Number(quest.gold) || 0);
+    return {
+        xp: Math.floor((totalXp * (completed + 1)) / target) - Math.floor((totalXp * completed) / target),
+        gold: Math.floor((totalGold * (completed + 1)) / target) - Math.floor((totalGold * completed) / target),
+    };
+}
+
+export function normalizeQuestProgress(quest = {}) {
+    if (!isProgressiveQuest(quest)) return quest;
+    const period = getQuestPeriod(quest);
+    const plan = GOAL_SESSION_PLANS[period];
+    const hadPlan = Number(quest.targetSessions) > 0;
+    const targetSessions = getQuestSessionTarget(quest);
+    const validDays = Array.isArray(quest.sessionDays)
+        ? [...new Set(quest.sessionDays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))].sort((a, b) => a - b)
+        : [];
+    const sessionDays = validDays.length ? validDays : [...plan.sessionDays];
+    const previousDuration = boundedInteger(quest.duration, plan.sessionDuration, 5, 240 * 31);
+    const sessionDuration = hadPlan || quest.done
+        ? boundedInteger(quest.sessionDuration, Math.max(5, Math.round(previousDuration / targetSessions)), 5, 240)
+        : quest.questKind === 'custom'
+            ? boundedInteger(quest.duration, plan.sessionDuration, 5, 240)
+            : plan.sessionDuration;
+    const completed = getQuestCompletedSessions(quest);
+    const done = Boolean(quest.done || completed >= targetSessions);
+    let xp = quest.xp;
+    let gold = quest.gold;
+    let duration = hadPlan || quest.done ? previousDuration : sessionDuration * targetSessions;
+    if (!hadPlan && !quest.done) {
+        if (quest.generated && quest.questKind === 'goal') {
+            xp = plan.xp;
+            gold = plan.gold;
+        } else if (quest.questKind === 'custom') {
+            xp = (Number(quest.xp) || 0) * targetSessions;
+            gold = (Number(quest.gold) || 0) * targetSessions;
+        }
+    }
+    if (!hadPlan && quest.done) duration = previousDuration;
+    return {
+        ...quest,
+        xp,
+        gold,
+        duration,
+        sessionDuration,
+        targetSessions,
+        completedSessions: done ? targetSessions : completed,
+        sessionDays,
+        sessionHistory: Array.isArray(quest.sessionHistory) ? quest.sessionHistory : [],
+        done,
+    };
+}
+
 export function isRandomQuest(quest = {}) {
     const id = String(quest.id ?? '');
     if (quest.questKind === 'goal' || quest.questKind === 'custom' || quest.questKind === 'selected' || id.startsWith('daily-')) return false;
@@ -186,15 +281,15 @@ export function createDailyQuest(player, previousQuestDate = null, date = new Da
 }
 
 const weeklyGoalTemplates = [
-    { title: goalText('Complete three distraction-free work sessions this week', 'أكمل ثلاث جلسات عمل بلا تشتت هذا الأسبوع', 'Terminez trois sessions de travail sans distraction cette semaine', 'Completa tres sesiones de trabajo sin distracciones esta semana'), category: 'Mental', duration: 60, xp: 300, gold: 40 },
-    { title: goalText('Take three 20-minute walks this week', 'امشِ ثلاث مرات لمدة 20 دقيقة هذا الأسبوع', 'Faites trois marches de 20 minutes cette semaine', 'Da tres caminatas de 20 minutos esta semana'), category: 'Physical', duration: 60, xp: 300, gold: 40 },
-    { title: goalText('Read 50 pages and record one lesson this week', 'اقرأ 50 صفحة وسجّل درسًا واحدًا هذا الأسبوع', 'Lisez 50 pages et notez une leçon cette semaine', 'Lee 50 páginas y anota una lección esta semana'), category: 'SelfDevelopment', duration: 60, xp: 300, gold: 40 },
+    { title: goalText('Complete three distraction-free work sessions this week', 'أكمل ثلاث جلسات عمل بلا تشتت هذا الأسبوع', 'Terminez trois sessions de travail sans distraction cette semaine', 'Completa tres sesiones de trabajo sin distracciones esta semana'), category: 'Mental', duration: 60, sessionDuration: 20, targetSessions: 3, sessionDays: [0, 2, 4], xp: 600, gold: 240 },
+    { title: goalText('Take three 20-minute walks this week', 'امشِ ثلاث مرات لمدة 20 دقيقة هذا الأسبوع', 'Faites trois marches de 20 minutes cette semaine', 'Da tres caminatas de 20 minutos esta semana'), category: 'Physical', duration: 60, sessionDuration: 20, targetSessions: 3, sessionDays: [0, 2, 4], xp: 600, gold: 240 },
+    { title: goalText('Read 50 pages and record one lesson this week', 'اقرأ 50 صفحة وسجّل درسًا واحدًا هذا الأسبوع', 'Lisez 50 pages et notez une leçon cette semaine', 'Lee 50 páginas y anota una lección esta semana'), category: 'SelfDevelopment', duration: 60, sessionDuration: 20, targetSessions: 3, sessionDays: [0, 2, 4], xp: 600, gold: 240 },
 ];
 
 const monthlyGoalTemplates = [
-    { title: goalText('Finish one meaningful personal project this month', 'أنجز مشروعًا شخصيًا ذا معنى هذا الشهر', 'Terminez un projet personnel significatif ce mois-ci', 'Termina un proyecto personal significativo este mes'), category: 'SelfDevelopment', duration: 90, xp: 1000, gold: 100 },
-    { title: goalText('Build a sustainable exercise routine and review it this month', 'ابنِ روتين تمارين مستدامًا وراجعه هذا الشهر', 'Créez une routine d’exercice durable et évaluez-la ce mois-ci', 'Crea una rutina de ejercicio sostenible y revísala este mes'), category: 'Physical', duration: 90, xp: 1000, gold: 100 },
-    { title: goalText('Review your habits and write a monthly improvement plan', 'راجع عاداتك واكتب خطة تحسين شهرية', 'Passez en revue vos habitudes et rédigez un plan d’amélioration mensuel', 'Revisa tus hábitos y escribe un plan mensual de mejora'), category: 'Psychological', duration: 90, xp: 1000, gold: 100 },
+    { title: goalText('Finish one meaningful personal project this month', 'أنجز مشروعًا شخصيًا ذا معنى هذا الشهر', 'Terminez un projet personnel significatif ce mois-ci', 'Termina un proyecto personal significativo este mes'), category: 'SelfDevelopment', duration: 240, sessionDuration: 30, targetSessions: 8, sessionDays: [1, 4], xp: 1600, gold: 640 },
+    { title: goalText('Build a sustainable exercise routine and review it this month', 'ابنِ روتين تمارين مستدامًا وراجعه هذا الشهر', 'Créez une routine d’exercice durable et évaluez-la ce mois-ci', 'Crea una rutina de ejercicio sostenible y revísala este mes'), category: 'Physical', duration: 240, sessionDuration: 30, targetSessions: 8, sessionDays: [1, 4], xp: 1600, gold: 640 },
+    { title: goalText('Review your habits and write a monthly improvement plan', 'راجع عاداتك واكتب خطة تحسين شهرية', 'Passez en revue vos habitudes et rédigez un plan d’amélioration mensuel', 'Revisa tus hábitos y escribe un plan mensual de mejora'), category: 'Psychological', duration: 240, sessionDuration: 30, targetSessions: 8, sessionDays: [1, 4], xp: 1600, gold: 640 },
 ];
 
 export function createWeeklyQuest(date = new Date(), language = 'en') {
@@ -210,6 +305,8 @@ export function createWeeklyQuest(date = new Date(), language = 'en') {
         generatedFor: week,
         period: 'week',
         periodKey: week,
+        completedSessions: 0,
+        sessionHistory: [],
         diamonds: 0,
     };
 }
@@ -227,6 +324,8 @@ export function createMonthlyQuest(date = new Date(), language = 'en') {
         generatedFor: month,
         period: 'month',
         periodKey: month,
+        completedSessions: 0,
+        sessionHistory: [],
         diamonds: 0,
     };
 }
@@ -240,12 +339,12 @@ export function updatePeriodicQuests({ player, quests = [], lastQuestDate = null
     const normalized = (quests || []).map((quest) => {
         const id = String(quest.id ?? '');
         if (quest.generated && !quest.period && id.startsWith('daily-')) {
-            return { ...quest, questKind: 'goal', period: 'day', periodKey: quest.generatedFor || lastQuestDate || today };
+            return normalizeQuestProgress({ ...quest, questKind: 'goal', period: 'day', periodKey: quest.generatedFor || lastQuestDate || today });
         }
         if (['day', 'week', 'month'].includes(quest.period) && !quest.periodKey) {
-            return { ...quest, periodKey: getPeriodKey(quest.period, date) };
+            return normalizeQuestProgress({ ...quest, periodKey: getPeriodKey(quest.period, date) });
         }
-        return quest;
+        return normalizeQuestProgress(quest);
     });
     const retained = normalized.filter((quest) => {
         if (['day', 'week', 'month'].includes(quest.period)) return quest.periodKey === getPeriodKey(quest.period, date);
