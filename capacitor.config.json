@@ -1,0 +1,8 @@
+{
+  "appId": "app.aura.rpg",
+  "appName": "AURA",
+  "webDir": "mobile-www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
