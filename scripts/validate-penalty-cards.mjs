@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import {
     DEFAULT_PENALTY_CONTRACT,
@@ -28,6 +29,11 @@ assert.equal(DEFAULT_PENALTY_CONTRACT.tiers.Legendary, false);
 assert.equal(DEFAULT_PENALTY_CONTRACT.realWorldCardIds.length, 0);
 assert.ok(penaltyCards.every((card) => ['en', 'ar', 'fr', 'es'].every((language) => card.name[language] && card.text[language] && card.effectText[language])));
 assert.ok(penaltyCards.every((card) => !('permanent' in card.effect) && !('price' in card.effect) && !('destroy' in card.effect)));
+const viteConfig = readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8');
+for (const file of ['penalty-back.webp', 'penalty-sorceress.webp']) {
+    assert.equal(existsSync(new URL(`../public/images/${file}`, import.meta.url)), true);
+    assert.ok(viteConfig.includes(`'${file}'`), `${file} must be copied into the offline Android bundle`);
+}
 console.log('PASS 16 in-game cards, localized catalog, default opt-out, and non-destructive effects');
 
 const openContract = normalizePenaltyContract({ enabled: true, tiers: { Common: true, Uncommon: true, Rare: true, Legendary: true } });

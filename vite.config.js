@@ -13,7 +13,7 @@ function nativePublicAssets() {
         name: 'aura-native-public-assets',
         closeBundle() {
             mkdirSync(`${outDir}/images`, { recursive: true });
-            for (const file of ['aura-hero.png', 'void-colossus.png']) {
+            for (const file of ['aura-hero.png', 'void-colossus.png', 'penalty-back.webp', 'penalty-sorceress.webp']) {
                 copyFileSync(`${publicDir}/images/${file}`, `${outDir}/images/${file}`);
             }
             cpSync(`${publicDir}/images/heroes`, `${outDir}/images/heroes`, { recursive: true });
