@@ -65,6 +65,7 @@ import { fateRanks, generateQuest, getFateRank, getRankProbabilities } from './a
 import { I18nProvider, LanguageSwitcher, translate, useI18n } from './aura/i18n';
 import { localizeLifeQuest } from './aura/life-quests';
 import QuestRankCard, { AuraCoverArtwork } from './aura/quest-card';
+import QuestGuide from './aura/quest-guide';
 import QuestChainPanel from './aura/quest-chain';
 import { Avatar, CategoryIcon, Currency, formatClock, formatNumber, formatSessionDays, getWeekdayNames, Modal, ProgressBar } from './aura/ui';
 import {
@@ -358,8 +359,8 @@ function TarotModal({ gold, level, randomQuestCount = 0, randomQuestLimit = 3, o
                 <QuestRankCard quest={drawnQuest} flippable className="fate-revealed-card" />
                 <div className="eyebrow">{t('fate.yourQuest', { rank: drawnQuest.rank })}</div>
                 <div className="fate-quest-category"><CategoryIcon category={drawnQuest.category} size={20} /><span>{t(`category.${drawnQuest.category}`)}</span></div>
-                <h2 dir="auto" lang={language}>{drawnQuest.text}</h2>
-                <p className="fate-quest-description" dir="auto" lang={language}>{drawnQuest.description}</p>
+                <h2 className="fate-quest-name" dir="auto" lang={language}>{drawnQuest.baseAction || drawnQuest.text}</h2>
+                <QuestGuide quest={drawnQuest} />
                 <QuestChainPanel quest={drawnQuest} level={level} />
                 <div className="quest-skill-links" aria-label={t('codex.advances')}><span>{t('codex.advances')}</span><div>{drawnQuest.skillIds.map((id) => <strong key={id}>{t(`skill.${id}`)}</strong>)}</div></div>
                 <p className="fate-draw-note">{t('fate.drawnFrom', { level, price: formatNumber(revealedRank.price), reward: formatNumber(drawnQuest.gold), net: formatNumber(drawnQuest.gold - revealedRank.price) })}</p>

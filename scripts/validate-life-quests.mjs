@@ -8,6 +8,7 @@ import {
     lifeQuestCount,
     lifeQuestSequentialCount,
     LIFE_REFERENCES,
+    localizeLifeQuest,
     rankDefinitions,
     SUPPORTED_LANGUAGES,
 } from '../components/aura/life-quests.js';
@@ -62,6 +63,10 @@ for (const language of SUPPORTED_LANGUAGES) {
         assert(quest.generatedArt && quest.image === `aura-art://${quest.id.toLowerCase()}`, `${quest.id}: generated artwork identity missing`);
         assert(quest.skillIds.length > 0 && quest.sourceCodes.length > 0, `${quest.id}: skill or source relationship missing`);
         assert(quest.text.includes(quest.baseAction) && quest.text.includes(quest.context), `${quest.id}: incomplete localized text`);
+        for (const field of ['objective', 'quote', 'howTo', 'dose']) assert(typeof quest[field] === 'string' && quest[field].length > 0, `${quest.id}: missing ${field}`);
+        assert(quest.objective.includes(quest.dose), `${quest.id}: compact objective does not contain its dose`);
+        assert(quest.howTo.includes(quest.dose) && quest.howTo.includes(quest.context), `${quest.id}: execution guide is not quest-specific`);
+        assert(quest.howTo !== quest.description && quest.quote !== quest.description && quest.objective !== quest.description, `${quest.id}: duplicated card description`);
         assert(getLifeQuestById(quest.id, language)?.text === quest.text, `${quest.id}: deterministic ID lookup failed`);
         if (quest.isSequential) {
             assert(quest.chainId && quest.chainLength === 9 && quest.chainStep === quest.rankIndex + 1, `${quest.id}: invalid chain metadata`);
@@ -82,6 +87,7 @@ for (const language of SUPPORTED_LANGUAGES) {
         const generatedChain = getLifeQuestChain(chainId, language);
         assert(generatedChain.map((quest) => quest.id).join('|') === chain.map((quest) => quest.id).join('|'), `${language}/${chainId}: chain lookup mismatch`);
         assert(chain.every((quest) => quest.baseAction === chain[0].baseAction && quest.context === chain[0].context), `${language}/${chainId}: chain theme changed between ranks`);
+        assert(chain.every((quest) => quest.quote === chain[0].quote), `${language}/${chainId}: quest wisdom changed between ranks`);
         assert(chain.every((quest, index) => index === 0 || (quest.duration > chain[index - 1].duration && quest.xp > chain[index - 1].xp)), `${language}/${chainId}: chain does not progress from easier to harder`);
     }
     assert(getLifeQuestChain('SC-CHAIN-0400', language).length === 0, `${language}: standalone base index incorrectly forms a chain`);
@@ -109,6 +115,14 @@ for (const [level, expected] of unlockExpectations) {
 }
 
 const englishSocial = getLifeQuestBank('en').filter((quest) => quest.category === 'Social');
+const arabicPushup = getLifeQuestById('BD-0023-F', 'ar');
+assert(arabicPushup.quote === 'الألم الجسدي يساعد على تقوية إرادتك لتحقيق مسعى أعلى.', 'Push-up wisdom mismatch');
+assert(arabicPushup.objective === 'خطوة البداية · 3 تكرارات', 'Push-up compact objective mismatch');
+assert(arabicPushup.howTo.includes('شدّ البطن') && arabicPushup.howTo.includes('هبوط الحوض'), 'Push-up technique must explain bracing and hip alignment');
+const { quote, howTo, objective, dose, ...legacyPushup } = arabicPushup;
+const restoredPushup = localizeLifeQuest(legacyPushup, 'ar');
+assert(restoredPushup.quote === quote && restoredPushup.howTo === howTo && restoredPushup.objective === objective && restoredPushup.dose === dose, 'Saved quests must recover guidance during localization');
+console.log('PASS nonduplicated objectives, localized quest wisdom, practical dose/context guides, push-up technique, and saved-quest migration');
 assert(englishSocial.some((quest) => /another gender/i.test(quest.baseAction)), 'Missing cross-gender perspective tasks');
 assert(englishSocial.some((quest) => /Persuade with truthful evidence/i.test(quest.baseAction)), 'Missing ethical influence tasks');
 assert(englishSocial.some((quest) => /right to refuse/i.test(quest.text)), 'Ethical influence lacks refusal protection');

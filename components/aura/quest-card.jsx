@@ -49,7 +49,7 @@ export default function QuestRankCard({
     const rank = getFateRank(quest.rank || 'F');
     const theme = getQuestCardTheme(quest.category);
     const title = quest.baseAction || quest.text || quest.title || '';
-    const description = quest.text || quest.description || title;
+    const objective = quest.objective || quest.text || quest.description || title;
     const sourceId = quest.sourceId || quest.id;
     const skills = (quest.skillIds || []).map((id) => t(`skill.${id}`));
     const rewards = [
@@ -114,10 +114,10 @@ export default function QuestRankCard({
                                 <span>{t(`category.${quest.category}`)}</span>
                             </div>
                             <div className="themed-quest-window">
-                                <QuestArtwork quest={{ ...quest, text: description }} decorative />
+                                <QuestArtwork quest={{ ...quest, text: objective }} decorative />
                                 <div className="themed-window-copy">
                                     <h3 dir="auto">{title}</h3>
-                                    <p dir="auto">{description}</p>
+                                    <p dir="auto">{objective}</p>
                                 </div>
                             </div>
                             {!!skills.length && (

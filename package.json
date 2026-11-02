@@ -20,7 +20,8 @@
     "build:life-docx": "python scripts/build-life-codex-docx.py",
     "generate:life-codex": "npm run export:life-codex && npm run build:life-docx",
     "validate:penalties": "node scripts/validate-penalty-cards.mjs",
-    "test:penalty-browser": "node scripts/browser-penalty-cards.mjs"
+    "test:penalty-browser": "node scripts/browser-penalty-cards.mjs",
+    "test:quest-guide-browser": "node scripts/browser-quest-guide.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",

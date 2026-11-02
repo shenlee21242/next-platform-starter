@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.22 includes one-tap daily goals, multi-session weekly and monthly goals with saved progress and gradual rewards, full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.23 includes one-tap daily goals, multi-session weekly and monthly goals with saved progress and gradual rewards, full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.22 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.23 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,7 +31,7 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.22 highlights
+## AURA 1.23 highlights
 
 - **03:00 failure evaluation:** late-night completions count until 03:00; daily incompletes, a full inactive day, and expired weekly/monthly goals produce at most one judgment per failure day
 - **Preaccepted Contract:** the player explicitly opts in, selects accepted rarities and individual in-game cards, and separately opts into each real-world card; Legendary remains locked until level 5 and three neglect days
@@ -40,6 +40,7 @@ The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.a
 - **Immediate in-game resolution:** all 16 in-game cards implement XP/Gold loss, current-level percentage loss, streak effects with Streak Freeze, temporary slot locks, no-XP next completion, mandatory quests, daily-XP loss across levels, and level regression without going below level 0
 - **Non-destructive slot locks:** Heavy Shackles and Harvest of Slots temporarily reduce usable random capacity for 24/72 hours while preserving permanent purchases and the exact 30/42/59/82/115/161/226 price ladder
 - **Persistent AURA Archive:** the Character ledger keeps awaiting decisions, red pending real-world fulfillment, dimmed fulfilled entries with checks, and shield-canceled history; optional notes and resized evidence remain device-local
+- **Quest wisdom and practical guides:** every one of the 22,500 localized Fate/Codex quests now has a compact objective, an original motivational quote, and distinct execution guidance. The repeated description below revealed cards is removed; Physical quests include technique-specific instructions, including push-up alignment and bracing, and saved quests recover the new fields during localization
 - **Exact 14-card real-world contract:** three Common, four Uncommon, three Rare, and four Legendary cards preserve the requested coffee/social-media/room, physical/cold/entertainment/tribute, confession/harsh-tribute/luxury, and digital-shame/seizure/hard-labor/ultimate-tribute concepts. Small Tribute designates UNICEF; Harsh Tribute has a preselected target field. Changed terms require renewed opt-in, while retired definitions remain readable in old archives
 - **Developer penalty trial:** entering `JSS777` in Social Hub friend search immediately opens a trial judgment on any authenticated account and cycles through all 14 real-world cards on repeated entries. Trials are clearly labeled, never grant admin conversion privileges, and do not create a real failure judgment
 - **Honor-based offline fulfillment:** accepted real-world judgments stay pending until the player confirms fulfillment. AURA never claims to post, message, charge, or enforce the action automatically; the Contract displays health and consent reminders without silently changing the selected card

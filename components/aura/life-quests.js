@@ -5,6 +5,7 @@ import mental from './life-content/mental.mjs';
 import selfDevelopment from './life-content/self-development.mjs';
 import social from './life-content/social.mjs';
 import { a } from './life-content/shared.mjs';
+import { createQuestGuidance } from './quest-guidance.js';
 
 export const SUPPORTED_LANGUAGES = ['en', 'ar', 'fr', 'es'];
 export const lifeCategories = [religious, psychological, physical, mental, selfDevelopment, social];
@@ -158,6 +159,15 @@ export function createLifeQuest(categoryId, baseIndex, rankIndex, locale = 'en')
     const completion = rankProofs[rankIndex][language];
     const baseAction = action.action[language];
     const description = `${baseAction} — ${context[language]}. ${completion}`;
+    const objective = `${rankDirectives[rankIndex][language]} · ${dose}`;
+    const { quote, howTo } = createQuestGuidance({
+        categoryId,
+        actionIndex,
+        locale: language,
+        action: baseAction,
+        dose,
+        context: context[language],
+    });
     return {
         id,
         sourceId: id,
@@ -170,6 +180,10 @@ export function createLifeQuest(categoryId, baseIndex, rankIndex, locale = 'en')
         diamonds: rank.diamonds,
         duration: rank.duration,
         description,
+        objective,
+        quote,
+        howTo,
+        dose,
         completion,
         image: `aura-art://${id.toLowerCase()}`,
         generatedArt: true,

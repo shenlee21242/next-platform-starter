@@ -7,6 +7,7 @@ import { fateRanks, getFateRank } from './fate';
 import { getLifeQuestBank, lifeCategories } from './life-quests';
 import { useI18n } from './i18n';
 import QuestRankCard from './quest-card';
+import QuestGuide from './quest-guide';
 import QuestChainPanel from './quest-chain';
 import { EmptyState, formatNumber, Modal, ScreenHeader } from './ui';
 
@@ -20,8 +21,8 @@ function CodexEntryModal({ quest, onClose, onDraw, onSelect, level, completedSou
         <Modal onClose={onClose} label={`${quest.id} ${t('codex.title')}`} className={`codex-detail-modal rank-reveal-${quest.rank.toLowerCase()}`}>
             <QuestRankCard quest={quest} flippable />
             <div className="eyebrow">{quest.id} · {t(`category.${quest.category}`)}</div>
-            <h2 dir="auto" lang={language}>{quest.text}</h2>
-            <p dir="auto" lang={language}>{quest.description}</p>
+            <h2 dir="auto" lang={language}>{quest.baseAction || quest.text}</h2>
+            <QuestGuide quest={quest} />
             <QuestChainPanel quest={quest} onSelect={onSelect} level={level} completedSourceIds={completedSourceIds} acceptedSourceIds={acceptedSourceIds} />
             <p className="codex-detail-note">{t('codex.reference')}: {quest.sourceCodes.join(' · ')}</p>
             <p className="codex-detail-note">{t('codex.note')}</p>

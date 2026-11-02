@@ -40,7 +40,7 @@ jobs:
         run: npm ci
 
       - name: Validate quest, store, and penalty engines
-        run: npm run validate:periods && npm run validate:store && npm run validate:penalties
+        run: npm run validate:periods && npm run validate:store && npm run validate:penalties && npm run validate:life-quests
 
       - name: Build and sync the native web app
         run: npm run cap:sync
