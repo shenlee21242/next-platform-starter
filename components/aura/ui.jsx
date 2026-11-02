@@ -121,10 +121,10 @@ export function PanelTitle({ eyebrow, title, meta, action, onAction }) {
     );
 }
 
-export function Modal({ children, onClose, className = '', label = 'Dialog' }) {
+export function Modal({ children, onClose, className = '', label = 'Dialog', dismissible = true }) {
     useEffect(() => {
         const handleKey = (event) => {
-            if (event.key === 'Escape') onClose();
+            if (event.key === 'Escape' && dismissible) onClose();
         };
         document.addEventListener('keydown', handleKey);
         const previous = document.body.style.overflow;
@@ -133,14 +133,14 @@ export function Modal({ children, onClose, className = '', label = 'Dialog' }) {
             document.removeEventListener('keydown', handleKey);
             document.body.style.overflow = previous;
         };
-    }, [onClose]);
+    }, [onClose, dismissible]);
 
     return createPortal(
         <div className="modal-backdrop" role="presentation" onMouseDown={(event) => {
-            if (event.target === event.currentTarget) onClose();
+            if (dismissible && event.target === event.currentTarget) onClose();
         }}>
             <section className={`modal-card ${className}`} role="dialog" aria-modal="true" aria-label={label}>
-                <button className="modal-close icon-button" onClick={onClose} aria-label="Close dialog"><X size={19} /></button>
+                {dismissible && <button className="modal-close icon-button" onClick={onClose} aria-label="Close dialog"><X size={19} /></button>}
                 {children}
             </section>
         </div>,

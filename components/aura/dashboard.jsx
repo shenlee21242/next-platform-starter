@@ -56,6 +56,7 @@ export default function Dashboard({
     focusRunning,
     onFocusToggle,
     penaltyGold,
+    penaltyContractEnabled = false,
     randomQuestLimit = 3,
     randomQuestCount = 0,
     activePeriod = 'day',
@@ -129,7 +130,7 @@ export default function Dashboard({
                     </div>
                     <div className="penalty-cost">
                         <span>{t('dashboard.missedPenalty')}</span>
-                        <strong>−{penaltyGold} <Coins size={13} /></strong>
+                        <strong>{penaltyContractEnabled ? t('judgment.title') : <>−{penaltyGold} <Coins size={13} /></>}</strong>
                     </div>
                 </section>
             )}

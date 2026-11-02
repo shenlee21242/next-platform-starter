@@ -18,7 +18,9 @@
     "validate:periods": "node scripts/validate-periodic-quests.mjs",
     "export:life-codex": "node scripts/export-life-codex.mjs",
     "build:life-docx": "python scripts/build-life-codex-docx.py",
-    "generate:life-codex": "npm run export:life-codex && npm run build:life-docx"
+    "generate:life-codex": "npm run export:life-codex && npm run build:life-docx",
+    "validate:penalties": "node scripts/validate-penalty-cards.mjs",
+    "test:penalty-browser": "node scripts/browser-penalty-cards.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",
@@ -43,6 +45,7 @@
     "eslint-config-next": "16.0.0-beta.0",
     "postcss": "^8.4.36",
     "tailwindcss": "^4.1.15",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "playwright": "^1.64.1"
   }
 }

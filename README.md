@@ -1,6 +1,6 @@
 # AURA — Real-Life RPG
 
-A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.20 includes one-tap daily goals, multi-session weekly and monthly goals with saved progress and gradual rewards, full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
+A cinematic, responsive RPG habit tracker built with Next.js, React, and a custom dark-fantasy design system. AURA 1.21 includes one-tap daily goals, multi-session weekly and monthly goals with saved progress and gradual rewards, full custom-goal management, a four-language 22,500-quest life codex, 1,250 nine-rank progression chains, illustrated three-state AURA cards, unlimited player-added goals, capped random-quest slots with fixed upgrade prices, a stable 10-Gold workday store, positive-net Fate draw economics, and an offline Capacitor Android shell.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ Open `http://localhost:3000`.
 
 ## Downloads
 
-- **Android:** [AURA 1.20 debug APK](public/downloads/AURA-debug.apk)
+- **Android:** [AURA 1.21 debug APK](public/downloads/AURA-debug.apk)
 - **Arabic Word codex:** [AURA — 22,500 life quests](public/downloads/AURA-Life-Quests-22500-Ar.docx)
 
 The APK is debug-signed for direct installation and testing; it is not a Play Store release build. The interface, fonts, generated quest engine, and artwork are bundled for offline use. Distribution APKs and the Word document are not nested inside subsequent Android builds.
@@ -31,8 +31,17 @@ npm run build:apk
 
 The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.apk`. For native development, use `npm run cap:sync` after changing the web interface.
 
-## AURA 1.20 highlights
+## AURA 1.21 highlights
 
+- **03:00 failure evaluation:** late-night completions count until 03:00; daily incompletes, a full inactive day, and expired weekly/monthly goals produce at most one judgment per failure day
+- **Preaccepted Contract:** the player explicitly opts in, selects accepted rarities and individual in-game cards, and separately opts into each safe real-world card; Legendary remains locked until level 5 and three neglect days
+- **Exact rarity model:** Common 60%, Uncommon 25%, Rare 12%, and Legendary 3%, renormalized only across rarities the contract makes eligible
+- **Non-dismissible Judgment:** a dark full-screen card-flip experience requires accepting the revealed judgment or consuming an owned Penalty Shield; no XP, Gold, streak, slot, or quest effect applies before that decision
+- **Immediate in-game resolution:** all 16 in-game cards implement XP/Gold loss, current-level percentage loss, streak effects with Streak Freeze, temporary slot locks, no-XP next completion, mandatory quests, daily-XP loss across levels, and level regression without going below level 0
+- **Non-destructive slot locks:** Heavy Shackles and Harvest of Slots temporarily reduce usable random capacity for 24/72 hours while preserving permanent purchases and the exact 30/42/59/82/115/161/226 price ladder
+- **Persistent AURA Archive:** the Character ledger keeps awaiting decisions, red pending real-world fulfillment, dimmed fulfilled entries with checks, and shield-canceled history; optional notes and resized evidence remain device-local
+- **Honor-based real-world cards:** accepted real-world judgments stay pending until the player confirms fulfillment; AURA does not claim to enforce offline actions, message partners, charge money, or coerce donations, and excludes public shaming, dangerous exercise/cold exposure, hunger, and sleep deprivation
+- **Server-assisted clock:** the web app syncs to an uncached server-time endpoint and advances from a monotonic clock; offline Android retains the last trusted reading or honestly falls back to the device clock before its first sync
 - **Daily once, long goals progressively:** daily goals retain one-tap completion, while every weekly and monthly goal advances through multiple sessions and reaches completion only at 100%
 - **Flexible session planner:** custom weekly goals support 2–7 sessions and monthly goals 2–31 sessions, with 5–240 minutes per session and selectable preferred weekdays; one session per goal can be logged each day, and a missed preferred day can be made up on another day
 - **Visible saved progress:** every long goal shows completed/target sessions, an automatic percentage, per-session and total time, preferred days, and session history; progress survives reloads and ordinary daily rollover
@@ -45,9 +54,9 @@ The generated APK is located at `android/app/build/outputs/apk/debug/app-debug.a
 - **Safe custom-goal deletion:** a two-step confirmation permanently deletes only player-created goals; automatic, Fate, and chain-selected quests do not expose these controls, and deletion never rolls back earned XP or Gold
 - **Immediate period handoff:** creating or moving a goal opens its destination tab automatically, and the selected period persists while navigating between screens in the SPA
 - **Three functional goal periods:** every account receives a localized daily goal for the local day, a weekly goal for the Monday-based week, and a monthly goal for the calendar month; each has its own navigation tab, progress, deadline, and period metadata
-- **Correct automatic rollover:** daily goals refresh at local midnight, weekly goals refresh on Monday, and monthly goals refresh on the first day of the next month; weekly and monthly goals survive ordinary daily resets, while expired custom goals are removed with their period
+- **Correct automatic rollover:** daily goals refresh at 03:00 local time, weekly goals refresh on Monday, and monthly goals refresh on the first day of the next month; weekly and monthly goals survive ordinary daily resets, while expired custom goals are removed with their period
 - **Period-specific custom goals:** the New quest action inherits the open tab, and its period picker can create a daily, weekly, or monthly goal; all custom goals remain unlimited and independent of random-quest capacity
-- **Resilient wall-clock resets:** the live timer rereads local time every second and detects calendar changes directly, covering device sleep and countdown drift; login, onboarding, and the live midnight path share the same period engine
+- **Resilient wall-clock resets:** the live timer rereads local time every second and detects calendar changes directly, covering device sleep and countdown drift; login, onboarding, and the live 03:00 path share the same period engine
 - **Unlimited personal additions:** player-created goals in all three periods and the next quests selected from progression chains never consume random-quest capacity and can be added whenever the player wants
 - **Three to ten simultaneous random quests:** every account starts with three active random-quest slots; completing a random quest releases its slot, and full slots prevent additional Fate draws or custom-to-random rerolls without consuming the reroll
 - **Exact fixed slot prices:** slots 4–10 cost **30, 42, 59, 82, 115, 161, and 226 Gold**, following `round(30 × 1.4^(slot − 4))`; the complete ladder costs **715 Gold**, approximately **71 days at 10 Gold/day**, and further purchases lock at ten
@@ -103,7 +112,10 @@ Runtime content and translations live in:
 - `public/images/card-themes/` — optimized local WebP AURA cover and character card illustrations
 - `components/aura/quest-chain.jsx` — nine-step chain navigation, level gates, completion state, and next-step handoff
 - `components/aura/i18n.jsx` — interface translations, language context, and switcher
-- `components/aura/game.js` — localized periodic-goal generation, multi-session plans, progress percentages, gradual reward slices, legacy-save migration, local day/week/month keys, inclusive date ranges, deadlines, rollover, penalties, and random-slot classification
+- `components/aura/game.js` — localized periodic-goal generation, multi-session plans, progress percentages, gradual reward slices, legacy-save migration, 03:00 failure evaluation, rollover, and judgment deduplication
+- `components/aura/penalty-cards.js` — localized penalty catalog, contract normalization, rarity-weighted draws, eligibility gates, and safe effect definitions
+- `components/aura/penalty-ui.jsx` — Judgment, Contract, fulfillment, and Character ledger interfaces
+- `components/aura/clock.js` and `app/api/aura/time/route.js` — server-assisted, monotonic time with offline fallback
 - `components/aura/dashboard.jsx` — daily/weekly/monthly navigation, exact date ranges, session progress bars, period progress, countdowns, status/category filters, and goal presentation
 - `components/aura/store-catalog.js` — localized workday items, the stable 10-Gold reference, exact percentage mappings, fixed random-slot pricing helpers, and balance ranges
 - `components/aura/store-screen.jsx` — responsive reward, power-up, cosmetic, upgrade, and PvP store interface
@@ -122,10 +134,13 @@ The tasks are practical adaptations, not quotations from every source, fatwas, d
 npm run validate:life-quests   # All 22,500 × 4 locales, chains, sources, skills, level gates, and Fate economics
 npm run validate:store         # All 17 exact prices at 10 Gold, the slot ladder, localization, and protection
 npm run validate:periods       # Session plans, progress/rewards, date ranges, migration, rollover, unlimited goals, and penalties
+npm run validate:penalties     # Contract, rarity, 03:00 judgments, inactivity, expiry, deduplication, and slot protections
 npm run export:life-codex      # Export the Arabic runtime bank for the Word builder
 npm run build:life-docx        # Build the Arabic Word document
 npm run generate:life-codex    # Export + build in one command
 ```
+
+For the optional browser regression suite, start the app, install a Playwright Chromium browser with `npx playwright install chromium`, then run `AURA_URL=http://127.0.0.1:3000 npm run test:penalty-browser`. Set `CHROMIUM_PATH` when using an existing Chromium executable.
 
 The Word builder requires Python and `python-docx`:
 

@@ -34,6 +34,7 @@ import {
     RotateCcw,
     Scan,
     Search,
+    Scale,
     Settings2,
     Shield,
     ShieldCheck,
@@ -51,6 +52,7 @@ import { friends, skills, storeItems, XP_TO_LEVEL, getRank } from './data';
 import { characters, getCharacter } from './characters';
 import CharacterLoreModal from './character-lore';
 import CharacterRoster from './character-roster';
+import { PenaltyLedger } from './penalty-ui';
 import { LanguageSwitcher, useI18n } from './i18n';
 import {
     Avatar,
@@ -158,7 +160,7 @@ export function SkillTreeScreen({ unlockedSkills, skillPoints, skillQuestProgres
     );
 }
 
-export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, playerTitle = '', attributes }) {
+export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenModal, player, playerTitle = '', attributes, judgments = [], onReviewJudgment, onFulfillJudgment }) {
     const [storyCharacter, setStoryCharacter] = useState(null);
     const activeCharacter = getCharacter(player.characterId || activeSkin);
 
@@ -212,6 +214,7 @@ export function CharacterScreen({ level, xp, activeSkin, onSkinChange, onOpenMod
                 <p className="hero-gallery-note">Tap any portrait to discover the person behind the armor.</p>
                 <CharacterRoster selectedId={activeCharacter.id} onSelect={onSkinChange} onReadStory={setStoryCharacter} />
             </section>
+            <PenaltyLedger judgments={judgments} onReview={onReviewJudgment} onFulfill={onFulfillJudgment} />
             {storyCharacter && <CharacterLoreModal character={storyCharacter} selected={storyCharacter.id === activeCharacter.id} onClose={() => setStoryCharacter(null)} onSelect={(character) => onSkinChange(character.id)} />}
         </div>
     );
@@ -505,7 +508,8 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                     <section className="panel settings-section">
                         <PanelTitle title={t('settings.discipline')} eyebrow={t('settings.difficulty')} />
                         <div className="setting-row"><div><strong>{t('settings.penalty')}</strong><p>{t('settings.penaltyDescription')}</p></div><select value={settings.penalty} onChange={(event) => onSettingChange('penalty', event.target.value)}><option>Forgiving</option><option>Standard</option><option>Relentless</option></select></div>
-                        <div className="setting-row"><div><strong>{t('settings.dailyReset')}</strong><p>{t('settings.resetDescription')}</p></div><span className="setting-static"><Clock3 size={15} /> 00:00</span></div>
+                        <div className="setting-row"><div><strong>{t('settings.dailyReset')}</strong><p>{t('settings.resetDescription')}</p></div><span className="setting-static"><Clock3 size={15} /> 03:00</span></div>
+                        <div className="setting-row contract-setting-row"><div><strong>{t('contract.title')}</strong><p>{t('contract.description')}</p></div><button className="button button-secondary button-small" onClick={() => onOpenModal('penalty-contract')}><Scale size={15} /> {settings.penaltyContract?.enabled ? t('contract.active') : t('contract.configure')}</button></div>
                     </section>
                 </div>
                 <aside>
@@ -516,7 +520,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> {t('settings.signOut')}</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.20</strong><p>{t('settings.local')}</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.21</strong><p>{t('settings.local')}</p></div></section>
                 </aside>
             </div>
         </div>

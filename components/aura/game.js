@@ -1,3 +1,6 @@
+import { auraNow } from './clock.js';
+import { createPenaltyJudgment, normalizePenaltyContract } from './penalty-cards.js';
+
 export const SESSION_STORAGE_KEY = 'aura_session_v3';
 export const ACCOUNT_STORAGE_PREFIX = 'aura_account_v3_';
 
@@ -17,6 +20,7 @@ export const defaultSettings = {
     notifications: true,
     reducedMotion: false,
     penalty: 'Standard',
+    penaltyContract: normalizePenaltyContract(),
 };
 
 export const DAILY_PENALTY_GOLD = {
@@ -37,28 +41,34 @@ export function accountStorageKey(email) {
     return `${ACCOUNT_STORAGE_PREFIX}${email.trim().toLowerCase()}`;
 }
 
-export function localDayKey(date = new Date()) {
+export function localDayKey(date = auraNow()) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
 
-export function localWeekKey(date = new Date()) {
+export function localQuestDayKey(date = auraNow()) {
+    const judgmentDay = new Date(date);
+    judgmentDay.setHours(judgmentDay.getHours() - 3);
+    return localDayKey(judgmentDay);
+}
+
+export function localWeekKey(date = auraNow()) {
     const monday = new Date(date);
     monday.setHours(12, 0, 0, 0);
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
     return localDayKey(monday);
 }
 
-export function localMonthKey(date = new Date()) {
+export function localMonthKey(date = auraNow()) {
     return localDayKey(date).slice(0, 7);
 }
 
-export function getPeriodKey(period = 'day', date = new Date()) {
+export function getPeriodKey(period = 'day', date = auraNow()) {
     if (period === 'week') return localWeekKey(date);
     if (period === 'month') return localMonthKey(date);
-    return localDayKey(date);
+    return localQuestDayKey(date);
 }
 
 export function getQuestPeriod(quest = {}) {
@@ -98,8 +108,8 @@ export function getQuestProgressPercent(quest = {}) {
     return Math.round((getQuestCompletedSessions(quest) / getQuestSessionTarget(quest)) * 100);
 }
 
-export function hasQuestSessionToday(quest = {}, date = new Date()) {
-    const today = localDayKey(date);
+export function hasQuestSessionToday(quest = {}, date = auraNow()) {
+    const today = localQuestDayKey(date);
     return Array.isArray(quest.sessionHistory) && quest.sessionHistory.some((entry) => entry?.day === today);
 }
 
@@ -175,29 +185,38 @@ export function secondsUntilMidnight() {
     return secondsUntilPeriodEnd('day');
 }
 
-export function secondsUntilPeriodEnd(period = 'day', date = new Date()) {
+export function secondsUntilPeriodEnd(period = 'day', date = auraNow()) {
     const end = new Date(date);
-    end.setHours(0, 0, 0, 0);
-    if (period === 'week') {
-        const daysSinceMonday = (end.getDay() + 6) % 7;
-        end.setDate(end.getDate() + 7 - daysSinceMonday);
-    } else if (period === 'month') {
-        end.setMonth(end.getMonth() + 1, 1);
+    if (period === 'day') {
+        end.setHours(3, 0, 0, 0);
+        if (end.getTime() <= date.getTime()) end.setDate(end.getDate() + 1);
     } else {
-        end.setDate(end.getDate() + 1);
+        end.setHours(0, 0, 0, 0);
+        if (period === 'week') {
+            const daysSinceMonday = (end.getDay() + 6) % 7;
+            end.setDate(end.getDate() + 7 - daysSinceMonday);
+        } else {
+            end.setMonth(end.getMonth() + 1, 1);
+        }
     }
     return Math.max(0, Math.floor((end.getTime() - date.getTime()) / 1000));
 }
 
-export function getPeriodBounds(period = 'day', date = new Date()) {
+export function getPeriodBounds(period = 'day', date = auraNow()) {
     const start = new Date(date);
     start.setHours(0, 0, 0, 0);
     if (period === 'week') start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
     if (period === 'month') start.setDate(1);
+    if (period === 'day') {
+        const [year, month, day] = localQuestDayKey(date).split('-').map(Number);
+        start.setFullYear(year, month - 1, day);
+        start.setHours(3, 0, 0, 0);
+    }
     const end = new Date(start);
+    if (period === 'day') end.setDate(end.getDate() + 1);
     if (period === 'week') end.setDate(end.getDate() + 6);
     if (period === 'month') end.setMonth(end.getMonth() + 1, 0);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(period === 'day' ? 2 : 23, 59, 59, 999);
     return { start, end };
 }
 
@@ -223,6 +242,11 @@ export function createNewGame(auth = {}) {
         effects: {},
         dailyGoldEarned: 0,
         dailyGoldDay: localDayKey(),
+        dailyXpEarned: 0,
+        dailyXpDay: localQuestDayKey(),
+        judgments: [],
+        neglectDays: 0,
+        lastActivityDay: null,
         secondChanceMonth: null,
         activeSkin: 'kael',
         duel: null,
@@ -260,8 +284,8 @@ const rotatingQuests = [
     { title: goalText('Stretch and move for 15 minutes', 'تمدّد وتحرّك لمدة 15 دقيقة', 'Étirez-vous et bougez pendant 15 minutes', 'Estírate y muévete durante 15 minutos'), category: 'Physical', duration: 15, xp: 100, gold: 60 },
 ];
 
-export function createDailyQuest(player, previousQuestDate = null, date = new Date(), language = 'en') {
-    const today = localDayKey(date);
+export function createDailyQuest(player, previousQuestDate = null, date = auraNow(), language = 'en') {
+    const today = localQuestDayKey(date);
     const dayNumber = calendarDayNumber(today);
     const template = previousQuestDate
         ? rotatingQuests[dayNumber % rotatingQuests.length]
@@ -292,7 +316,7 @@ const monthlyGoalTemplates = [
     { title: goalText('Review your habits and write a monthly improvement plan', 'راجع عاداتك واكتب خطة تحسين شهرية', 'Passez en revue vos habitudes et rédigez un plan d’amélioration mensuel', 'Revisa tus hábitos y escribe un plan mensual de mejora'), category: 'Psychological', duration: 240, sessionDuration: 30, targetSessions: 8, sessionDays: [1, 4], xp: 1600, gold: 640 },
 ];
 
-export function createWeeklyQuest(date = new Date(), language = 'en') {
+export function createWeeklyQuest(date = auraNow(), language = 'en') {
     const week = localWeekKey(date);
     const template = weeklyGoalTemplates[Math.floor(calendarDayNumber(week) / 7) % weeklyGoalTemplates.length];
     return {
@@ -311,7 +335,7 @@ export function createWeeklyQuest(date = new Date(), language = 'en') {
     };
 }
 
-export function createMonthlyQuest(date = new Date(), language = 'en') {
+export function createMonthlyQuest(date = auraNow(), language = 'en') {
     const month = localMonthKey(date);
     const template = monthlyGoalTemplates[(date.getFullYear() * 12 + date.getMonth()) % monthlyGoalTemplates.length];
     return {
@@ -330,8 +354,8 @@ export function createMonthlyQuest(date = new Date(), language = 'en') {
     };
 }
 
-export function updatePeriodicQuests({ player, quests = [], lastQuestDate = null, language = 'en' }, date = new Date()) {
-    const today = localDayKey(date);
+export function updatePeriodicQuests({ player, quests = [], lastQuestDate = null, language = 'en' }, date = auraNow()) {
+    const today = localQuestDayKey(date);
     const isNewDay = lastQuestDate !== today;
     const previousDate = lastQuestDate ? new Date(`${lastQuestDate}T12:00:00`) : null;
     const isNewWeek = Boolean(previousDate && localWeekKey(previousDate) !== localWeekKey(date));
@@ -372,7 +396,7 @@ export function updatePeriodicQuests({ player, quests = [], lastQuestDate = null
     };
 }
 
-export function resolveDailyProtection({ quests = [], severity = 'Standard', inventory = [], upgrades = {}, secondChanceMonth = null }, date = new Date()) {
+export function resolveDailyProtection({ quests = [], severity = 'Standard', inventory = [], upgrades = {}, secondChanceMonth = null }, date = auraNow()) {
     const penalty = getMissedQuestPenalty(quests, severity);
     const nextInventory = [...inventory];
     const month = localDayKey(date).slice(0, 7);
@@ -405,27 +429,102 @@ export function resolveDailyProtection({ quests = [], severity = 'Standard', inv
     return { ...penalty, gold, streakReset, protection, inventory: nextInventory, secondChanceMonth: nextSecondChanceMonth };
 }
 
-export function withDailyQuest(game, date = new Date()) {
+export function withDailyQuest(game, date = auraNow()) {
     if (!game.profileComplete) return game;
-    const today = localDayKey(date);
+    const today = localQuestDayKey(date);
     const periodic = updatePeriodicQuests({ ...game, language: game.settings?.language || 'en' }, date);
     if (!periodic.isNewDay) return { ...game, quests: periodic.quests };
 
-    const penalty = resolveDailyProtection({
-        quests: game.lastQuestDate ? (game.quests || []).filter((quest) => !['week', 'month'].includes(quest.period)) : [],
-        severity: game.settings?.penalty,
-        inventory: game.inventory,
-        upgrades: game.upgrades,
-        secondChanceMonth: game.secondChanceMonth,
-    }, date);
-    const penaltyNotification = penalty.incomplete ? {
+    const previousQuests = game.lastQuestDate ? (game.quests || []) : [];
+    const failedDaily = previousQuests.filter((quest) =>
+        !['week', 'month'].includes(quest.period) && !quest.done &&
+        (!quest.periodKey || quest.periodKey === game.lastQuestDate));
+    const expiredGoals = previousQuests.filter((quest) => {
+        if (quest.done) return false;
+        if (quest.period === 'week') return periodic.isNewWeek && quest.periodKey !== getPeriodKey('week', date);
+        if (quest.period === 'month') return periodic.isNewMonth && quest.periodKey !== getPeriodKey('month', date);
+        return false;
+    });
+    const noActivity = Boolean(game.lastQuestDate && game.lastActivityDay && game.lastActivityDay !== game.lastQuestDate);
+    const failedQuestIds = [...failedDaily, ...expiredGoals].map((quest) => quest.id);
+    const failed = failedQuestIds.length > 0 || noActivity;
+    const contract = normalizePenaltyContract(game.settings?.penaltyContract);
+    const neglectDays = noActivity || failedDaily.length ? (game.neglectDays || 0) + 1 : 0;
+    let judgment = null;
+    let penalty = null;
+
+    if (contract.enabled && failed) {
+        const month = localDayKey(date).slice(0, 7);
+        if (game.upgrades?.secondChance && game.secondChanceMonth !== month) {
+            penalty = {
+                incomplete: failedDaily.length,
+                gold: 0,
+                streakReset: false,
+                protection: 'Second Chance',
+                inventory: [...(game.inventory || [])],
+                secondChanceMonth: month,
+            };
+        } else {
+            judgment = createPenaltyJudgment({
+                contract,
+                level: game.level || 0,
+                neglectDays,
+                reason: failedDaily.length ? 'daily-missed' : expiredGoals.length ? 'quest-expired' : 'streak-broken',
+                failedQuestIds,
+                day: today,
+                dailyXpEarned: game.dailyXpDay === game.lastQuestDate ? game.dailyXpEarned || 0 : 0,
+                dailyXpDay: game.lastQuestDate,
+                date,
+            });
+            if (judgment) {
+                penalty = {
+                    incomplete: failedDaily.length,
+                    gold: 0,
+                    streakReset: false,
+                    protection: null,
+                    inventory: [...(game.inventory || [])],
+                    secondChanceMonth: game.secondChanceMonth,
+                };
+            }
+        }
+    }
+
+    if (!penalty && contract.enabled && failed) {
+        penalty = {
+            incomplete: failedDaily.length,
+            gold: 0,
+            streakReset: false,
+            protection: null,
+            inventory: [...(game.inventory || [])],
+            secondChanceMonth: game.secondChanceMonth,
+        };
+    }
+
+    if (!penalty) {
+        penalty = resolveDailyProtection({
+            quests: failedDaily,
+            severity: game.settings?.penalty,
+            inventory: game.inventory || [],
+            upgrades: game.upgrades,
+            secondChanceMonth: game.secondChanceMonth,
+        }, date);
+    }
+
+    const penaltyNotification = judgment ? {
+        id: `judgment-notice-${today}`,
+        type: 'quest',
+        title: 'AURA judgment pending',
+        description: 'A judgment awaits your review. No card effect has been applied yet.',
+        time: '03:00 reset',
+        read: false,
+    } : (penalty.incomplete || (failed && penalty.protection)) ? {
         id: `penalty-${today}`,
         type: 'quest',
         title: penalty.protection || 'Daily quest penalty',
         description: penalty.protection
             ? `${penalty.protection} protected your record. ${penalty.gold ? `${penalty.gold} Gold was deducted; your streak is safe.` : 'The Gold and streak penalty was canceled.'}`
             : `${penalty.incomplete} ${penalty.incomplete === 1 ? 'quest was' : 'quests were'} left incomplete. A ${penalty.gold} Gold penalty was applied and your streak was reset.`,
-        time: 'Daily reset',
+        time: '03:00 reset',
         read: false,
     } : null;
 
@@ -438,8 +537,12 @@ export function withDailyQuest(game, date = new Date()) {
         bestStreak: Math.max(game.bestStreak ?? 0, game.streak ?? 0),
         inventory: penalty.inventory,
         secondChanceMonth: penalty.secondChanceMonth,
+        judgments: judgment ? [judgment, ...(game.judgments || [])].slice(0, 100) : game.judgments || [],
+        neglectDays,
         dailyGoldEarned: 0,
-        dailyGoldDay: today,
+        dailyGoldDay: localDayKey(date),
+        dailyXpEarned: 0,
+        dailyXpDay: today,
         focusSessions: periodic.isNewWeek ? 0 : game.focusSessions ?? 0,
         focusMinutes: periodic.isNewWeek ? 0 : game.focusMinutes ?? 0,
         focusWeek: localWeekKey(date),

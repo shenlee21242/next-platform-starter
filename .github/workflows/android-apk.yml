@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate quest, store, and penalty engines
+        run: npm run validate:periods && npm run validate:store && npm run validate:penalties
+
       - name: Build and sync the native web app
         run: npm run cap:sync
 

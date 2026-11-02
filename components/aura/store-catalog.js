@@ -9,6 +9,12 @@ export function getRandomQuestSlotLimit(upgrades = {}) {
     return Math.min(MAX_RANDOM_QUEST_SLOTS, MIN_RANDOM_QUEST_SLOTS + purchased);
 }
 
+export function getEffectiveRandomQuestSlotLimit(upgrades = {}, effects = {}, now = Date.now()) {
+    const permanentLimit = getRandomQuestSlotLimit(upgrades);
+    const temporarilyLocked = Number(effects.randomSlotLockUntil) > now ? 1 : 0;
+    return Math.max(1, permanentLimit - temporarilyLocked);
+}
+
 export function getRandomQuestSlotPrice(slot) {
     if (!Number.isInteger(slot) || slot < MIN_RANDOM_QUEST_SLOTS + 1 || slot > MAX_RANDOM_QUEST_SLOTS) return null;
     return Math.round(30 * (1.4 ** (slot - 4)));
@@ -35,7 +41,7 @@ export const workdayStoreItems = [
     { id: 'power-reroll', category: 'powerups', percent: 50, dailyLimit: 2, icon: 'reroll', effect: 'select-quest', name: l('Quest Reroll', 'إعادة تدوير مهمة', 'Relance de quête', 'Cambio de misión'), description: l('Replace one unfinished quest with a new Fate quest.', 'استبدل مهمة غير مكتملة بمهمة قدر جديدة.', 'Remplacez une quête inachevée par une nouvelle quête du destin.', 'Sustituye una misión pendiente por una nueva misión del destino.') },
     { id: 'power-xp', category: 'powerups', percent: 80, dailyLimit: 1, icon: 'xp', effect: 'xp-boost', name: l('XP Multiplier', 'مضاعف XP', 'Multiplicateur d’XP', 'Multiplicador de XP'), description: l('Double quest XP for one hour.', 'ضاعف XP المهام لمدة ساعة.', 'Doublez l’XP des quêtes pendant une heure.', 'Duplica la XP de misiones durante una hora.') },
     { id: 'power-streak-freeze', category: 'powerups', percent: 100, dailyLimit: 1, icon: 'freeze', effect: 'automatic', name: l('Streak Freeze', 'تجميد السلسلة', 'Gel de série', 'Congelar racha'), description: l('Automatically preserve your streak for one missed day.', 'يحافظ تلقائيًا على سلسلتك عند يوم فائت واحد.', 'Préserve automatiquement votre série lors d’un jour manqué.', 'Conserva automáticamente tu racha durante un día fallado.') },
-    { id: 'power-penalty-shield', category: 'powerups', percent: 150, dailyLimit: 1, icon: 'shield', effect: 'automatic', name: l('Penalty Shield', 'درع العقوبة', 'Bouclier de pénalité', 'Escudo de penalización'), description: l('Automatically cancel one daily Gold and streak penalty.', 'يلغي تلقائيًا عقوبة الذهب والسلسلة ليوم واحد.', 'Annule automatiquement une pénalité quotidienne d’or et de série.', 'Cancela automáticamente una penalización diaria de oro y racha.') },
+    { id: 'power-penalty-shield', category: 'powerups', percent: 150, dailyLimit: 1, icon: 'shield', effect: 'automatic', name: l('Penalty Shield', 'درع العقوبة', 'Bouclier de pénalité', 'Escudo de penalización'), description: l('Automatically cancel one legacy daily penalty, or cancel one judgment from its decision screen.', 'يلغي تلقائيًا عقوبة يومية قديمة، أو يلغي حكمًا واحدًا من شاشة القرار.', 'Annule une ancienne pénalité quotidienne ou un jugement depuis son écran de décision.', 'Cancela una penalización diaria anterior o un juicio desde su pantalla de decisión.') },
     { id: 'power-gold', category: 'powerups', percent: 250, dailyLimit: 1, icon: 'gold', effect: 'gold-boost', name: l('Gold Multiplier', 'مضاعف الذهب', 'Multiplicateur d’or', 'Multiplicador de oro'), description: l('Double quest Gold for the rest of today, within your daily cap.', 'ضاعف ذهب المهام لبقية اليوم ضمن سقفك اليومي.', 'Doublez l’or des quêtes aujourd’hui, dans la limite quotidienne.', 'Duplica el oro de misiones hoy, dentro de tu límite diario.') },
 
     { id: 'cosmetic-background', category: 'cosmetics', percent: 400, icon: 'background', effect: 'permanent', name: l('Profile background', 'خلفية بروفايل', 'Arrière-plan du profil', 'Fondo de perfil'), description: l('A permanent celestial background for your character profile.', 'خلفية فلكية دائمة لملف شخصيتك.', 'Un arrière-plan céleste permanent pour votre profil.', 'Un fondo celestial permanente para tu perfil.') },

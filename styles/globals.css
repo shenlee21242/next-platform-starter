@@ -1831,3 +1831,128 @@ html[dir="rtl"] .goal-session-overview-heading > span,
 html[dir="rtl"] .quest-reward-preview > span { letter-spacing: 0; }
 html[dir="rtl"] .input-with-suffix input { padding-right: 11px; padding-left: 68px; }
 html[dir="rtl"] .input-with-suffix small { right: auto; left: 10px; }
+
+/* AURA 1.21 — Contract, Judgment, and Ledger */
+.modal-backdrop:has(.judgment-modal) { background: rgba(2, 3, 6, .94); backdrop-filter: blur(16px); }
+.judgment-modal { width: min(100%, 620px); min-height: min(760px, calc(100vh - 34px)); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; overflow-x: hidden; padding: 24px 34px; border-color: rgba(239, 68, 68, .25); background: radial-gradient(circle at 50% 42%, rgba(121, 20, 32, .17), transparent 42%), linear-gradient(155deg, #141218, #090b10 75%); box-shadow: 0 0 120px rgba(239, 68, 68, .08), 0 35px 100px #000; }
+.judgment-aura { position: absolute; width: 430px; height: 430px; top: 29%; left: 50%; transform: translate(-50%, -50%); border: 1px solid rgba(239, 68, 68, .06); border-radius: 50%; box-shadow: 0 0 80px rgba(239, 68, 68, .06), inset 0 0 80px rgba(239, 68, 68, .04); pointer-events: none; }
+.judgment-heading { position: relative; z-index: 1; max-width: 470px; text-align: center; }
+.judgment-sigil { width: 44px; height: 44px; display: grid; place-items: center; margin: 0 auto 10px; border: 1px solid rgba(239, 68, 68, .28); border-radius: 50%; color: #f87171; background: rgba(239, 68, 68, .06); }
+.judgment-heading .eyebrow { color: #c98383; }
+.judgment-heading h2 { margin-top: 4px; color: #f1e8e3; font-size: 27px; letter-spacing: .08em; }
+.judgment-heading p { margin: 7px auto 0; color: #a49a9d; font-size: 10px; line-height: 1.65; }
+.judgment-heading small { display: inline-flex; align-items: center; gap: 5px; margin-top: 7px; color: #d3a3a3; font-size: 8px; }
+.penalty-card-stage { position: relative; z-index: 1; width: 248px; height: 390px; flex: 0 0 auto; perspective: 1100px; }
+.penalty-card-back, .penalty-card-face { position: absolute; inset: 0; overflow: hidden; border: 1px solid rgba(229, 184, 107, .34); border-radius: 13px; background: #09090d; box-shadow: 0 22px 55px rgba(0, 0, 0, .65), 0 0 28px rgba(239, 68, 68, .12); backface-visibility: hidden; }
+.penalty-card-back { animation: judgment-back-turn .85s cubic-bezier(.55,.05,.55,.95) forwards; }
+.penalty-card-back img { object-fit: cover; }
+.penalty-card-face { display: grid; grid-template-rows: 53% 47%; animation: judgment-front-turn .7s cubic-bezier(.2,.75,.25,1) both; }
+@keyframes judgment-back-turn { from { transform: rotateY(0); } to { transform: rotateY(90deg); } }
+@keyframes judgment-front-turn { from { opacity: .5; transform: rotateY(-90deg); } to { opacity: 1; transform: rotateY(0); } }
+.penalty-card-art { position: relative; min-height: 0; overflow: hidden; border-bottom: 1px solid rgba(239, 68, 68, .25); }
+.penalty-card-art img { object-fit: cover; object-position: 50% 20%; }
+.penalty-card-copy { padding: 10px 13px 12px; text-align: center; background: linear-gradient(180deg, rgba(30, 11, 17, .97), #0c0c11); }
+.penalty-card-copy > div { display: flex; justify-content: space-between; gap: 8px; color: #77727a; font-size: 6px; letter-spacing: .08em; text-transform: uppercase; }
+.penalty-card-copy h3 { margin: 6px 0 4px; color: #f0d8cf; font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+.penalty-card-copy > strong { display: block; color: #f0a4a4; font-size: 9px; line-height: 1.45; font-weight: 600; }
+.penalty-card-copy p { margin: 5px 0 0; color: #9a8d91; font-size: 7px; line-height: 1.5; font-style: italic; }
+.penalty-rarity { font-size: 7px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.rarity-text-common { color: #aeb5bd !important; }
+.rarity-text-uncommon { color: #69d5a3 !important; }
+.rarity-text-rare { color: #70bfff !important; }
+.rarity-text-legendary { color: var(--gold) !important; }
+.judgment-revealing { color: #8d767c; font-size: 8px; letter-spacing: .1em; }
+.judgment-actions { position: relative; z-index: 1; width: min(100%, 360px); display: flex; flex-direction: column; gap: 8px; animation: judgment-actions-in .3s ease both; }
+@keyframes judgment-actions-in { from { opacity: 0; transform: translateY(6px); } }
+.judgment-actions .button-primary { background: linear-gradient(135deg, #b73543, #7f1f2e); border-color: #d95c68; color: #fff5f3; }
+.judgment-actions .button-secondary { border-color: rgba(229, 184, 107, .25); color: #d8bd92; }
+.judgment-actions > small { color: #897b80; font-size: 7px; line-height: 1.5; text-align: center; }
+.judgment-real-note { display: flex; align-items: flex-start; gap: 7px; margin: 0 0 3px; padding: 9px; border: 1px solid rgba(76, 215, 246, .12); border-radius: 6px; color: #91b7bf; background: rgba(76, 215, 246, .025); font-size: 7px; line-height: 1.55; }
+.judgment-real-note svg { flex: 0 0 auto; margin-top: 1px; }
+
+.penalty-ledger { margin-top: 18px; }
+.ledger-description { margin: -4px 0 15px; color: var(--muted); font-size: 9px; line-height: 1.6; }
+.ledger-empty { min-height: 105px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; border: 1px dashed var(--border); border-radius: 8px; color: #69717a; font-size: 9px; text-align: center; }
+.ledger-list { display: flex; flex-direction: column; gap: 8px; }
+.ledger-entry { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255, 255, 255, .012); }
+.ledger-entry.ledger-pending, .ledger-entry.ledger-awaiting { border-color: rgba(239, 68, 68, .28); background: rgba(239, 68, 68, .035); }
+.ledger-entry.ledger-fulfilled { opacity: .64; }
+.ledger-entry.ledger-shielded { border-color: rgba(76, 215, 246, .16); }
+.ledger-status-icon { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: #b0a39b; }
+.ledger-pending .ledger-status-icon, .ledger-awaiting .ledger-status-icon { color: #f87171; border-color: rgba(239, 68, 68, .25); }
+.ledger-fulfilled .ledger-status-icon { color: #72c69c; }
+.ledger-shielded .ledger-status-icon { color: var(--cyan); }
+.ledger-entry-copy > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ledger-entry-copy time { color: #6d737b; font-size: 7px; }
+.ledger-entry-copy h3 { margin: 3px 0; color: #d7d5d1; font-family: var(--font-display); font-size: 12px; font-weight: 500; }
+.ledger-entry-copy p { margin: 0; color: #8f959b; font-size: 8px; line-height: 1.5; }
+.ledger-status-label { display: inline-block; margin-top: 5px; color: #b29494; font-size: 7px; }
+.ledger-entry-copy > small { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: #7fb3bd; font-size: 7px; }
+.ledger-entry-copy blockquote { margin: 7px 0 0; padding-inline-start: 8px; border-inline-start: 2px solid var(--border); color: #99918d; font-size: 8px; }
+
+.contract-modal { width: min(100%, 690px); }
+.contract-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 20px 0 13px; padding: 4px; border: 1px solid var(--border); border-radius: 7px; background: rgba(0, 0, 0, .14); }
+.contract-tabs button { min-height: 35px; border: 0; border-radius: 5px; color: #858b93; background: transparent; font-size: 8px; }
+.contract-tabs button.active { color: var(--gold); background: rgba(255, 193, 116, .07); }
+.contract-scroll { max-height: min(48vh, 470px); overflow-y: auto; padding-inline-end: 4px; }
+.contract-enable-row { padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+.contract-rarities { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-top: 15px; }
+.contract-rarities h3, .contract-rarities > p, .contract-partner h3 { grid-column: 1 / -1; color: #c5c3bd; font-size: 10px; font-weight: 600; }
+.contract-rarity { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; }
+.contract-rarity > div { display: flex; flex-direction: column; gap: 2px; }
+.contract-rarity strong { font-size: 9px; }
+.contract-rarity span { color: #767d85; font-size: 8px; }
+.contract-rarities > p { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; color: #8e8579; font-size: 8px; line-height: 1.5; font-weight: 400; }
+.contract-partner { margin-top: 18px; }
+.contract-partner .form-row { margin-top: 9px; }
+.contract-partner label { flex: 1; display: flex; flex-direction: column; gap: 6px; color: #8e949b; font-size: 8px; }
+.contract-partner input, .fulfillment-note textarea { width: 100%; border: 1px solid var(--border-strong); border-radius: 6px; outline: 0; color: var(--text); background: rgba(8, 10, 14, .4); padding: 10px; font-size: 9px; }
+.contract-partner input { height: 38px; padding: 0 10px; }
+.contract-partner > small { display: block; margin-top: 7px; color: #6f767e; font-size: 7px; }
+.contract-safety { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; padding: 11px; border: 1px solid rgba(76, 215, 246, .13); border-radius: 6px; color: #8fb6bd; background: rgba(76, 215, 246, .025); }
+.contract-safety svg { flex: 0 0 auto; }
+.contract-safety p { margin: 0; font-size: 8px; line-height: 1.6; }
+.contract-card-list { display: flex; flex-direction: column; gap: 7px; }
+.contract-card-row { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 7px; opacity: .65; }
+.contract-card-row.selected { opacity: 1; border-color: rgba(255, 193, 116, .16); background: rgba(255, 193, 116, .018); }
+.contract-card-row h3 { margin: 3px 0; color: #d2d0ca; font-family: var(--font-display); font-size: 12px; font-weight: 500; }
+.contract-card-row p { margin: 0; color: #8a9199; font-size: 8px; line-height: 1.5; }
+.contract-card-row .toggle { flex: 0 0 auto; }
+.contract-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+.contract-footer > span { color: #858b92; font-size: 8px; }
+.contract-footer .button { min-width: 150px; }
+.form-error { color: #f87171 !important; }
+
+.fulfillment-honor { display: flex; align-items: flex-start; gap: 8px; margin: 18px 0; padding: 10px; border: 1px solid rgba(76, 215, 246, .13); border-radius: 6px; color: #94b8bd !important; background: rgba(76, 215, 246, .025); }
+.fulfillment-honor svg { flex: 0 0 auto; }
+.fulfillment-note { display: flex; flex-direction: column; gap: 7px; color: #a1a4a7; font-size: 8px; }
+.fulfillment-note textarea { resize: vertical; line-height: 1.6; }
+.fulfillment-proof { margin: 16px 0; }
+.fulfillment-proof > span { display: block; margin-bottom: 7px; color: #a1a4a7; font-size: 8px; }
+.proof-upload { min-height: 70px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; border: 1px dashed var(--border-strong); border-radius: 7px; color: #858d94; cursor: pointer; font-size: 8px; }
+.proof-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.proof-preview { position: relative; max-height: 220px; overflow: hidden; border-radius: 7px; }
+.proof-preview img { display: block; width: 100%; max-height: 220px; object-fit: cover; }
+.proof-preview .icon-button { position: absolute; top: 7px; right: 7px; background: rgba(0, 0, 0, .65); }
+
+@media (max-width: 640px) {
+    .judgment-modal { min-height: calc(100vh - 20px); padding: 19px 16px; gap: 12px; }
+    .judgment-heading h2 { font-size: 23px; }
+    .judgment-heading p { font-size: 9px; }
+    .penalty-card-stage { width: 224px; height: 352px; }
+    .penalty-card-copy h3 { font-size: 14px; }
+    .penalty-card-copy > strong { font-size: 8px; }
+    .ledger-entry { grid-template-columns: 30px minmax(0, 1fr); gap: 9px; }
+    .ledger-entry > .button { grid-column: 2; justify-self: start; }
+    .contract-rarities { grid-template-columns: 1fr; }
+    .contract-partner .form-row { flex-direction: column; }
+    .contract-scroll { max-height: 51vh; }
+}
+@media (max-height: 760px) and (min-width: 641px) {
+    .judgment-modal { justify-content: flex-start; }
+    .penalty-card-stage { width: 210px; height: 330px; }
+}
+.reduce-motion .penalty-card-back, .reduce-motion .penalty-card-face, .reduce-motion .judgment-actions { animation: none; }
+html[dir="rtl"] .penalty-card-copy > div, html[dir="rtl"] .ledger-entry-copy > div { letter-spacing: 0; }
+html[dir="rtl"] .proof-preview .icon-button { right: auto; left: 7px; }
+.penalty-card-copy { display: flex; flex-direction: column; justify-content: center; }
