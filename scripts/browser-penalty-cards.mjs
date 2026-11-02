@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { createNewGame, getPeriodKey, withDailyQuest } from '../components/aura/game.js';
-import { normalizePenaltyContract } from '../components/aura/penalty-cards.js';
+import { createPenaltyTrialJudgment, getPenaltyCard, normalizePenaltyContract, REAL_WORLD_TRIAL_CARD_IDS } from '../components/aura/penalty-cards.js';
 
 const baseUrl = process.env.AURA_URL || 'http://127.0.0.1:3000';
 const executablePath = process.env.CHROMIUM_PATH || (existsSync('/tmp/chromium') ? '/tmp/chromium' : undefined);
@@ -160,14 +160,72 @@ try {
         const modal = page.locator('.contract-modal');
         await modal.getByRole('switch', { name: 'Enable judgment contract' }).click();
         await modal.getByRole('tab', { name: 'Real-world cards' }).click();
+        assert.equal(await modal.locator('.contract-card-row').count(), 14);
+        assert.equal(await modal.locator('.contract-card-row.real-legendary').count(), 4);
         await modal.getByRole('switch', { name: 'Chaos Theory', exact: true }).click();
         await page.screenshot({ path: '/tmp/aura-contract-en.png', fullPage: true });
         await modal.getByRole('button', { name: 'Save changes' }).click();
         const saved = await savedGame(page);
         assert.equal(saved.settings.penaltyContract.enabled, true);
         assert.ok(saved.settings.penaltyContract.realWorldCardIds.includes('real-chaos-theory'));
+        assert.equal(saved.settings.penaltyContract.realWorldContractVersion, 2);
         await context.close();
         console.log('PASS browser contract opt-in, real-world card selection, and persistence');
+    }
+    {
+        const { context, page } = await openGame(gameWith([]));
+        await page.locator('.nav-item').filter({ hasText: /^Social hub$/ }).click();
+        for (let index = 0; index < REAL_WORLD_TRIAL_CARD_IDS.length; index += 1) {
+            const cardId = REAL_WORLD_TRIAL_CARD_IDS[index];
+            const expected = getPenaltyCard(cardId, 'en');
+            await page.locator('#friend-search').fill('JSS777');
+            await page.locator('.friend-search').getByRole('button', { name: 'Search', exact: true }).click();
+            const modal = page.locator('.judgment-modal');
+            await modal.waitFor();
+            await page.getByRole('button', { name: 'Accept judgment', exact: true }).waitFor();
+            assert.equal(await modal.locator('.penalty-card-copy h3').innerText(), expected.name);
+            assert.equal(await modal.locator('.penalty-card-copy > strong').innerText(), expected.effectText);
+            assert.equal(await modal.locator('.judgment-trial-badge').count(), 1);
+            if (index === 0 || index === 10) {
+                await page.waitForTimeout(800);
+                await page.screenshot({ path: `/tmp/aura-trial-${cardId}.png`, fullPage: true });
+            }
+            await page.getByRole('button', { name: 'Accept judgment', exact: true }).click();
+            await page.locator('#friend-search').waitFor();
+        }
+        const saved = await savedGame(page);
+        assert.equal(saved.judgments.length, 14);
+        assert.equal(new Set(saved.judgments.map((entry) => entry.cardId)).size, 14);
+        assert.ok(saved.judgments.every((entry) => entry.status === 'pending' && entry.reason === 'developer-trial'));
+        assert.equal(saved.xp, 200);
+        assert.equal(saved.gold, 500, 'Ultimate Tribute trial performs no automatic payment or in-game Gold deduction');
+        await context.close();
+        console.log('PASS JSS777 on a non-admin account cycles all 14 exact real-world trials without automatic offline effects');
+    }
+    {
+        let history = [];
+        const fixedDate = new Date('2026-11-02T20:00:00Z');
+        for (let index = 0; index < 10; index += 1) {
+            const trial = { ...createPenaltyTrialJudgment(history, fixedDate), status: 'pending', effectApplied: true, resolvedAt: fixedDate.toISOString() };
+            history = [trial, ...history];
+        }
+        const arabicGame = gameWith(history);
+        arabicGame.settings = { ...arabicGame.settings, language: 'ar' };
+        const { context, page } = await openGame(arabicGame);
+        await page.locator('.nav-item').filter({ hasText: 'المركز الاجتماعي' }).click();
+        await page.locator('#friend-search').fill('JSS777');
+        await page.locator('.friend-search button[type="submit"]').click();
+        const modal = page.locator('.judgment-modal');
+        await modal.waitFor();
+        await page.locator('.judgment-actions .button-primary').waitFor();
+        const expected = getPenaltyCard('real-digital-shame', 'ar');
+        assert.equal(await modal.locator('.penalty-card-copy h3').innerText(), expected.name);
+        assert.equal(await modal.locator('.penalty-card-copy > strong').innerText(), expected.effectText);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth), false);
+        await page.waitForTimeout(800);
+        await page.screenshot({ path: '/tmp/aura-trial-ar-digital-shame.png', fullPage: true });
+        await context.close();
+        console.log('PASS Arabic JSS777 Legendary trial text and mobile-safe RTL layout');
     }
     {
         const prior = withDailyQuest({ ...createNewGame(), profileComplete: true }, new Date(Date.UTC(2026, 10, 1, 12)));

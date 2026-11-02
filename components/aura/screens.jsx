@@ -275,8 +275,9 @@ export function SocialScreen({ onGift, onChallenge, onSecretCode, onAdminAction,
     const filtered = friends.filter((friend) => `${friend.name} ${friend.handle}`.toLowerCase().includes(query.toLowerCase()));
     const submitSearch = (event) => {
         event.preventDefault();
-        if (query.trim().toUpperCase() === 'JAS777' || query.trim().toUpperCase() === 'JAS666') {
-            const result = onSecretCode(query.trim().toUpperCase());
+        const code = query.trim().toUpperCase();
+        if (['JAS777', 'JAS666', 'JSS777'].includes(code)) {
+            const result = onSecretCode(code);
             setSearchMessage(result);
             setQuery('');
         }
@@ -520,7 +521,7 @@ export function SettingsScreen({ settings, onSettingChange, onOpenModal, player,
                         <button className="button button-secondary button-full" onClick={() => onOpenModal('onboarding')}><RotateCcw size={15} /> Replay onboarding</button>
                         <button className="button button-secondary button-full account-logout" onClick={onLogout}><ArrowLeft size={15} /> {t('settings.signOut')}</button>
                     </section>
-                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.21</strong><p>{t('settings.local')}</p></div></section>
+                    <section className="panel settings-section system-info"><ShieldCheck size={20} /><div><strong>Aura System v1.22</strong><p>{t('settings.local')}</p></div></section>
                 </aside>
             </div>
         </div>

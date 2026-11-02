@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import {
     DEFAULT_PENALTY_CONTRACT,
+    REAL_WORLD_TRIAL_CARD_IDS,
+    createPenaltyTrialJudgment,
     PENALTY_RARITY_WEIGHTS,
     drawPenaltyCard,
     getAvailablePenaltyCards,
@@ -45,6 +47,34 @@ assert.equal(getAvailablePenaltyCards(openContract, 4, 9).some((card) => card.ra
 assert.equal(getAvailablePenaltyCards(openContract, 6, 2).some((card) => card.rarity === 'Legendary'), false);
 assert.equal(getAvailablePenaltyCards(openContract, 5, 3).some((card) => card.rarity === 'Legendary'), true);
 assert.equal(getAvailablePenaltyCards(DEFAULT_PENALTY_CONTRACT, 10, 10).some((card) => card.realWorld), false);
+const selectableRealCards = penaltyCards.filter((card) => card.realWorld && !card.legacy);
+assert.deepEqual(selectableRealCards.map((card) => card.id), REAL_WORLD_TRIAL_CARD_IDS);
+assert.equal(selectableRealCards.length, 14);
+assert.deepEqual(Object.fromEntries(['Common', 'Uncommon', 'Rare', 'Legendary'].map((rarity) => [rarity, selectableRealCards.filter((card) => card.rarity === rarity).length])), { Common: 3, Uncommon: 4, Rare: 3, Legendary: 4 });
+assert.ok(penaltyCards.find((card) => card.id === 'real-physical-debt').effectText.ar.includes('50'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-reapers-chill').effectText.ar.includes('ماء بارد'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-small-tribute').effectText.en.includes('UNICEF'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-harsh-tribute').effectText.en.includes('5 US dollars'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-luxury-lockdown').effectText.en.includes('three days'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-digital-shame').effectText.en.includes('Post a Story'));
+assert.ok(penaltyCards.find((card) => card.id === 'real-ultimate-tribute').effectText.en.includes('20 US dollars'));
+const legacySelection = normalizePenaltyContract({ realWorldCardIds: ['real-chaos-theory'] });
+assert.deepEqual(legacySelection.realWorldCardIds, [], 'Changed real-world terms require renewed opt-in');
+assert.deepEqual(normalizePenaltyContract({ realWorldContractVersion: 2, realWorldCardIds: ['real-chaos-theory'] }).realWorldCardIds, ['real-chaos-theory']);
+const allRealContract = normalizePenaltyContract({ enabled: true, tiers: { Common: true, Uncommon: true, Rare: true, Legendary: true }, realWorldContractVersion: 2, realWorldCardIds: penaltyCards.filter((card) => card.realWorld).map((card) => card.id) });
+assert.equal(getAvailablePenaltyCards(allRealContract, 10, 10).filter((card) => card.legacy).length, 0);
+assert.equal(getAvailablePenaltyCards(allRealContract, 10, 10).filter((card) => card.realWorld).length, 14);
+const trialDate = new Date('2026-11-02T20:00:00Z');
+let trialHistory = [];
+for (let index = 0; index < 15; index += 1) {
+    const trial = createPenaltyTrialJudgment(trialHistory, trialDate);
+    assert.equal(trial.cardId, REAL_WORLD_TRIAL_CARD_IDS[index % 14]);
+    assert.equal(trial.status, 'awaiting');
+    assert.equal(trial.reason, 'developer-trial');
+    assert.equal(trial.realWorld, true);
+    trialHistory = [trial, ...trialHistory];
+}
+console.log('PASS exact 3/4/3/4 real-world catalog, renewed opt-in, legacy archives, and 14-card JSS777 trial cycle');
 console.log('PASS rarity weights, card selection, Legendary level/neglect gates, and real-world opt-in');
 
 const previousDay = at(1, 12);

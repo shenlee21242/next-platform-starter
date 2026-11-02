@@ -1956,3 +1956,11 @@ html[dir="rtl"] .input-with-suffix small { right: auto; left: 10px; }
 html[dir="rtl"] .penalty-card-copy > div, html[dir="rtl"] .ledger-entry-copy > div { letter-spacing: 0; }
 html[dir="rtl"] .proof-preview .icon-button { right: auto; left: 7px; }
 .penalty-card-copy { display: flex; flex-direction: column; justify-content: center; }
+
+/* AURA 1.22 — exact real-world contract and developer penalty trial */
+.judgment-trial-badge { display: inline-flex; margin-top: 7px; padding: 4px 8px; border: 1px solid rgba(76, 215, 246, .25); border-radius: 4px; color: var(--cyan); background: rgba(76, 215, 246, .045); font-size: 7px; letter-spacing: .1em; }
+.judgment-preselected { margin: 0; color: #a7a0a2; font-size: 8px; text-align: center; }
+.judgment-preselected strong { color: #d9c8c4; font-weight: 600; }
+.contract-card-row.real-legendary { border-color: rgba(239, 68, 68, .34); background: rgba(239, 68, 68, .035); }
+.contract-card-row.real-legendary h3, .contract-card-row.real-legendary .penalty-rarity { color: #f87171 !important; }
+.contract-partner > label { display: flex; flex-direction: column; gap: 6px; margin-top: 9px; color: #8e949b; font-size: 8px; }

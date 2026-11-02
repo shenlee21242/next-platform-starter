@@ -99,7 +99,7 @@ import {
     writeStoredGame,
 } from './aura/game';
 import { auraNow, syncAuraClock } from './aura/clock';
-import { getPenaltyCard, normalizePenaltyContract } from './aura/penalty-cards';
+import { createPenaltyTrialJudgment, getPenaltyCard, normalizePenaltyContract } from './aura/penalty-cards';
 import { PenaltyContractModal, PenaltyFulfillmentModal, PenaltyJudgmentModal } from './aura/penalty-ui';
 
 const navigation = [
@@ -1325,6 +1325,13 @@ export default function AuraApp() {
     };
 
     const secretCode = (code) => {
+        if (code === 'JSS777') {
+            const trial = createPenaltyTrialJudgment(judgments, auraNow());
+            const card = getPenaltyCard(trial.cardId, language);
+            setJudgments((current) => [trial, ...current].slice(0, 100));
+            openModal('penalty-judgment', trial);
+            return t('judgment.trialStarted', { number: ((trial.trialNumber - 1) % 14) + 1, name: card.name });
+        }
         if (session?.email !== 'arin@aura.app') return 'Invalid code';
         if (code === 'JAS777') {
             setDevMode(true);
@@ -1452,7 +1459,7 @@ export default function AuraApp() {
             {modal === 'onboarding' && <OnboardingExperience player={player} onClose={closeModal} onSave={savePlayer} />}
             {modal === 'level-up' && <LevelUpModal level={level} onClose={closeModal} />}
             {modal === 'penalty-contract' && <PenaltyContractModal contract={settings.penaltyContract} onClose={closeModal} onSave={savePenaltyContract} />}
-            {modal === 'penalty-judgment' && <PenaltyJudgmentModal key={modalData?.id} judgment={judgments.find((entry) => entry.id === modalData?.id) || modalData} hasShield={inventory.includes('power-penalty-shield')} onAccept={acceptJudgment} onShield={shieldJudgment} reducedMotion={settings.reducedMotion} />}
+            {modal === 'penalty-judgment' && <PenaltyJudgmentModal key={modalData?.id} judgment={judgments.find((entry) => entry.id === modalData?.id) || modalData} hasShield={inventory.includes('power-penalty-shield')} onAccept={acceptJudgment} onShield={shieldJudgment} reducedMotion={settings.reducedMotion} contract={settings.penaltyContract} />}
             {modal === 'penalty-fulfillment' && <PenaltyFulfillmentModal judgment={judgments.find((entry) => entry.id === modalData?.id) || modalData} onClose={closeModal} onComplete={fulfillJudgment} />}
 
             {toast && <div className={`toast toast-${toast.type}`} role="status" key={toast.id}><span>{toast.type === 'error' ? <CircleAlert size={18} /> : toast.type === 'neutral' ? <Bell size={18} /> : <Check size={18} />}</span><p>{toast.message}</p><button onClick={() => setToast(null)} aria-label="Dismiss notification"><X size={15} /></button></div>}
